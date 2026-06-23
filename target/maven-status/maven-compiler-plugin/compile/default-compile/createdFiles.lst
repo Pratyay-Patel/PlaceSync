@@ -1,0 +1,14 @@
+com\placesync\recruiter\package-info.class
+com\placesync\auth\package-info.class
+com\placesync\interview\package-info.class
+com\placesync\application\package-info.class
+com\placesync\analytics\package-info.class
+com\placesync\company\package-info.class
+com\placesync\job\package-info.class
+com\placesync\PlaceSyncApplication.class
+com\placesync\notification\package-info.class
+com\placesync\user\package-info.class
+com\placesync\common\audit\package-info.class
+com\placesync\common\config\package-info.class
+com\placesync\common\util\package-info.class
+com\placesync\common\exception\package-info.class
