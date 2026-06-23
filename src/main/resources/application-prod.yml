@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Profile: prod
+# Activate with: SPRING_PROFILES_ACTIVE=prod
+# ALL environment variables listed below are REQUIRED in production.
+# The application will fail to start if any are absent — this is intentional.
+# ─────────────────────────────────────────────────────────────────────────────
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: PlaceSyncProdPool
+      maximum-pool-size: 20
+      minimum-idle: 5
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: false
+
+  flyway:
+    enabled: true
+
+# In production, health details are hidden from unauthenticated callers.
+# Nginx restricts /actuator/* to localhost or admin IP — see ARCHITECTURE.md.
+management:
+  endpoint:
+    health:
+      show-details: never
+
+logging:
+  level:
+    root: WARN
+    com.placesync: INFO
+    org.flywaydb: INFO

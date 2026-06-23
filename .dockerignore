@@ -1,0 +1,35 @@
+# Exclude files that the Docker build context does not need.
+# Keeping the context small speeds up docker build on the VPS.
+
+# Maven build output (the multi-stage build runs its own mvn package)
+target/
+
+# IntelliJ IDEA project files
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Git metadata
+.git/
+.gitignore
+
+# Editor and OS artefacts
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Documentation (not needed in the image)
+docs/
+README.md
+
+# Environment files — never bake secrets into the image
+.env
+.env.example
+
+# Test resources (tests are skipped during Docker build)
+src/test/
+
+# Logs
+*.log
+logs/
