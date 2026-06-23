@@ -1,0 +1,105 @@
+package com.placesync.recruiter.service;
+
+import com.placesync.auth.service.EmailService;
+import com.placesync.common.exception.ConflictException;
+import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.util.PagedResponse;
+import com.placesync.company.entity.Company;
+import com.placesync.company.repository.CompanyRepository;
+import com.placesync.recruiter.dto.RecruiterProfileResponse;
+import com.placesync.recruiter.dto.RecruiterVerificationRequest;
+import com.placesync.recruiter.dto.UpdateRecruiterProfileRequest;
+import com.placesync.recruiter.entity.RecruiterProfile;
+import com.placesync.recruiter.entity.VerificationStatus;
+import com.placesync.recruiter.repository.RecruiterProfileRepository;
+import com.placesync.user.entity.User;
+import com.placesync.user.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.time.OffsetDateTime;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class RecruiterService {
+
+    private final RecruiterProfileRepository recruiterProfileRepository;
+    private final CompanyRepository companyRepository;
+    private final UserRepository userRepository;
+    private final EmailService emailService;
+
+    @Transactional(readOnly = true)
+    public RecruiterProfileResponse getMyProfile(UUID userId) {
+        RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+        return RecruiterProfileResponse.from(profile);
+    }
+
+    @Transactional
+    public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
+        RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+
+        profile.setFirstName(req.getFirstName());
+        profile.setLastName(req.getLastName());
+        profile.setJobTitle(req.getJobTitle());
+        profile.setContactEmail(req.getContactEmail());
+        profile.setPhone(req.getPhone());
+
+        if (req.getCompanyId() != null) {
+            Company company = companyRepository.findByIdAndDeletedAtIsNull(req.getCompanyId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Company", req.getCompanyId()));
+            profile.setCompany(company);
+        }
+
+        return RecruiterProfileResponse.from(recruiterProfileRepository.save(profile));
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<RecruiterProfileResponse> getPendingVerifications(Pageable pageable) {
+        Page<RecruiterProfile> page = recruiterProfileRepository
+                .findByVerificationStatus(VerificationStatus.PENDING_VERIFICATION, pageable);
+        return PagedResponse.of(page.map(RecruiterProfileResponse::from));
+    }
+
+    @Transactional
+    public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
+                                                        RecruiterVerificationRequest req) {
+        RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
+                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", recruiterId));
+
+        if (profile.getVerificationStatus() != VerificationStatus.PENDING_VERIFICATION) {
+            throw new ConflictException("Recruiter is not in PENDING_VERIFICATION state");
+        }
+
+        User admin = userRepository.findById(adminUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", adminUserId));
+
+        if (req.getDecision() == RecruiterVerificationRequest.Decision.APPROVE) {
+            profile.setVerificationStatus(VerificationStatus.VERIFIED);
+            profile.setVerifiedAt(OffsetDateTime.now());
+            profile.setVerifiedBy(admin);
+            emailService.sendRecruiterApprovedEmail(
+                    profile.getUser().getEmail(),
+                    profile.getFirstName() + " " + profile.getLastName());
+        } else {
+            if (req.getRejectionReason() == null || req.getRejectionReason().isBlank()) {
+                throw new IllegalArgumentException("rejectionReason is required when rejecting");
+            }
+            profile.setVerificationStatus(VerificationStatus.REJECTED);
+            profile.setVerifiedAt(OffsetDateTime.now());
+            profile.setVerifiedBy(admin);
+            profile.setRejectionReason(req.getRejectionReason());
+            emailService.sendRecruiterRejectedEmail(
+                    profile.getUser().getEmail(),
+                    profile.getFirstName() + " " + profile.getLastName(),
+                    req.getRejectionReason());
+        }
+
+        return RecruiterProfileResponse.from(recruiterProfileRepository.save(profile));
+    }
+}

@@ -60,4 +60,16 @@ info:
     name: PlaceSync
     description: SaaS Placement Management Platform
     version: 1.0.0
-    phase: Phase 1 — Foundation
+    phase: Phase 2 — Auth Layer
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Application-level configuration (bound to @ConfigurationProperties beans)
+# ─────────────────────────────────────────────────────────────────────────────
+app:
+  jwt:
+    secret: ${JWT_SECRET:dev-secret-key-change-in-production-32ch}
+    access-token-expiry-ms: ${JWT_ACCESS_TOKEN_EXPIRY_MS:900000}
+    refresh-token-expiry-days: ${JWT_REFRESH_TOKEN_EXPIRY_DAYS:7}
+  cors:
+    allowed-origins: ${FRONTEND_URL:http://localhost:3000}
+  base-url: ${APP_BASE_URL:http://localhost:8080}

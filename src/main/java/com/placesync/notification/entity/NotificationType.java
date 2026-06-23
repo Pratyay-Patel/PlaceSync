@@ -1,0 +1,12 @@
+package com.placesync.notification.entity;
+
+public enum NotificationType {
+    APPLICATION_SUBMITTED,
+    APPLICATION_STATUS_CHANGED,
+    INTERVIEW_SCHEDULED,
+    INTERVIEW_RESCHEDULED,
+    INTERVIEW_CANCELLED,
+    RECRUITER_VERIFIED,
+    RECRUITER_REJECTED,
+    OFFER_RELEASED
+}
