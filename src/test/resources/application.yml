@@ -15,8 +15,12 @@ spring:
     password:
 
   jpa:
+    open-in-view: false
     hibernate:
-      ddl-auto: create-drop
+      # none: Hibernate does not run any DDL — avoids H2 failures caused by
+      # PostgreSQL-specific columnDefinition types (e.g. user_role, gender_type).
+      # Schema creation is Flyway's job; context load tests don't need it.
+      ddl-auto: none
     show-sql: false
     database-platform: org.hibernate.dialect.H2Dialect
     properties:
