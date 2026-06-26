@@ -27,7 +27,7 @@ This file is the single source of truth for the phased build-out of PlaceSync. U
 |---|---|---|---|
 | 1 | Project bootstrap & infrastructure | ✅ Complete | `feat/backend` |
 | 2 | Database layer + Auth/User/Recruiter/Company modules | ✅ Complete | `feat/database-layer` |
-| 3 | Jobs, Applications, Interviews, Resumes + Redis caching | ⬜ Not started | `feat/job-application-layer` |
+| 3 | Jobs, Applications, Interviews, Resumes + Redis caching | 🔄 In progress | `feat/job-application-layer` |
 | 4 | Notifications + Apache Kafka | ⬜ Not started | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ⬜ Not started | `feat/analytics-s3-email` |
 | 6 | CI/CD + Nginx + Production hardening | ⬜ Not started | `feat/cicd-production` |
@@ -310,8 +310,8 @@ All repositories in their respective `repository/` sub-packages:
 
 ## Phase 3 — Jobs, Applications, Interviews + Resume Metadata + Redis Caching
 
-**Status:** ⬜ Not started
-**Planned branch:** `feat/job-application-layer`
+**Status:** 🔄 In progress
+**Branch:** `feat/job-application-layer`
 
 ### Scope
 

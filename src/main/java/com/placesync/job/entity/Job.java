@@ -9,6 +9,8 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -83,4 +85,12 @@ public class Job {
 
     @Column(name = "deleted_at")
     private OffsetDateTime deletedAt;
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<JobRequiredSkill> requiredSkills = new ArrayList<>();
+
+    @OneToMany(mappedBy = "job", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @Builder.Default
+    private List<JobEligibleDepartment> eligibleDepartments = new ArrayList<>();
 }

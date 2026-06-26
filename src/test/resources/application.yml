@@ -30,6 +30,9 @@ spring:
   flyway:
     enabled: false
 
+  cache:
+    type: none
+
 logging:
   level:
     root: WARN

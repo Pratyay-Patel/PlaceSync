@@ -13,4 +13,6 @@ public interface InterviewRepository extends JpaRepository<Interview, UUID> {
     List<Interview> findByApplicationIdOrderByRoundNumberAsc(UUID applicationId);
 
     boolean existsByApplicationIdAndRoundNumber(UUID applicationId, Short roundNumber);
+
+    List<Interview> findByApplication_StudentIdOrderByScheduledAtAsc(UUID studentId);
 }

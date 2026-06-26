@@ -1,12 +1,12 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# PlaceSync — Docker Compose (Phase 1: Foundation)
+# PlaceSync — Docker Compose (Phase 3: Jobs + Applications + Redis)
 #
 # Services included:
 #   - postgres   PostgreSQL 16 (database)
+#   - redis      Redis 7 (cache — added in Phase 3)
 #   - api        Spring Boot application
 #
 # Services NOT yet included (added in later phases):
-#   - redis      (Phase 3 — caching)
 #   - kafka      (Phase 4 — event streaming)
 #   - nginx      (Phase 6 — reverse proxy / production deployment)
 #
@@ -43,6 +43,21 @@ services:
       retries: 5
       start_period: 10s
 
+  # ── Redis ─────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: placesync-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    networks:
+      - placesync-net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   # ── Spring Boot API ────────────────────────────────────────────────────────
   api:
     build:
@@ -57,8 +72,12 @@ services:
       DATABASE_URL: jdbc:postgresql://postgres:5432/placesync_dev
       DATABASE_USERNAME: ${DATABASE_USERNAME:-postgres}
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - placesync-net

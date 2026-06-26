@@ -1,5 +1,7 @@
 package com.placesync.common.util;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
@@ -13,8 +15,14 @@ public class PagedResponse<T> {
     private final int totalPages;
     private final boolean last;
 
-    public PagedResponse(List<T> content, int page, int size,
-                         long totalElements, int totalPages, boolean last) {
+    @JsonCreator
+    public PagedResponse(
+            @JsonProperty("content") List<T> content,
+            @JsonProperty("page") int page,
+            @JsonProperty("size") int size,
+            @JsonProperty("totalElements") long totalElements,
+            @JsonProperty("totalPages") int totalPages,
+            @JsonProperty("last") boolean last) {
         this.content = content;
         this.page = page;
         this.size = size;
