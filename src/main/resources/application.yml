@@ -2,6 +2,21 @@ spring:
   application:
     name: placesync
 
+  # Redis caching (Phase 3)
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+
+  cache:
+    type: redis
+    redis:
+      time-to-live: 300000
+      key-prefix: "placesync::"
+      use-key-prefix: true
+      cache-null-values: false
+
   # JPA / Hibernate base configuration
   # DDL is managed entirely by Flyway — Hibernate must never auto-create or update schema
   jpa:
@@ -60,7 +75,7 @@ info:
     name: PlaceSync
     description: SaaS Placement Management Platform
     version: 1.0.0
-    phase: Phase 2 — Auth Layer
+    phase: Phase 3 — Jobs, Applications, Interviews + Redis Caching
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Application-level configuration (bound to @ConfigurationProperties beans)
