@@ -5,6 +5,8 @@ import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -36,6 +38,7 @@ public class Application {
     private Resume resume;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "status", nullable = false, columnDefinition = "application_status")
     @Builder.Default
     private ApplicationStatus status = ApplicationStatus.APPLIED;

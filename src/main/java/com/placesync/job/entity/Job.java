@@ -6,6 +6,8 @@ import com.placesync.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.math.BigDecimal;
 import java.time.OffsetDateTime;
@@ -42,10 +44,12 @@ public class Job {
     private String description;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "location_type", nullable = false, columnDefinition = "job_location_type")
     private JobLocationType locationType;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "job_type", nullable = false, columnDefinition = "job_type")
     private JobType jobType;
 
@@ -62,6 +66,7 @@ public class Job {
     private BigDecimal minCgpa;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "status", nullable = false, columnDefinition = "job_status")
     @Builder.Default
     private JobStatus status = JobStatus.PENDING_APPROVAL;

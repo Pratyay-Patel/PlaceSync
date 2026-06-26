@@ -4,6 +4,8 @@ import com.placesync.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -41,6 +43,7 @@ public class Company {
     private String logoS3Key;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "status", nullable = false, columnDefinition = "company_status")
     @Builder.Default
     private CompanyStatus status = CompanyStatus.PENDING_VERIFICATION;

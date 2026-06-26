@@ -103,6 +103,8 @@
         <!-- ─── OpenAPI / Swagger UI ─────────────────────────────────── -->
         <dependency>
             <groupId>org.springdoc</groupId>
+<!--            Swagger UI is an automatically generated interactive documentation website for your REST API. Because you added springdoc-openapi as a dependency, Spring Boot scans all your @RestController classes at startup and generates a complete description of every endpoint — the URL, the HTTP method, what JSON it expects, what it returns, what auth it requires.-->
+<!--            Swagger UI then presents that description as a clickable web interface at http://localhost:8080/swagger-ui.html.-->
             <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
             <version>2.6.0</version>
         </dependency>
