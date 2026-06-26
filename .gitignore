@@ -4,6 +4,12 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+# ─── Build artefacts (belt-and-suspenders) ────────────────────────────────────
+*.jar
+*.war
+*.ear
+*.class
+
 # ─── IntelliJ IDEA ────────────────────────────────────────────────────────────
 .idea/
 *.iws
