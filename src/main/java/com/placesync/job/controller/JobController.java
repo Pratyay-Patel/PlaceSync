@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -32,7 +33,7 @@ public class JobController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List open jobs (paginated) — cached")
     public ResponseEntity<PagedResponse<JobSummaryResponse>> getOpenJobs(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(jobService.getOpenJobs(pageable));
     }
 
@@ -87,7 +88,7 @@ public class JobController {
     @Operation(summary = "List own job postings")
     public ResponseEntity<PagedResponse<JobSummaryResponse>> getRecruiterJobs(
             @AuthenticationPrincipal UserPrincipal principal,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(jobService.getRecruiterJobs(principal.getId(), pageable));
     }
 
@@ -95,7 +96,7 @@ public class JobController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "List jobs pending approval (admin only)")
     public ResponseEntity<PagedResponse<JobSummaryResponse>> getPendingJobs(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(jobService.getPendingJobs(pageable));
     }
 

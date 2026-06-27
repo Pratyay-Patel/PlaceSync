@@ -4,6 +4,8 @@ import com.placesync.application.entity.Application;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -30,10 +32,12 @@ public class Interview {
     private Short roundNumber;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "interview_type", nullable = false, columnDefinition = "interview_type")
     private InterviewType interviewType;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "status", nullable = false, columnDefinition = "interview_status")
     @Builder.Default
     private InterviewStatus status = InterviewStatus.SCHEDULED;

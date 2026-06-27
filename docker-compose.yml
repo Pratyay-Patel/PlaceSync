@@ -29,9 +29,10 @@ services:
       POSTGRES_USER: ${DATABASE_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${DATABASE_PASSWORD:-postgres}
     ports:
-      # Expose to host so IntelliJ / DBeaver can connect directly during development.
-      # Restrict this port on the VPS firewall in production (UFW deny 5432).
-      - "5432:5432"
+      # Host port 5433 avoids conflict with any local PostgreSQL on 5432.
+      # The API container still reaches this DB via postgres:5432 over the Docker network.
+      # Connect pgAdmin/DBeaver to localhost:5433 to inspect the Docker DB directly.
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     networks:

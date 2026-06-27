@@ -5,6 +5,8 @@ import com.placesync.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.JdbcType;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
 import java.time.OffsetDateTime;
 import java.util.UUID;
@@ -47,6 +49,7 @@ public class RecruiterProfile {
     private Company company;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "verification_status", nullable = false, columnDefinition = "verification_status")
     @Builder.Default
     private VerificationStatus verificationStatus = VerificationStatus.PENDING_VERIFICATION;

@@ -2,7 +2,9 @@ package com.placesync.common.audit;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 import org.hibernate.type.SqlTypes;
 
 import java.time.OffsetDateTime;
@@ -30,6 +32,7 @@ public class AuditLog {
     private UUID entityId;
 
     @Enumerated(EnumType.STRING)
+    @JdbcType(PostgreSQLEnumJdbcType.class)
     @Column(name = "action", nullable = false, columnDefinition = "audit_action")
     private AuditAction action;
 
