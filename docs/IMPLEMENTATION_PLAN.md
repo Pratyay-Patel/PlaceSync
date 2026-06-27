@@ -35,6 +35,28 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 
 ---
 
+## Database environment strategy
+
+PlaceSync uses two PostgreSQL environments throughout its lifecycle. The application is provider-agnostic — it connects via `DATABASE_URL`, `DATABASE_USERNAME`, and `DATABASE_PASSWORD` only, so switching environments requires no code changes, only configuration changes.
+
+| Environment | Provider | Used for |
+|---|---|---|
+| Development / CI | Docker Compose (PostgreSQL 16 container) | Local development, feature implementation, integration testing, GitHub Actions CI, local Flyway migrations |
+| Production | Supabase (managed PostgreSQL) | Staging, production deployment, VPS deployment, long-term data persistence |
+
+**Docker PostgreSQL is the permanent development database.** It is not a temporary stand-in to be replaced — it continues to be used for all local and CI work even after Supabase is connected in Phase 5. The two environments run in parallel throughout the project's lifetime.
+
+**Why this split:**
+- Fast local development and instant database resets during testing
+- Full offline development capability with no external dependency
+- Reproducible, reliable CI builds using a known-good container image
+- Safe isolation between development data and production data
+- Supabase provides managed backups, high availability, and connection pooling (PgBouncer) for production without operational overhead
+
+Connecting to Supabase for the first time is a dedicated task in Phase 5 (subphase 5.5). Until then, all work targets the Docker PostgreSQL instance.
+
+---
+
 ## Development workflow
 
 Every numbered subphase (e.g., 4.0, 4.1, 4.2 …) is an independent implementation milestone. After completing a subphase:
@@ -875,13 +897,16 @@ Inject `KafkaEventPublisher` into `ApplicationService` and `InterviewService`. P
 
 ### Scope
 
-Three sub-systems built and merged together:
+Four sub-systems built and merged together:
 
 1. **Analytics** — global placement dashboard (admin) + recruiter-scoped analytics
 2. **AWS S3** — real file upload for resumes and profile pictures; company logos
 3. **Email delivery** — replace the `EmailService` stub with HTML Thymeleaf templates over Gmail SMTP
+4. **Supabase production integration** — first-time connection of the application to the managed production database
 
 Plus production-facing security and file safety concerns: Spring-level security headers, file upload validation (MIME type + magic bytes), and request size limits.
+
+All development and CI work in this phase continues to target Docker PostgreSQL. Supabase is introduced at the end of the phase (subphase 5.5) after all features are verified locally.
 
 ---
 
@@ -1056,6 +1081,114 @@ http.headers(headers -> headers
         .policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
 );
 ```
+
+---
+
+### 5.5 Supabase Production Integration
+
+**Why here:** All Phase 5 features are now verified against Docker PostgreSQL. Before this branch is merged, the application must be proven to start cleanly against the managed production database. This subphase has no code changes — it is purely configuration, connection verification, and schema migration.
+
+**Docker PostgreSQL continues unchanged** for local development and CI after this subphase. Supabase is an additional target environment, not a replacement.
+
+#### Prerequisites
+- Phase 5 features (5.1 – 5.4) are complete and `mvn verify` passes against Docker PostgreSQL
+- A Supabase account and project exist (free tier is sufficient for V1)
+
+#### Tasks
+
+**1. Create the Supabase project**
+- Create a new project at [supabase.com](https://supabase.com) in the region closest to the VPS (e.g., `ap-south-1`)
+- Note the project URL and service role key from the Supabase dashboard
+- Retrieve the direct connection string (not the pooler) for Flyway migrations:
+  `jdbc:postgresql://<host>:5432/postgres`
+- Retrieve the transaction pooler connection string (PgBouncer) for the running application:
+  `jdbc:postgresql://<host>:6543/postgres?pgbouncer=true`
+
+**2. Configure environment variables for production**
+
+Add to `.env.example` (do not commit real values):
+```
+# Production database (Supabase)
+PROD_DATABASE_URL=jdbc:postgresql://<supabase-host>:6543/postgres?pgbouncer=true
+PROD_DATABASE_USERNAME=postgres
+PROD_DATABASE_PASSWORD=<supabase-db-password>
+```
+
+Create a local `.env.prod` file (git-ignored) for production smoke testing:
+```
+DATABASE_URL=jdbc:postgresql://<supabase-host>:6543/postgres?pgbouncer=true
+DATABASE_USERNAME=postgres
+DATABASE_PASSWORD=<supabase-db-password>
+```
+
+Verify `.env.prod` is in `.gitignore` before proceeding.
+
+**3. Configure SSL**
+
+Supabase requires SSL. Add `?sslmode=require` to the connection URL if not already implied by the `pgbouncer=true` parameter. Verify the connection is encrypted by checking the Supabase dashboard connection logs.
+
+**4. Run Flyway migrations against Supabase**
+
+Run migrations using the direct connection (not the pooler — Flyway requires a persistent connection):
+```bash
+JAVA_HOME="C:/Program Files/Eclipse Adoptium/jdk-21.0.11.10-hotspot" \
+  mvn flyway:migrate \
+  -Dflyway.url="jdbc:postgresql://<supabase-host>:5432/postgres?sslmode=require" \
+  -Dflyway.user=postgres \
+  -Dflyway.password=<password>
+```
+
+Verify all 19 migrations (V001–V019) applied cleanly in the Supabase SQL editor: `SELECT * FROM flyway_schema_history ORDER BY installed_rank;`
+
+**5. Validate schema consistency**
+
+Spot-check key tables and enum types in the Supabase SQL editor:
+```sql
+SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' ORDER BY table_name;
+SELECT typname FROM pg_type WHERE typtype = 'e' ORDER BY typname;
+```
+
+Confirm all 18 tables and all 12 custom enum types are present.
+
+**6. Smoke test the application against Supabase**
+
+Start the application locally pointing at Supabase (Redis and Kafka still from Docker Compose):
+```bash
+JAVA_HOME="C:/Program Files/Eclipse Adoptium/jdk-21.0.11.10-hotspot" \
+  mvn spring-boot:run \
+  -Dspring.datasource.url="${PROD_DATABASE_URL}" \
+  -Dspring.datasource.username="${PROD_DATABASE_USERNAME}" \
+  -Dspring.datasource.password="${PROD_DATABASE_PASSWORD}"
+```
+
+Verify:
+- Application starts without errors
+- `GET /actuator/health` returns `{"status":"UP"}`
+- `POST /api/v1/auth/register` creates a user row in the Supabase `users` table
+- `POST /api/v1/auth/login` returns a valid JWT
+
+**7. Update `docs/DEPLOYMENT.md`**
+
+Add a section documenting the two-environment database setup:
+- How to obtain Supabase connection strings (direct vs. pooler)
+- When to use each connection string (Flyway = direct, application = pooler)
+- Environment variable mapping for VPS `.env` file
+- How to verify Flyway migration status on Supabase
+
+#### No code changes required
+
+This subphase produces no Java source changes. The application is already provider-agnostic. If any code change is needed to make the application work with Supabase, that is a bug in the application's configuration isolation and must be fixed before this subphase is marked complete.
+
+#### Subphase 5.5 acceptance criteria
+- [ ] Supabase project created and connection strings retrieved
+- [ ] `flyway:migrate` runs cleanly against Supabase — all 19 migrations applied, `flyway_schema_history` shows no errors
+- [ ] All 18 tables and 12 custom enum types present in Supabase schema
+- [ ] Application starts successfully when `DATABASE_URL` points to Supabase
+- [ ] `GET /actuator/health` returns `{"status":"UP"}` against Supabase
+- [ ] Register + login smoke test succeeds and data is visible in Supabase dashboard
+- [ ] `.env.prod` is git-ignored and no production credentials are committed
+- [ ] `docs/DEPLOYMENT.md` updated with Supabase connection and migration instructions
+- [ ] Docker PostgreSQL is still used for all `mvn verify` runs — no changes to dev or CI configuration
 
 ---
 
@@ -1350,13 +1483,14 @@ For all existing controllers, add:
 This ensures Swagger UI is a complete, accurate API reference.
 
 #### VPS setup documentation
-Create `docs/DEPLOYMENT.md` covering:
+Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployment:
 - UFW firewall rules (22, 80, 443 only)
 - Docker + Docker Compose installation
 - Certbot / Let's Encrypt SSL setup
 - systemd service for Docker Compose auto-restart on reboot
 - Fail2ban for SSH brute-force protection
-- `.env` file setup on VPS
+- `.env` file setup on VPS — including `DATABASE_URL` pointing to Supabase (not a local PostgreSQL container; the VPS runs no database service of its own)
+- Running `flyway:migrate` against Supabase before first deploy
 
 ---
 
