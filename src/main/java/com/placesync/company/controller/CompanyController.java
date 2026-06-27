@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -42,7 +43,7 @@ public class CompanyController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "List all verified companies (paginated)")
     public ResponseEntity<PagedResponse<CompanyResponse>> getVerifiedCompanies(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(companyService.getVerifiedCompanies(pageable));
     }
 
@@ -82,7 +83,7 @@ public class CompanyController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "List companies pending approval (admin only)")
     public ResponseEntity<PagedResponse<CompanyResponse>> getPendingCompanies(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(companyService.getPendingCompanies(pageable));
     }
 

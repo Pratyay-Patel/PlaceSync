@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
@@ -50,7 +51,7 @@ public class RecruiterController {
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @Operation(summary = "List recruiters pending verification (admin only)")
     public ResponseEntity<PagedResponse<RecruiterProfileResponse>> getPendingVerifications(
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(recruiterService.getPendingVerifications(pageable));
     }
 

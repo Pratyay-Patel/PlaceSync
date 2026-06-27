@@ -7,9 +7,9 @@
 
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/placesync_dev
-    username: postgres
-    password: root
+    url: ${DATABASE_URL:jdbc:postgresql://localhost:5432/placesync_dev}
+    username: ${DATABASE_USERNAME:postgres}
+    password: ${DATABASE_PASSWORD:root}
     driver-class-name: org.postgresql.Driver
     hikari:
       pool-name: PlaceSyncDevPool
