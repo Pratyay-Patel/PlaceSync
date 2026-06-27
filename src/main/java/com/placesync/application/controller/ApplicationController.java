@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
@@ -45,7 +46,7 @@ public class ApplicationController {
     @Operation(summary = "List own applications (paginated)")
     public ResponseEntity<PagedResponse<ApplicationResponse>> getMyApplications(
             @AuthenticationPrincipal UserPrincipal principal,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(applicationService.getMyApplications(principal.getId(), pageable));
     }
 
@@ -64,7 +65,7 @@ public class ApplicationController {
     public ResponseEntity<PagedResponse<ApplicationResponse>> getJobApplications(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID jobId,
-            @PageableDefault(size = 20) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
         return ResponseEntity.ok(applicationService.getJobApplications(principal.getId(), jobId, pageable));
     }
 
