@@ -437,9 +437,9 @@ jobs:
 - Maven dependency cache keyed by `pom.xml` — subsequent runs resolve dependencies from cache
 
 #### Subphase 4.0 acceptance criteria
-- [ ] `.github/workflows/ci.yml` committed to the branch
-- [ ] Pipeline triggers on push and completes green (`mvn clean verify` passes)
-- [ ] Context load test (`PlaceSyncApplicationTests`) passes in CI
+- [x] `.github/workflows/ci.yml` committed to the branch
+- [x] Pipeline triggers on push and completes green (`mvn clean verify` passes)
+- [x] Context load test (`PlaceSyncApplicationTests`) passes in CI
 
 ---
 
