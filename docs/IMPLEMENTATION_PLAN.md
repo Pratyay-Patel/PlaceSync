@@ -492,36 +492,25 @@ jobs:
 
 ---
 
-### 4.3 Structured Logging + Request/Response Filter + Correlation IDs
+### 4.3 Structured Logging + Request/Response Filter + Correlation IDs ✅
 
 **Why:** Without structured logging, debugging production issues requires grep-based log mining. Correlation IDs link all log lines from a single HTTP request together. The SRS (ARCH section 22) specifies JSON structured logging in production.
 
-#### Files to create
-| File | Purpose |
-|---|---|
-| `common/logging/MdcLoggingFilter.java` | `OncePerRequestFilter` — generates a UUID `X-Correlation-ID`, sets `MDC.put("correlationId", id)`, forwards header in response |
-| `common/logging/RequestResponseLoggingFilter.java` | Logs method, path, status, duration for every request at INFO level |
-| `common/config/LoggingConfig.java` | Registers both filters with appropriate order |
+#### What was built
+- `common/logging/MdcLoggingFilter.java` — reads or generates `X-Correlation-ID` UUID per request, writes to MDC and response header, clears MDC in `finally` block
+- `common/logging/RequestResponseLoggingFilter.java` — logs `METHOD path -> status (Xms)` at INFO for every request
+- `common/config/LoggingConfig.java` — registers both filters via `FilterRegistrationBean` with order 1 (MDC) then 2 (request/response)
+- `src/main/resources/logback-spring.xml` — dev profile: human-readable console with `[%X{correlationId}]`; prod profile: `LogstashEncoder` JSON with `correlationId` MDC field
+- Added `logstash-logback-encoder:7.4` dependency
+- Added SLF4J `Logger` + `log.info()` on all write operations to: `UserService`, `ResumeService`, `RecruiterService`, `CompanyService`, `JobService`, `ApplicationService`, `InterviewService`
 
-#### Logback configuration update (`logback-spring.xml`)
-- Dev profile: human-readable pattern including `[%X{correlationId}]`
-- Prod profile: JSON encoder (Logstash Logback Encoder) — each log line is a JSON object with `timestamp`, `level`, `logger`, `correlationId`, `message`, `stack_trace`
-
-```xml
-<!-- prod JSON encoder dependency -->
-<dependency>
-    <groupId>net.logstash.logback</groupId>
-    <artifactId>logstash-logback-encoder</artifactId>
-    <version>7.4</version>
-</dependency>
-```
-
-#### SLF4J conventions (enforce via code review)
-- Every service class has: `private static final Logger log = LoggerFactory.getLogger(ClassName.class);`
-- `log.info()` at service method entry for all write operations
-- `log.warn()` for recoverable errors (Kafka failure, email failure)
-- `log.error(message, ex)` for unhandled exceptions (already wired in `GlobalExceptionHandler`)
-- No `System.out.println()` anywhere
+#### Acceptance criteria
+- [x] `MdcLoggingFilter` sets `correlationId` in MDC and echoes it in response header
+- [x] `RequestResponseLoggingFilter` logs method, path, status, and duration for every request
+- [x] Dev profile uses human-readable pattern with `[correlationId]`
+- [x] Prod profile uses JSON encoder (Logstash)
+- [x] All 7 service classes have `private static final Logger log` and `log.info()` on write operations
+- [x] `mvn clean verify` passes — BUILD SUCCESS, 137 source files compiled
 
 ---
 

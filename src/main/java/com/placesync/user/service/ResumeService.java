@@ -9,6 +9,8 @@ import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,6 +24,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ResumeService {
 
+    private static final Logger log = LoggerFactory.getLogger(ResumeService.class);
     private static final String STUDENT_PROFILE = "StudentProfile";
 
     private final ResumeRepository resumeRepository;
@@ -40,6 +43,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
+        log.info("Creating resume '{}' for userId={}", req.getLabel(), userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -68,6 +72,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
+        log.info("Setting resumeId={} as default for userId={}", resumeId, userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -93,6 +98,7 @@ public class ResumeService {
 
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
+        log.info("Soft-deleting resumeId={} for userId={}", resumeId, userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 

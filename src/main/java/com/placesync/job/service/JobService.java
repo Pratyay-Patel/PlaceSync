@@ -13,6 +13,8 @@ import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -28,6 +30,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JobService {
 
+    private static final Logger log = LoggerFactory.getLogger(JobService.class);
     private static final String RECRUITER_PROFILE = "RecruiterProfile";
 
     private final JobRepository jobRepository;
@@ -70,6 +73,7 @@ public class JobService {
     @CacheEvict(value = "job-listings", allEntries = true)
     @Transactional
     public JobResponse createJob(UUID userId, CreateJobRequest req) {
+        log.info("Creating job '{}' by userId={}", req.getTitle(), userId);
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -111,6 +115,7 @@ public class JobService {
     })
     @Transactional
     public JobResponse updateJob(UUID userId, UUID jobId, UpdateJobRequest req) {
+        log.info("Updating jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -152,6 +157,7 @@ public class JobService {
     })
     @Transactional
     public void softDeleteJob(UUID userId, UUID jobId) {
+        log.info("Soft-deleting jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -172,6 +178,7 @@ public class JobService {
     })
     @Transactional
     public JobResponse closeJob(UUID userId, UUID jobId) {
+        log.info("Closing jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -196,6 +203,8 @@ public class JobService {
     })
     @Transactional
     public JobResponse processApproval(UUID adminUserId, UUID jobId, JobApprovalRequest req) {
+        log.info("Processing job approval: jobId={}, decision={}, adminUserId={}",
+                jobId, req.getDecision(), adminUserId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 

@@ -20,6 +20,8 @@ import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -31,6 +33,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApplicationService {
 
+    private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
     private static final String STUDENT_PROFILE = "StudentProfile";
 
     private final ApplicationRepository applicationRepository;
@@ -42,6 +45,7 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
+        log.info("Student userId={} applying to jobId={}", userId, req.getJobId());
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -129,6 +133,7 @@ public class ApplicationService {
 
     @Transactional
     public ApplicationResponse updateStatus(UUID userId, UUID applicationId, UpdateApplicationStatusRequest req) {
+        log.info("Updating applicationId={} status to {} by userId={}", applicationId, req.getStatus(), userId);
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
 

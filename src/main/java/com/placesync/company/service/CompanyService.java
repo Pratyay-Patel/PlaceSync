@@ -16,6 +16,8 @@ import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -29,6 +31,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CompanyService {
 
+    private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
     private static final String COMPANY = "Company";
 
     private final CompanyRepository companyRepository;
@@ -51,6 +54,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse createCompany(UUID userId, CreateCompanyRequest req) {
+        log.info("Creating company '{}' by userId={}", req.getName(), userId);
         if (companyRepository.existsByNameAndDeletedAtIsNull(req.getName())) {
             throw new ConflictException("A company with this name already exists: " + req.getName());
         }
@@ -73,6 +77,7 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse updateCompany(UUID userId, UUID companyId, UpdateCompanyRequest req) {
+        log.info("Updating companyId={} by userId={}", companyId, userId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
@@ -95,6 +100,7 @@ public class CompanyService {
 
     @Transactional
     public void softDeleteCompany(UUID userId, UUID companyId) {
+        log.info("Soft-deleting companyId={} by userId={}", companyId, userId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
@@ -119,6 +125,8 @@ public class CompanyService {
     @Transactional
     public CompanyResponse processVerification(UUID adminUserId, UUID companyId,
                                                CompanyVerificationRequest req) {
+        log.info("Processing company verification: companyId={}, decision={}, adminUserId={}",
+                companyId, req.getDecision(), adminUserId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 

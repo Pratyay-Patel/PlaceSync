@@ -28,6 +28,8 @@
         <!-- MapStruct -->
         <mapstruct.version>1.5.5.Final</mapstruct.version>
         <lombok.mapstruct.binding.version>0.2.0</lombok.mapstruct.binding.version>
+        <!-- Structured logging -->
+        <logstash.logback.encoder.version>7.4</logstash.logback.encoder.version>
         <!-- SonarCloud coordinates (token is passed at runtime via -Dsonar.token) -->
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
         <sonar.organization>pratyay-patel</sonar.organization>
@@ -91,6 +93,13 @@
             <groupId>org.mapstruct</groupId>
             <artifactId>mapstruct</artifactId>
             <version>${mapstruct.version}</version>
+        </dependency>
+
+        <!-- ─── Structured logging (JSON encoder for prod profile) ───── -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <version>${logstash.logback.encoder.version}</version>
         </dependency>
 
         <!-- ─── Spring Security ──────────────────────────────────────── -->

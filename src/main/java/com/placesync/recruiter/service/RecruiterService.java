@@ -16,6 +16,8 @@ import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -28,6 +30,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RecruiterService {
 
+    private static final Logger log = LoggerFactory.getLogger(RecruiterService.class);
     private static final String RECRUITER_PROFILE = "RecruiterProfile";
 
     private final RecruiterProfileRepository recruiterProfileRepository;
@@ -45,6 +48,7 @@ public class RecruiterService {
 
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
+        log.info("Updating recruiter profile for userId={}", userId);
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -73,6 +77,8 @@ public class RecruiterService {
     @Transactional
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {
+        log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
+                recruiterId, req.getDecision(), adminUserId);
         RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, recruiterId));
 
