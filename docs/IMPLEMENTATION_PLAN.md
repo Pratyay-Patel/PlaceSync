@@ -2,7 +2,7 @@
 # PlaceSync — SaaS Placement Management Platform
 
 **Version:** 2.0.0
-**Last updated:** 2026-06-27
+**Last updated:** 2026-06-28
 **Author:** Pratyay Patel
 
 ---
@@ -443,24 +443,26 @@ jobs:
 
 ---
 
-### 4.1 SonarLint & Code Quality Setup
+### 4.1 SonarLint & Code Quality Setup ✅
 
 **Why now:** The SRS (NFR-041) requires a SonarQube quality gate of 0 critical bugs, 0 security vulnerabilities, <5% code duplication. Setting this up early catches issues while the codebase is still small rather than deferring to Phase 6 when the backlog of fixes would be large.
 
-#### Tasks
-- Install SonarLint plugin in IntelliJ IDEA — enabled globally
-- Add `sonar-maven-plugin` to `pom.xml`
-- Create `sonar-project.properties` at project root:
-  ```properties
-  sonar.projectKey=placesync
-  sonar.organization=<your-sonarcloud-org>
-  sonar.host.url=https://sonarcloud.io
-  sonar.java.source=21
-  sonar.coverage.jacoco.xmlReportPaths=target/site/jacoco/jacoco.xml
-  ```
-- Add JaCoCo Maven plugin to `pom.xml` for coverage reporting
-- Run `mvn sonar:sonar` locally; address all existing blocker/critical findings before proceeding
-- Note: SonarCloud CI gate is wired up in Phase 6. This step just establishes local enforcement.
+#### What was built
+- Installed SonarQube (SonarLint) plugin in IntelliJ IDEA
+- Added `jacoco-maven-plugin` (0.8.12) to `pom.xml` — generates `target/site/jacoco/jacoco.xml` on every `mvn verify`
+- Added `sonar-maven-plugin` (3.11.0.3922) to `pom.xml`
+- Added `sonar.host.url`, `sonar.organization`, `sonar.projectKey`, `sonar.coverage.jacoco.xmlReportPaths` to `pom.xml` properties so the Maven plugin connects to SonarCloud without command-line flags
+- Created `sonar-project.properties` at project root (SonarCloud metadata; token passed at runtime only)
+- Fixed all 9 high-severity findings: extracted 8 duplicate string literals into class-level constants (`STUDENT_PROFILE`, `RECRUITER_PROFILE`, `COMPANY`, `MESSAGE_KEY`) across 8 service/controller classes; marked CSRF hotspot in `SecurityConfig` as "Safe" (intentional — stateless JWT API)
+- SonarCloud quality gate: **PASSED** — 0 blocker, 0 high issues
+
+#### Acceptance criteria
+- [x] SonarQube plugin installed in IntelliJ IDEA
+- [x] `jacoco-maven-plugin` generates coverage report on `mvn verify`
+- [x] `sonar-maven-plugin` connects to SonarCloud via `pom.xml` properties
+- [x] `sonar-project.properties` created and committed (no secrets)
+- [x] `mvn sonar:sonar` runs successfully — quality gate PASSED
+- [x] Zero high/blocker findings remaining
 
 ---
 

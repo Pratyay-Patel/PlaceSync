@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class InterviewService {
 
+    private static final String RECRUITER_PROFILE = "RecruiterProfile";
+
     private final InterviewRepository interviewRepository;
     private final ApplicationRepository applicationRepository;
     private final StudentProfileRepository studentProfileRepository;
@@ -45,7 +47,7 @@ public class InterviewService {
     @Transactional(readOnly = true)
     public List<InterviewResponse> getApplicationInterviews(UUID userId, UUID applicationId) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application", applicationId));
@@ -62,7 +64,7 @@ public class InterviewService {
     @Transactional
     public InterviewResponse scheduleInterview(UUID userId, UUID applicationId, ScheduleInterviewRequest req) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application", applicationId));
@@ -138,7 +140,7 @@ public class InterviewService {
 
     private Interview loadInterviewForRecruiter(UUID userId, UUID interviewId) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         Interview interview = interviewRepository.findById(interviewId)
                 .orElseThrow(() -> new ResourceNotFoundException("Interview", interviewId));

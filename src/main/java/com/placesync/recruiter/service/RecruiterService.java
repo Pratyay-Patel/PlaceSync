@@ -27,6 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class RecruiterService {
 
+    private static final String RECRUITER_PROFILE = "RecruiterProfile";
+
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
@@ -35,14 +37,14 @@ public class RecruiterService {
     @Transactional(readOnly = true)
     public RecruiterProfileResponse getMyProfile(UUID userId) {
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
         return RecruiterProfileResponse.from(profile);
     }
 
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         profile.setFirstName(req.getFirstName());
         profile.setLastName(req.getLastName());
@@ -70,7 +72,7 @@ public class RecruiterService {
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {
         RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", recruiterId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, recruiterId));
 
         if (profile.getVerificationStatus() != VerificationStatus.PENDING_VERIFICATION) {
             throw new ConflictException("Recruiter is not in PENDING_VERIFICATION state");

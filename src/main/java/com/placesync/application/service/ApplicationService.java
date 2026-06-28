@@ -30,6 +30,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ApplicationService {
 
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
     private final ApplicationRepository applicationRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final JobRepository jobRepository;
@@ -39,7 +41,7 @@ public class ApplicationService {
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Job job = jobRepository.findByIdAndDeletedAtIsNull(req.getJobId())
                 .orElseThrow(() -> new ResourceNotFoundException("Job", req.getJobId()));
@@ -87,7 +89,7 @@ public class ApplicationService {
     @Transactional(readOnly = true)
     public PagedResponse<ApplicationResponse> getMyApplications(UUID userId, Pageable pageable) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return PagedResponse.of(
                 applicationRepository.findByStudentId(student.getId(), pageable)
                         .map(ApplicationResponse::from));
@@ -96,7 +98,7 @@ public class ApplicationService {
     @Transactional(readOnly = true)
     public ApplicationResponse getMyApplication(UUID userId, UUID applicationId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application", applicationId));

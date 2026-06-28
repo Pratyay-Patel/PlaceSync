@@ -28,6 +28,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CompanyService {
 
+    private static final String COMPANY = "Company";
+
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
@@ -35,7 +37,7 @@ public class CompanyService {
     @Transactional(readOnly = true)
     public CompanyResponse getCompany(UUID companyId) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
         return CompanyResponse.from(company);
     }
 
@@ -70,7 +72,7 @@ public class CompanyService {
     @Transactional
     public CompanyResponse updateCompany(UUID userId, UUID companyId, UpdateCompanyRequest req) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (!company.getCreatedBy().getId().equals(userId)) {
             throw new AccessDeniedException("Only the company creator can update it");
@@ -92,7 +94,7 @@ public class CompanyService {
     @Transactional
     public void softDeleteCompany(UUID userId, UUID companyId) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (!company.getCreatedBy().getId().equals(userId)) {
             throw new AccessDeniedException("Only the company creator can delete it");
@@ -116,7 +118,7 @@ public class CompanyService {
     public CompanyResponse processVerification(UUID adminUserId, UUID companyId,
                                                CompanyVerificationRequest req) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (company.getStatus() != CompanyStatus.PENDING_VERIFICATION) {
             throw new ConflictException("Company is not in PENDING_VERIFICATION state");

@@ -17,6 +17,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
     private final StudentProfileRepository studentProfileRepository;
     private final StudentSkillRepository studentSkillRepository;
     private final StudentEducationRepository studentEducationRepository;
@@ -25,14 +27,14 @@ public class UserService {
     @Transactional(readOnly = true)
     public StudentProfileResponse getMyProfile(UUID userId) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return StudentProfileResponse.from(profile);
     }
 
     @Transactional
     public StudentProfileResponse updateProfile(UUID userId, UpdateStudentProfileRequest req) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         profile.setFirstName(req.getFirstName());
         profile.setLastName(req.getLastName());
@@ -181,6 +183,6 @@ public class UserService {
 
     private StudentProfile requireStudentProfile(UUID userId) {
         return studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
     }
 }

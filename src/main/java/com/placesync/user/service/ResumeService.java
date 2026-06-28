@@ -21,13 +21,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ResumeService {
 
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
     private final ResumeRepository resumeRepository;
     private final StudentProfileRepository studentProfileRepository;
 
     @Transactional(readOnly = true)
     public List<ResumeResponse> getMyResumes(UUID userId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return resumeRepository.findByStudentIdAndDeletedAtIsNullOrderByUploadedAtDesc(student.getId())
                 .stream()
                 .map(ResumeResponse::from)
@@ -37,7 +39,7 @@ public class ResumeService {
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         if (Boolean.TRUE.equals(req.getIsDefault())) {
             resumeRepository.findByStudentIdAndIsDefaultTrueAndDeletedAtIsNull(student.getId())
@@ -65,7 +67,7 @@ public class ResumeService {
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
@@ -90,7 +92,7 @@ public class ResumeService {
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));

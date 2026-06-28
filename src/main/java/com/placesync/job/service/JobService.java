@@ -27,6 +27,8 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JobService {
 
+    private static final String RECRUITER_PROFILE = "RecruiterProfile";
+
     private final JobRepository jobRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final UserRepository userRepository;
@@ -50,7 +52,7 @@ public class JobService {
     @Transactional(readOnly = true)
     public PagedResponse<JobSummaryResponse> getRecruiterJobs(UUID userId, Pageable pageable) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
         return PagedResponse.of(
                 jobRepository.findByRecruiterIdAndDeletedAtIsNull(recruiter.getId(), pageable)
                         .map(JobSummaryResponse::from));
@@ -67,7 +69,7 @@ public class JobService {
     @Transactional
     public JobResponse createJob(UUID userId, CreateJobRequest req) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (recruiter.getVerificationStatus() != VerificationStatus.VERIFIED) {
             throw new ConflictException("Recruiter must be verified before posting jobs");
@@ -111,7 +113,7 @@ public class JobService {
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can update it");
@@ -152,7 +154,7 @@ public class JobService {
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can delete it");
@@ -172,7 +174,7 @@ public class JobService {
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can close it");
