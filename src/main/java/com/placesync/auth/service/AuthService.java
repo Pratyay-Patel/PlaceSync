@@ -7,11 +7,15 @@ import com.placesync.auth.entity.RefreshToken;
 import com.placesync.auth.repository.EmailVerificationTokenRepository;
 import com.placesync.auth.repository.PasswordResetTokenRepository;
 import com.placesync.auth.repository.RefreshTokenRepository;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.AuditLog;
+import com.placesync.common.audit.service.AuditLogService;
 import com.placesync.common.config.JwtProperties;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.exception.UnauthorizedException;
 import com.placesync.common.security.JwtTokenProvider;
+import com.placesync.common.security.UserPrincipal;
 import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.entity.VerificationStatus;
 import com.placesync.recruiter.repository.RecruiterProfileRepository;
@@ -20,6 +24,8 @@ import com.placesync.user.repository.StudentProfileRepository;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -46,6 +52,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final JwtProperties jwtProperties;
+    private final AuditLogService auditLogService;
 
     @Transactional
     public AuthResponse register(RegisterRequest req) {
@@ -150,6 +157,14 @@ public class AuthService {
     public void logout(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
         refreshTokenRepository.findByTokenHashAndIsRevokedFalse(hash).ifPresent(this::revokeToken);
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+            auditLogService.saveAsync(AuditLog.builder()
+                    .entityType("User").entityId(principal.getId())
+                    .action(AuditAction.LOGOUT)
+                    .actorId(principal.getId()).actorRole(principal.getRole().name()).actorEmail(principal.getEmail())
+                    .build());
+        }
     }
 
     @Transactional
@@ -209,6 +224,11 @@ public class AuthService {
 
         // Invalidate all sessions after password reset
         refreshTokenRepository.deleteByUserId(user.getId());
+        auditLogService.saveAsync(AuditLog.builder()
+                .entityType("User").entityId(user.getId())
+                .action(AuditAction.PASSWORD_RESET)
+                .actorId(user.getId()).actorRole(user.getRole().name()).actorEmail(user.getEmail())
+                .build());
     }
 
     @Transactional
@@ -225,6 +245,11 @@ public class AuthService {
 
         // Invalidate all sessions after password change
         refreshTokenRepository.deleteByUserId(userId);
+        auditLogService.saveAsync(AuditLog.builder()
+                .entityType("User").entityId(userId)
+                .action(AuditAction.PASSWORD_CHANGE)
+                .actorId(userId).actorRole(user.getRole().name()).actorEmail(user.getEmail())
+                .build());
     }
 
     // ── Helpers ──────────────────────────────────────────────────────────────

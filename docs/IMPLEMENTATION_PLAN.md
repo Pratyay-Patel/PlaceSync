@@ -570,7 +570,7 @@ OFFERED and REJECTED are terminal states (no further transitions allowed).
 
 ---
 
-### 4.6 AOP Audit Logging
+### 4.6 AOP Audit Logging ✅ COMPLETE
 
 **Why:** The `audit_log` table exists from Phase 1 but nothing writes to it. ARS-FR-001 requires logging all write operations. The correct implementation is an AOP aspect that intercepts service methods — not manual `auditLogRepository.save()` calls scattered across every service.
 

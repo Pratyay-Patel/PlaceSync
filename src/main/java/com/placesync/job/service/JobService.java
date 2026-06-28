@@ -1,5 +1,7 @@
 package com.placesync.job.service;
 
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.spec.JobSpecification;
@@ -72,6 +74,7 @@ public class JobService {
                         .map(jobMapper::toSummaryResponse));
     }
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Job")
     @CacheEvict(value = "job-listings", allEntries = true)
     @Transactional
     public JobResponse createJob(UUID userId, CreateJobRequest req) {
@@ -111,6 +114,7 @@ public class JobService {
         return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
@@ -153,6 +157,7 @@ public class JobService {
         return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.SOFT_DELETE, entityType = "Job", entityIdParamIndex = 1)
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
@@ -174,6 +179,7 @@ public class JobService {
         jobRepository.save(job);
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
@@ -199,6 +205,7 @@ public class JobService {
         return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")

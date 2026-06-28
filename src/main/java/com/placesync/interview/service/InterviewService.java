@@ -3,6 +3,8 @@ package com.placesync.interview.service;
 import com.placesync.application.entity.Application;
 import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.repository.ApplicationRepository;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.interview.dto.*;
@@ -66,6 +68,7 @@ public class InterviewService {
                 .collect(Collectors.toList());
     }
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Interview")
     @Transactional
     public InterviewResponse scheduleInterview(UUID userId, UUID applicationId, ScheduleInterviewRequest req) {
         log.info("Scheduling interview round {} for applicationId={} by userId={}", req.getRoundNumber(), applicationId, userId);
@@ -116,6 +119,7 @@ public class InterviewService {
         return interviewMapper.toResponse(interviewRepository.save(interview));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Interview")
     @Transactional
     public InterviewResponse cancelInterview(UUID userId, UUID interviewId, CancelInterviewRequest req) {
         log.info("Cancelling interviewId={} by userId={}", interviewId, userId);

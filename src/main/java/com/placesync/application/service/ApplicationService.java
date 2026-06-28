@@ -7,6 +7,8 @@ import com.placesync.application.mapper.ApplicationMapper;
 import com.placesync.application.entity.Application;
 import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.repository.ApplicationRepository;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
@@ -54,6 +56,7 @@ public class ApplicationService {
     private final ResumeRepository resumeRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
         log.info("Student userId={} applying to jobId={}", userId, req.getJobId());
@@ -142,6 +145,7 @@ public class ApplicationService {
                         .map(applicationMapper::toResponse));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Application")
     @Transactional
     public ApplicationResponse updateStatus(UUID userId, UUID applicationId, UpdateApplicationStatusRequest req) {
         log.info("Updating applicationId={} status to {} by userId={}", applicationId, req.getStatus(), userId);

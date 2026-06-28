@@ -1,6 +1,8 @@
 package com.placesync.recruiter.service;
 
 import com.placesync.auth.service.EmailService;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
@@ -46,6 +48,7 @@ public class RecruiterService {
         return recruiterMapper.toResponse(profile);
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "RecruiterProfile")
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
         log.info("Updating recruiter profile for userId={}", userId);
@@ -74,6 +77,7 @@ public class RecruiterService {
         return PagedResponse.of(page.map(recruiterMapper::toResponse));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "RecruiterProfile")
     @Transactional
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {

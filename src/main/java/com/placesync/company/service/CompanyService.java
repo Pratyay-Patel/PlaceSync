@@ -1,5 +1,7 @@
 package com.placesync.company.service;
 
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
@@ -52,6 +54,7 @@ public class CompanyService {
         return PagedResponse.of(page.map(companyMapper::toResponse));
     }
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Company")
     @Transactional
     public CompanyResponse createCompany(UUID userId, CreateCompanyRequest req) {
         log.info("Creating company '{}' by userId={}", req.getName(), userId);
@@ -98,6 +101,7 @@ public class CompanyService {
         return companyMapper.toResponse(companyRepository.save(company));
     }
 
+    @Auditable(action = AuditAction.SOFT_DELETE, entityType = "Company", entityIdParamIndex = 1)
     @Transactional
     public void softDeleteCompany(UUID userId, UUID companyId) {
         log.info("Soft-deleting companyId={} by userId={}", companyId, userId);
@@ -121,6 +125,8 @@ public class CompanyService {
                 CompanyStatus.PENDING_VERIFICATION, pageable);
         return PagedResponse.of(page.map(companyMapper::toResponse));
     }
+
+    @Auditable(action = AuditAction.UPDATE, entityType = "Company")
 
     @Transactional
     public CompanyResponse processVerification(UUID adminUserId, UUID companyId,
