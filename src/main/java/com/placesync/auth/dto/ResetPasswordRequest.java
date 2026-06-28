@@ -1,7 +1,7 @@
 package com.placesync.auth.dto;
 
+import com.placesync.common.validation.ValidPassword;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.Size;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -13,6 +13,6 @@ public class ResetPasswordRequest {
     private String token;
 
     @NotBlank
-    @Size(min = 8, max = 72)
+    @ValidPassword
     private String newPassword;
 }

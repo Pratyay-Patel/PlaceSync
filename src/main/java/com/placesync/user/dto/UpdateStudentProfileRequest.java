@@ -1,5 +1,6 @@
 package com.placesync.user.dto;
 
+import com.placesync.common.validation.ValidCgpa;
 import com.placesync.user.entity.GenderType;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -39,7 +40,7 @@ public class UpdateStudentProfileRequest {
     @Min(2000) @Max(2100)
     private Short graduationYear;
 
-    @DecimalMin("0.00") @DecimalMax("10.00")
+    @ValidCgpa
     private BigDecimal cgpa;
 
     @Size(max = 2000)

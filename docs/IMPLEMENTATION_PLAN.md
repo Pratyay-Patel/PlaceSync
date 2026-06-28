@@ -543,39 +543,30 @@ jobs:
 
 ---
 
-### 4.5 Enhanced Bean Validation + Custom Validators
+### 4.5 Enhanced Bean Validation + Custom Validators ✅
 
 **Why:** Current validation uses only standard Jakarta annotations (`@NotBlank`, `@Size`, `@NotNull`). Several business rules require custom validators.
 
-#### Custom validators to create
-| Validator | Applied to | Rule |
-|---|---|---|
-| `@ValidPassword` | `RegisterRequest.password`, `ResetPasswordRequest.newPassword` | Min 8 chars, 1 uppercase, 1 lowercase, 1 digit, 1 special char (SRS AUTH-FR-003) |
-| `@FutureDate` | `CreateJobRequest.applicationDeadline`, `ScheduleInterviewRequest.scheduledAt` | Must be strictly in the future (more descriptive message than `@Future`) |
-| `@ValidCgpa` | `UpdateStudentProfileRequest.cgpa` | Between 0.0 and 10.0 inclusive (SRS STU-FR-008) |
-| `@ValidFileSize` | Resume upload (Phase 5) | File size ≤ 10 MB |
+#### What was built
+- `common/validation/ValidPassword` + `PasswordValidator` — regex `^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$` enforcing SRS AUTH-FR-003; replaces `@Size(min=8)` on both `RegisterRequest` and `ResetPasswordRequest`
+- `common/validation/FutureDate` + `FutureDateValidator` — `value.isAfter(OffsetDateTime.now())` with a descriptive message; replaces `@Future` on `CreateJobRequest.applicationDeadline` and `ScheduleInterviewRequest.scheduledAt`
+- `common/validation/ValidCgpa` + `CgpaValidator` — `BigDecimal` range check [0.0, 10.0] inclusive (SRS STU-FR-008); replaces `@DecimalMin @DecimalMax` on `UpdateStudentProfileRequest.cgpa`
+- `@ValidFileSize` deferred to Phase 5 (resume upload not yet implemented)
+- `ApplicationService.updateStatus` — added `VALID_TRANSITIONS` map enforcing the state machine; invalid transitions throw `IllegalArgumentException` → 400 with `"Invalid status transition from X to Y"`
 
-#### Files to create
-| File | Purpose |
-|---|---|
-| `common/validation/ValidPassword.java` | Annotation |
-| `common/validation/PasswordValidator.java` | `ConstraintValidator` implementation |
-| `common/validation/FutureDate.java` | Annotation |
-| `common/validation/FutureDateValidator.java` | `ConstraintValidator` implementation |
-| `common/validation/ValidCgpa.java` | Annotation |
-| `common/validation/CgpaValidator.java` | `ConstraintValidator` implementation |
-
-Apply `@ValidPassword` to `RegisterRequest` and `ResetPasswordRequest`. Replace manual password validation in `AuthService` with `@Valid`.
-
-#### Application status transition validation
-Currently `UpdateApplicationStatusRequest` accepts any `ApplicationStatus` value. Add a `@ValidStatusTransition` cross-field validator or enforce transition rules in `ApplicationService` with an explicit transition matrix:
-
+#### Status transition matrix
 ```
 APPLIED → UNDER_REVIEW → SHORTLISTED → INTERVIEW_SCHEDULED → OFFERED
-         ↘ REJECTED      ↘ REJECTED    ↘ REJECTED            ↘ REJECTED
+        ↘ REJECTED      ↘ REJECTED    ↘ REJECTED            ↘ REJECTED
 ```
+OFFERED and REJECTED are terminal states (no further transitions allowed).
 
-Invalid transitions return 400 Bad Request with message: `"Invalid status transition from X to Y"`.
+#### Acceptance criteria
+- [x] `@ValidPassword` applied to `RegisterRequest.password` and `ResetPasswordRequest.newPassword`
+- [x] `@FutureDate` applied to `CreateJobRequest.applicationDeadline` and `ScheduleInterviewRequest.scheduledAt`
+- [x] `@ValidCgpa` applied to `UpdateStudentProfileRequest.cgpa`
+- [x] Invalid status transitions return 400 with descriptive message
+- [x] `mvn clean verify` passes — BUILD SUCCESS
 
 ---
 

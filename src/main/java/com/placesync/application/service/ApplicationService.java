@@ -27,6 +27,8 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -35,6 +37,15 @@ public class ApplicationService {
 
     private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
     private static final String STUDENT_PROFILE = "StudentProfile";
+
+    private static final Map<ApplicationStatus, Set<ApplicationStatus>> VALID_TRANSITIONS = Map.of(
+            ApplicationStatus.APPLIED,              Set.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.REJECTED),
+            ApplicationStatus.UNDER_REVIEW,         Set.of(ApplicationStatus.SHORTLISTED, ApplicationStatus.REJECTED),
+            ApplicationStatus.SHORTLISTED,          Set.of(ApplicationStatus.INTERVIEW_SCHEDULED, ApplicationStatus.REJECTED),
+            ApplicationStatus.INTERVIEW_SCHEDULED,  Set.of(ApplicationStatus.OFFERED, ApplicationStatus.REJECTED),
+            ApplicationStatus.OFFERED,              Set.of(),
+            ApplicationStatus.REJECTED,             Set.of()
+    );
 
     private final ApplicationRepository applicationRepository;
     private final ApplicationMapper applicationMapper;
@@ -144,7 +155,14 @@ public class ApplicationService {
             throw new AccessDeniedException("Application does not belong to the recruiter's job");
         }
 
-        application.setStatus(req.getStatus());
+        ApplicationStatus current = application.getStatus();
+        ApplicationStatus next = req.getStatus();
+        if (!VALID_TRANSITIONS.getOrDefault(current, Set.of()).contains(next)) {
+            throw new IllegalArgumentException(
+                    "Invalid status transition from " + current + " to " + next);
+        }
+
+        application.setStatus(next);
         return applicationMapper.toResponse(applicationRepository.save(application));
     }
 }

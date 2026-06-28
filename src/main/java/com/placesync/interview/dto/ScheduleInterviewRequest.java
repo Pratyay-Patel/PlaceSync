@@ -1,7 +1,7 @@
 package com.placesync.interview.dto;
 
+import com.placesync.common.validation.FutureDate;
 import com.placesync.interview.entity.InterviewType;
-import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Getter;
@@ -21,7 +21,7 @@ public class ScheduleInterviewRequest {
     private InterviewType interviewType;
 
     @NotNull
-    @Future
+    @FutureDate
     private OffsetDateTime scheduledAt;
 
     @NotNull
