@@ -31,10 +31,11 @@ public class JobController {
 
     @GetMapping("/jobs")
     @PreAuthorize("isAuthenticated()")
-    @Operation(summary = "List open jobs (paginated) — cached")
+    @Operation(summary = "List open jobs with optional filters (paginated, cached per filter combination)")
     public ResponseEntity<PagedResponse<JobSummaryResponse>> getOpenJobs(
+            @ParameterObject JobFilterRequest filter,
             @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
-        return ResponseEntity.ok(jobService.getOpenJobs(pageable));
+        return ResponseEntity.ok(jobService.getOpenJobs(filter, pageable));
     }
 
     @GetMapping("/jobs/{jobId}")

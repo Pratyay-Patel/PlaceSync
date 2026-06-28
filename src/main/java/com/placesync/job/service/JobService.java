@@ -2,6 +2,7 @@ package com.placesync.job.service;
 
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.spec.JobSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.dto.*;
 import com.placesync.job.entity.*;
@@ -38,11 +39,12 @@ public class JobService {
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final UserRepository userRepository;
 
-    @Cacheable(value = "job-listings", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "job-listings",
+            key = "#filter.cacheKey() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     @Transactional(readOnly = true)
-    public PagedResponse<JobSummaryResponse> getOpenJobs(Pageable pageable) {
+    public PagedResponse<JobSummaryResponse> getOpenJobs(JobFilterRequest filter, Pageable pageable) {
         return PagedResponse.of(
-                jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.OPEN, pageable)
+                jobRepository.findAll(JobSpecification.withFilters(filter), pageable)
                         .map(jobMapper::toSummaryResponse));
     }
 

@@ -514,32 +514,32 @@ jobs:
 
 ---
 
-### 4.4 Common Pagination, Filtering, Sorting, and Search Infrastructure
+### 4.4 Common Pagination, Filtering, Sorting, and Search Infrastructure ✅
 
 **Why:** Each controller currently re-implements filtering independently. The SRS (JOB-FR-008) requires filtering by keyword, company, location type, job type, skills, and deadline. Rather than repeating this in every controller, a reusable specification layer handles it.
 
-#### Files to create
-| File | Purpose |
-|---|---|
-| `common/util/PagedResponse.java` | Already exists — review and keep |
-| `common/spec/JobSpecification.java` | JPA `Specification<Job>` — builds dynamic predicates from filter params |
-| `common/spec/ApplicationSpecification.java` | JPA `Specification<Application>` — filter by status, jobId, studentId |
-| `common/spec/UserSearchSpecification.java` | JPA `Specification<User>` — admin user search by name, email, role, status |
+#### What was built
+- `common/spec/JobSpecification.java` — static factory `withFilters(JobFilterRequest)` composing predicates: `status=OPEN`, `deletedAt IS NULL`, keyword LIKE on title/description, companyId, locationType, jobType, skill LIKE with LEFT JOIN on requiredSkills, deadlineAfter; null filters are no-ops
+- `common/spec/ApplicationSpecification.java` — `withFilters(jobId, studentId, status)` — infrastructure for admin module (subphase 4.7)
+- `common/spec/UserSearchSpecification.java` — `withFilters(email, role, isActive)` — infrastructure for admin module (subphase 4.7)
+- `job/dto/JobFilterRequest.java` — `@Getter @Setter` bean with all 6 filter fields + `cacheKey()` method for stable cache key generation
+- `JobRepository`, `ApplicationRepository`, `UserRepository` — each extended with `JpaSpecificationExecutor<T>`
+- `JobService.getOpenJobs` — updated signature to `(JobFilterRequest filter, Pageable pageable)`; uses `JobSpecification.withFilters(filter)`; cache key now includes `filter.cacheKey()` so different filter combinations cache independently
+- `JobController.getOpenJobs` — now accepts `@ParameterObject JobFilterRequest filter` so all 6 filters appear as Swagger query params
+- `PagedResponse.java` — reviewed, no changes needed
 
-#### Job listing enhancement
-Update `GET /api/v1/jobs` to accept optional query parameters:
-| Parameter | Type | Description |
+#### Endpoints updated
+| Method | Path | Change |
 |---|---|---|
-| `keyword` | `String` | Matches against job title and description |
-| `companyId` | `UUID` | Filter by company |
-| `locationType` | `JobLocationType` | REMOTE / ONSITE / HYBRID |
-| `jobType` | `JobType` | FULL_TIME / INTERNSHIP / CONTRACT |
-| `skill` | `String` | At least one required skill matches |
-| `deadlineAfter` | `OffsetDateTime` | Application deadline not yet passed |
+| `GET` | `/api/v1/jobs` | Now accepts optional `keyword`, `companyId`, `locationType`, `jobType`, `skill`, `deadlineAfter` query params |
 
-The `JobRepository` must extend `JpaSpecificationExecutor<Job>` to support `findAll(Specification, Pageable)`.
-
-Update Redis cache key to include a hash of the active filters so different filter combinations cache independently.
+#### Acceptance criteria
+- [x] `JobSpecification` builds correct predicates for all 6 filter dimensions
+- [x] `ApplicationSpecification` and `UserSearchSpecification` created as infrastructure
+- [x] All three repositories extend `JpaSpecificationExecutor`
+- [x] `GET /api/v1/jobs` accepts all 6 optional filter params
+- [x] Redis cache key includes filter combination — different filters cache independently
+- [x] `mvn clean verify` passes — BUILD SUCCESS, 141 source files compiled
 
 ---
 
