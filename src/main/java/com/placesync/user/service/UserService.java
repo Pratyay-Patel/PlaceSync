@@ -3,6 +3,7 @@ package com.placesync.user.service;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.user.dto.*;
+import com.placesync.user.mapper.StudentProfileMapper;
 import com.placesync.user.entity.*;
 import com.placesync.user.repository.*;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ public class UserService {
     private static final String STUDENT_PROFILE = "StudentProfile";
 
     private final StudentProfileRepository studentProfileRepository;
+    private final StudentProfileMapper studentProfileMapper;
     private final StudentSkillRepository studentSkillRepository;
     private final StudentEducationRepository studentEducationRepository;
     private final StudentExperienceRepository studentExperienceRepository;
@@ -28,7 +30,7 @@ public class UserService {
     public StudentProfileResponse getMyProfile(UUID userId) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
-        return StudentProfileResponse.from(profile);
+        return studentProfileMapper.toResponse(profile);
     }
 
     @Transactional
@@ -50,7 +52,7 @@ public class UserService {
             profile.setIsProfilePublic(req.getIsProfilePublic());
         }
 
-        return StudentProfileResponse.from(studentProfileRepository.save(profile));
+        return studentProfileMapper.toResponse(studentProfileRepository.save(profile));
     }
 
     @Transactional

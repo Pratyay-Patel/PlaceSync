@@ -9,6 +9,7 @@ import com.placesync.company.repository.CompanyRepository;
 import com.placesync.recruiter.dto.RecruiterProfileResponse;
 import com.placesync.recruiter.dto.RecruiterVerificationRequest;
 import com.placesync.recruiter.dto.UpdateRecruiterProfileRequest;
+import com.placesync.recruiter.mapper.RecruiterMapper;
 import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.entity.VerificationStatus;
 import com.placesync.recruiter.repository.RecruiterProfileRepository;
@@ -30,6 +31,7 @@ public class RecruiterService {
     private static final String RECRUITER_PROFILE = "RecruiterProfile";
 
     private final RecruiterProfileRepository recruiterProfileRepository;
+    private final RecruiterMapper recruiterMapper;
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
@@ -38,7 +40,7 @@ public class RecruiterService {
     public RecruiterProfileResponse getMyProfile(UUID userId) {
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
-        return RecruiterProfileResponse.from(profile);
+        return recruiterMapper.toResponse(profile);
     }
 
     @Transactional
@@ -58,14 +60,14 @@ public class RecruiterService {
             profile.setCompany(company);
         }
 
-        return RecruiterProfileResponse.from(recruiterProfileRepository.save(profile));
+        return recruiterMapper.toResponse(recruiterProfileRepository.save(profile));
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<RecruiterProfileResponse> getPendingVerifications(Pageable pageable) {
         Page<RecruiterProfile> page = recruiterProfileRepository
                 .findByVerificationStatus(VerificationStatus.PENDING_VERIFICATION, pageable);
-        return PagedResponse.of(page.map(RecruiterProfileResponse::from));
+        return PagedResponse.of(page.map(recruiterMapper::toResponse));
     }
 
     @Transactional
@@ -102,6 +104,6 @@ public class RecruiterService {
                     req.getRejectionReason());
         }
 
-        return RecruiterProfileResponse.from(recruiterProfileRepository.save(profile));
+        return recruiterMapper.toResponse(recruiterProfileRepository.save(profile));
     }
 }

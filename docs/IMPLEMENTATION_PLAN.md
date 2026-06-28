@@ -466,51 +466,29 @@ jobs:
 
 ---
 
-### 4.2 MapStruct Mapper Layer
+### 4.2 MapStruct Mapper Layer ✅
 
 **Why:** All existing modules perform Entity → DTO conversion manually inside service methods or response constructors. This couples the service layer to the presentation layer, makes testing harder, and produces duplication. MapStruct generates type-safe, compile-time mappers.
 
-#### New dependency
-```xml
-<dependency>
-    <groupId>org.mapstruct</groupId>
-    <artifactId>mapstruct</artifactId>
-    <version>1.5.5.Final</version>
-</dependency>
-<!-- annotation processor — must be listed BEFORE lombok processor -->
-<annotationProcessorPaths>
-    <path>
-        <groupId>org.mapstruct</groupId>
-        <artifactId>mapstruct-processor</artifactId>
-        <version>1.5.5.Final</version>
-    </path>
-    <path>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok</artifactId>
-    </path>
-    <path>
-        <groupId>org.projectlombok</groupId>
-        <artifactId>lombok-mapstruct-binding</artifactId>
-        <version>0.2.0</version>
-    </path>
-</annotationProcessorPaths>
-```
+#### What was built
+- Added `mapstruct` (1.5.5.Final) dependency and `maven-compiler-plugin` with `annotationProcessorPaths` for `mapstruct-processor`, `lombok`, and `lombok-mapstruct-binding` (0.2.0)
+- Created 7 mapper interfaces (skipped `AuthMapper` — `AuthResponse` requires injected JWT services, not entity data; skipped `notification`/`analytics` — modules are stubs):
+  - `user/mapper/StudentProfileMapper` — `StudentProfile → StudentProfileResponse` (nested `user.id`, Boolean `isProfilePublic` expression)
+  - `user/mapper/ResumeMapper` — `Resume → ResumeResponse`
+  - `recruiter/mapper/RecruiterMapper` — `RecruiterProfile → RecruiterProfileResponse` (nullable `company.id`/`company.name`)
+  - `company/mapper/CompanyMapper` — `Company → CompanyResponse` (nested `createdBy.id`)
+  - `job/mapper/JobMapper` — `Job → JobResponse` and `Job → JobSummaryResponse` (collection → `List<String>` via `@Named` default methods)
+  - `application/mapper/ApplicationMapper` — `Application → ApplicationResponse` (3-level nesting: `job.company.name`)
+  - `interview/mapper/InterviewMapper` — `Interview → InterviewResponse` (4-level nesting: `application.job.company.name`)
+- Refactored all 7 service classes to inject mappers via constructor injection and call `mapper.toResponse()` / `mapper::toResponse`
+- Removed all `from()` static methods and entity imports from 8 response DTOs
 
-#### Mappers to create (one per module)
-| Mapper | Maps |
-|---|---|
-| `auth/mapper/AuthMapper.java` | `User` → `AuthResponse` |
-| `user/mapper/StudentProfileMapper.java` | `StudentProfile` → `StudentProfileResponse`, `StudentSkill` → `StudentSkillResponse`, etc. |
-| `user/mapper/ResumeMapper.java` | `Resume` → `ResumeResponse` |
-| `recruiter/mapper/RecruiterMapper.java` | `RecruiterProfile` → `RecruiterProfileResponse` |
-| `company/mapper/CompanyMapper.java` | `Company` → `CompanyResponse` |
-| `job/mapper/JobMapper.java` | `Job` → `JobResponse` / `JobSummaryResponse` |
-| `application/mapper/ApplicationMapper.java` | `Application` → `ApplicationResponse` |
-| `interview/mapper/InterviewMapper.java` | `Interview` → `InterviewResponse` |
-| `notification/mapper/NotificationMapper.java` | `Notification` → `NotificationResponse` |
-| `analytics/mapper/AnalyticsMapper.java` | DB projection → `PlacementStatsResponse` |
-
-After mappers are created, refactor all service classes to use them instead of manual mapping. `ApplicationResponse.from()`, `JobResponse.from()`, etc. should be removed.
+#### Acceptance criteria
+- [x] MapStruct dependency and annotation processor paths added to `pom.xml`
+- [x] 7 mapper interfaces created in module `mapper` sub-packages
+- [x] All `static from()` methods removed from response DTOs
+- [x] All service classes use injected mappers — no manual mapping code remains
+- [x] `mvn clean verify` passes — BUILD SUCCESS, 134 source files compiled
 
 ---
 

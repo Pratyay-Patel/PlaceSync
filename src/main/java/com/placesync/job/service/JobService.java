@@ -5,6 +5,7 @@ import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.dto.*;
 import com.placesync.job.entity.*;
+import com.placesync.job.mapper.JobMapper;
 import com.placesync.job.repository.JobRepository;
 import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.entity.VerificationStatus;
@@ -30,6 +31,7 @@ public class JobService {
     private static final String RECRUITER_PROFILE = "RecruiterProfile";
 
     private final JobRepository jobRepository;
+    private final JobMapper jobMapper;
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final UserRepository userRepository;
 
@@ -38,7 +40,7 @@ public class JobService {
     public PagedResponse<JobSummaryResponse> getOpenJobs(Pageable pageable) {
         return PagedResponse.of(
                 jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.OPEN, pageable)
-                        .map(JobSummaryResponse::from));
+                        .map(jobMapper::toSummaryResponse));
     }
 
     @Cacheable(value = "job-detail", key = "#jobId")
@@ -46,7 +48,7 @@ public class JobService {
     public JobResponse getJob(UUID jobId) {
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
-        return JobResponse.from(job);
+        return jobMapper.toResponse(job);
     }
 
     @Transactional(readOnly = true)
@@ -55,14 +57,14 @@ public class JobService {
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
         return PagedResponse.of(
                 jobRepository.findByRecruiterIdAndDeletedAtIsNull(recruiter.getId(), pageable)
-                        .map(JobSummaryResponse::from));
+                        .map(jobMapper::toSummaryResponse));
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<JobSummaryResponse> getPendingJobs(Pageable pageable) {
         return PagedResponse.of(
                 jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.PENDING_APPROVAL, pageable)
-                        .map(JobSummaryResponse::from));
+                        .map(jobMapper::toSummaryResponse));
     }
 
     @CacheEvict(value = "job-listings", allEntries = true)
@@ -100,7 +102,7 @@ public class JobService {
                 job.getEligibleDepartments().add(
                         JobEligibleDepartment.builder().job(job).departmentName(dept).build()));
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
     @Caching(evict = {
@@ -141,7 +143,7 @@ public class JobService {
                 job.getEligibleDepartments().add(
                         JobEligibleDepartment.builder().job(job).departmentName(dept).build()));
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
     @Caching(evict = {
@@ -185,7 +187,7 @@ public class JobService {
 
         job.setStatus(JobStatus.CLOSED);
         job.setClosedAt(OffsetDateTime.now());
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
     @Caching(evict = {
@@ -217,6 +219,6 @@ public class JobService {
             job.setApprovedAt(OffsetDateTime.now());
         }
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 }

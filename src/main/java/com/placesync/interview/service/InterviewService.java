@@ -7,6 +7,7 @@ import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.interview.dto.*;
 import com.placesync.interview.entity.Interview;
+import com.placesync.interview.mapper.InterviewMapper;
 import com.placesync.interview.entity.InterviewStatus;
 import com.placesync.interview.repository.InterviewRepository;
 import com.placesync.recruiter.entity.RecruiterProfile;
@@ -29,6 +30,7 @@ public class InterviewService {
     private static final String RECRUITER_PROFILE = "RecruiterProfile";
 
     private final InterviewRepository interviewRepository;
+    private final InterviewMapper interviewMapper;
     private final ApplicationRepository applicationRepository;
     private final StudentProfileRepository studentProfileRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
@@ -40,7 +42,7 @@ public class InterviewService {
         return interviewRepository.findByApplication_StudentIdOrderByScheduledAtAsc(student.getId())
                 .stream()
                 .filter(i -> i.getStatus() != InterviewStatus.CANCELLED)
-                .map(InterviewResponse::from)
+                .map(interviewMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -57,7 +59,7 @@ public class InterviewService {
         }
         return interviewRepository.findByApplicationIdOrderByRoundNumberAsc(applicationId)
                 .stream()
-                .map(InterviewResponse::from)
+                .map(interviewMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -90,7 +92,7 @@ public class InterviewService {
         application.setStatus(ApplicationStatus.INTERVIEW_SCHEDULED);
         applicationRepository.save(application);
 
-        return InterviewResponse.from(interviewRepository.save(interview));
+        return interviewMapper.toResponse(interviewRepository.save(interview));
     }
 
     @Transactional
@@ -106,7 +108,7 @@ public class InterviewService {
         interview.setMeetingLink(req.getMeetingLink());
         interview.setVenue(req.getVenue());
         interview.setStatus(InterviewStatus.RESCHEDULED);
-        return InterviewResponse.from(interviewRepository.save(interview));
+        return interviewMapper.toResponse(interviewRepository.save(interview));
     }
 
     @Transactional
@@ -122,7 +124,7 @@ public class InterviewService {
 
         interview.setStatus(InterviewStatus.CANCELLED);
         interview.setCancellationReason(req.getCancellationReason());
-        return InterviewResponse.from(interviewRepository.save(interview));
+        return interviewMapper.toResponse(interviewRepository.save(interview));
     }
 
     @Transactional
@@ -135,7 +137,7 @@ public class InterviewService {
         }
 
         interview.setStatus(InterviewStatus.COMPLETED);
-        return InterviewResponse.from(interviewRepository.save(interview));
+        return interviewMapper.toResponse(interviewRepository.save(interview));
     }
 
     private Interview loadInterviewForRecruiter(UUID userId, UUID interviewId) {

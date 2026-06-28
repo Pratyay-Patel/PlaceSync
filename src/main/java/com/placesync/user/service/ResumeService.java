@@ -3,6 +3,7 @@ package com.placesync.user.service;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.user.dto.CreateResumeRequest;
 import com.placesync.user.dto.ResumeResponse;
+import com.placesync.user.mapper.ResumeMapper;
 import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
@@ -24,6 +25,7 @@ public class ResumeService {
     private static final String STUDENT_PROFILE = "StudentProfile";
 
     private final ResumeRepository resumeRepository;
+    private final ResumeMapper resumeMapper;
     private final StudentProfileRepository studentProfileRepository;
 
     @Transactional(readOnly = true)
@@ -32,7 +34,7 @@ public class ResumeService {
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return resumeRepository.findByStudentIdAndDeletedAtIsNullOrderByUploadedAtDesc(student.getId())
                 .stream()
-                .map(ResumeResponse::from)
+                .map(resumeMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
@@ -61,7 +63,7 @@ public class ResumeService {
                 .isDefault(Boolean.TRUE.equals(req.getIsDefault()))
                 .build();
 
-        return ResumeResponse.from(resumeRepository.save(resume));
+        return resumeMapper.toResponse(resumeRepository.save(resume));
     }
 
     @Transactional
@@ -86,7 +88,7 @@ public class ResumeService {
                 });
 
         resume.setIsDefault(true);
-        return ResumeResponse.from(resumeRepository.save(resume));
+        return resumeMapper.toResponse(resumeRepository.save(resume));
     }
 
     @Transactional

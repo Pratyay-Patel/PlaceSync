@@ -1,6 +1,5 @@
 package com.placesync.user.dto;
 
-import com.placesync.user.entity.Resume;
 import lombok.*;
 
 import java.time.OffsetDateTime;
@@ -20,14 +19,4 @@ public class ResumeResponse {
     private Boolean isDefault;
     private OffsetDateTime uploadedAt;
 
-    public static ResumeResponse from(Resume resume) {
-        return ResumeResponse.builder()
-                .id(resume.getId())
-                .label(resume.getLabel())
-                .originalFilename(resume.getOriginalFilename())
-                .fileSizeBytes(resume.getFileSizeBytes())
-                .isDefault(resume.getIsDefault())
-                .uploadedAt(resume.getUploadedAt())
-                .build();
-    }
 }

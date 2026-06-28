@@ -3,6 +3,7 @@ package com.placesync.application.service;
 import com.placesync.application.dto.ApplyRequest;
 import com.placesync.application.dto.ApplicationResponse;
 import com.placesync.application.dto.UpdateApplicationStatusRequest;
+import com.placesync.application.mapper.ApplicationMapper;
 import com.placesync.application.entity.Application;
 import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.repository.ApplicationRepository;
@@ -33,6 +34,7 @@ public class ApplicationService {
     private static final String STUDENT_PROFILE = "StudentProfile";
 
     private final ApplicationRepository applicationRepository;
+    private final ApplicationMapper applicationMapper;
     private final StudentProfileRepository studentProfileRepository;
     private final JobRepository jobRepository;
     private final ResumeRepository resumeRepository;
@@ -83,7 +85,7 @@ public class ApplicationService {
                 .status(ApplicationStatus.APPLIED)
                 .build();
 
-        return ApplicationResponse.from(applicationRepository.save(application));
+        return applicationMapper.toResponse(applicationRepository.save(application));
     }
 
     @Transactional(readOnly = true)
@@ -92,7 +94,7 @@ public class ApplicationService {
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return PagedResponse.of(
                 applicationRepository.findByStudentId(student.getId(), pageable)
-                        .map(ApplicationResponse::from));
+                        .map(applicationMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
@@ -106,7 +108,7 @@ public class ApplicationService {
         if (!application.getStudent().getId().equals(student.getId())) {
             throw new AccessDeniedException("Application does not belong to the student");
         }
-        return ApplicationResponse.from(application);
+        return applicationMapper.toResponse(application);
     }
 
     @Transactional(readOnly = true)
@@ -122,7 +124,7 @@ public class ApplicationService {
         }
         return PagedResponse.of(
                 applicationRepository.findByJobId(jobId, pageable)
-                        .map(ApplicationResponse::from));
+                        .map(applicationMapper::toResponse));
     }
 
     @Transactional
@@ -138,6 +140,6 @@ public class ApplicationService {
         }
 
         application.setStatus(req.getStatus());
-        return ApplicationResponse.from(applicationRepository.save(application));
+        return applicationMapper.toResponse(applicationRepository.save(application));
     }
 }

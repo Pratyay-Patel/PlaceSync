@@ -5,6 +5,7 @@ import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.company.dto.CompanyResponse;
 import com.placesync.company.dto.CompanyVerificationRequest;
+import com.placesync.company.mapper.CompanyMapper;
 import com.placesync.company.dto.CreateCompanyRequest;
 import com.placesync.company.dto.UpdateCompanyRequest;
 import com.placesync.company.entity.Company;
@@ -31,6 +32,7 @@ public class CompanyService {
     private static final String COMPANY = "Company";
 
     private final CompanyRepository companyRepository;
+    private final CompanyMapper companyMapper;
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
 
@@ -38,13 +40,13 @@ public class CompanyService {
     public CompanyResponse getCompany(UUID companyId) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
-        return CompanyResponse.from(company);
+        return companyMapper.toResponse(company);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<CompanyResponse> getVerifiedCompanies(Pageable pageable) {
         Page<Company> page = companyRepository.findByStatusAndDeletedAtIsNull(CompanyStatus.VERIFIED, pageable);
-        return PagedResponse.of(page.map(CompanyResponse::from));
+        return PagedResponse.of(page.map(companyMapper::toResponse));
     }
 
     @Transactional
@@ -66,7 +68,7 @@ public class CompanyService {
                 .createdBy(creator)
                 .build();
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 
     @Transactional
@@ -88,7 +90,7 @@ public class CompanyService {
         company.setIndustry(req.getIndustry());
         company.setHeadquarters(req.getHeadquarters());
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 
     @Transactional
@@ -111,7 +113,7 @@ public class CompanyService {
     public PagedResponse<CompanyResponse> getPendingCompanies(Pageable pageable) {
         Page<Company> page = companyRepository.findByStatusAndDeletedAtIsNull(
                 CompanyStatus.PENDING_VERIFICATION, pageable);
-        return PagedResponse.of(page.map(CompanyResponse::from));
+        return PagedResponse.of(page.map(companyMapper::toResponse));
     }
 
     @Transactional
@@ -140,6 +142,6 @@ public class CompanyService {
             company.setVerifiedAt(OffsetDateTime.now());
         }
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 }
