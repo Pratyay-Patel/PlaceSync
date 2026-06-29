@@ -1,13 +1,13 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# PlaceSync — Docker Compose (Phase 3: Jobs + Applications + Redis)
+# PlaceSync — Docker Compose (Phase 4: Kafka event streaming added)
 #
 # Services included:
 #   - postgres   PostgreSQL 16 (database)
-#   - redis      Redis 7 (cache — added in Phase 3)
+#   - redis      Redis 7 (cache)
+#   - kafka      Confluent KRaft-mode Kafka 7.6 (event streaming)
 #   - api        Spring Boot application
 #
 # Services NOT yet included (added in later phases):
-#   - kafka      (Phase 4 — event streaming)
 #   - nginx      (Phase 6 — reverse proxy / production deployment)
 #
 # Usage:
@@ -59,6 +59,30 @@ services:
       timeout: 5s
       retries: 5
 
+  # ── Kafka (KRaft mode — no ZooKeeper) ─────────────────────────────────────
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: placesync-kafka
+    restart: unless-stopped
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qg
+    ports:
+      - "9092:9092"
+    networks:
+      - placesync-net
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
   # ── Spring Boot API ────────────────────────────────────────────────────────
   api:
     build:
@@ -75,10 +99,13 @@ services:
       DATABASE_PASSWORD: ${DATABASE_PASSWORD:-postgres}
       REDIS_HOST: redis
       REDIS_PORT: 6379
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      kafka:
         condition: service_healthy
     networks:
       - placesync-net

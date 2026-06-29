@@ -9,8 +9,12 @@ import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.repository.ApplicationRepository;
 import com.placesync.common.audit.AuditAction;
 import com.placesync.common.audit.Auditable;
+import com.placesync.common.event.ApplicationStatusChangedEvent;
+import com.placesync.common.event.ApplicationSubmittedEvent;
+import com.placesync.common.event.OfferReleasedEvent;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.kafka.KafkaEventPublisher;
 import com.placesync.common.spec.ApplicationSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.entity.Job;
@@ -56,6 +60,7 @@ public class ApplicationService {
     private final JobRepository jobRepository;
     private final ResumeRepository resumeRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
@@ -104,7 +109,11 @@ public class ApplicationService {
                 .status(ApplicationStatus.APPLIED)
                 .build();
 
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        kafkaEventPublisher.publish(ApplicationSubmittedEvent.of(
+                saved.getId(), student.getUser().getId(), job.getId(),
+                job.getTitle(), job.getCompany().getName(), student.getUser().getEmail()));
+        return applicationMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
@@ -168,7 +177,15 @@ public class ApplicationService {
         }
 
         application.setStatus(next);
-        return applicationMapper.toResponse(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        kafkaEventPublisher.publish(ApplicationStatusChangedEvent.of(
+                saved.getId(), saved.getStudent().getUser().getId(), current, next));
+        if (next == ApplicationStatus.OFFERED) {
+            kafkaEventPublisher.publish(OfferReleasedEvent.of(
+                    saved.getId(), saved.getStudent().getUser().getId(),
+                    saved.getJob().getTitle(), saved.getJob().getCompany().getName()));
+        }
+        return applicationMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)

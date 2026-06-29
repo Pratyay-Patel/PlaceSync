@@ -686,7 +686,30 @@ These read from `ApplicationRepository` and `InterviewRepository` without a user
 
 ---
 
-### 4.9 Kafka Infrastructure + Events
+### 4.9 Kafka Infrastructure + Events ✅ COMPLETE
+
+#### What was built
+- `common/event/DomainEvent.java` — interface: `eventId`, `eventType`, `timestamp`
+- `common/event/ApplicationSubmittedEvent.java`, `ApplicationStatusChangedEvent.java`, `OfferReleasedEvent.java` — application domain events
+- `common/event/InterviewScheduledEvent.java`, `InterviewRescheduledEvent.java`, `InterviewCancelledEvent.java` — interview domain events
+- `common/event/RecruiterVerifiedEvent.java` — recruiter verification event
+- `common/kafka/KafkaEventPublisher.java` — `publish()` routes through Spring `ApplicationEventPublisher`; `@TransactionalEventListener(AFTER_COMMIT)` + `@Async` delivers to Kafka after DB commit; `KafkaTemplate` is `@Autowired(required = false)` for test safety
+- `common/config/KafkaConfig.java` — `application-events`, `interview-events`, `offer-events` topics (3 partitions, replication 1); `DefaultErrorHandler` + `DeadLetterPublishingRecoverer` (3 retries, 1 s back-off); `@ConditionalOnBean(KafkaTemplate.class)` on error handler bean
+- `docker-compose.yml` — Confluent KRaft Kafka 7.6.0 added; `api` now depends on `kafka: service_healthy`
+- `application-dev.yml` — Kafka bootstrap-servers, consumer group, JSON de/serialization config
+- `src/test/resources/application.yml` — `KafkaAutoConfiguration` excluded so tests run without a broker
+- `ApplicationService` — injects `KafkaEventPublisher`; publishes `ApplicationSubmittedEvent` after `apply()`, `ApplicationStatusChangedEvent` + `OfferReleasedEvent` after `updateStatus()`
+- `InterviewService` — injects `KafkaEventPublisher`; publishes `InterviewScheduledEvent`, `InterviewRescheduledEvent`, `InterviewCancelledEvent`
+- `RecruiterService` — injects `KafkaEventPublisher`; publishes `RecruiterVerifiedEvent` after `processVerification()`
+
+#### Acceptance criteria
+- [x] `spring-kafka` dependency added
+- [x] Kafka KRaft service in docker-compose.yml with health check
+- [x] `DomainEvent` interface and 7 event records created
+- [x] `KafkaEventPublisher` publishes via `@TransactionalEventListener(AFTER_COMMIT)` — Kafka send only after DB transaction commits
+- [x] `KafkaConfig` creates 3 topics (3 partitions each) and `DefaultErrorHandler` with `DeadLetterPublishingRecoverer`
+- [x] Events wired in `ApplicationService`, `InterviewService`, `RecruiterService`
+- [x] `mvn clean verify` passes
 
 #### New dependency
 ```xml

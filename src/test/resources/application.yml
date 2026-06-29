@@ -33,6 +33,10 @@ spring:
   cache:
     type: none
 
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
 logging:
   level:
     root: WARN

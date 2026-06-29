@@ -3,8 +3,10 @@ package com.placesync.recruiter.service;
 import com.placesync.auth.service.EmailService;
 import com.placesync.common.audit.AuditAction;
 import com.placesync.common.audit.Auditable;
+import com.placesync.common.event.RecruiterVerifiedEvent;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.kafka.KafkaEventPublisher;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.company.entity.Company;
 import com.placesync.company.repository.CompanyRepository;
@@ -40,6 +42,7 @@ public class RecruiterService {
     private final CompanyRepository companyRepository;
     private final UserRepository userRepository;
     private final EmailService emailService;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
     @Transactional(readOnly = true)
     public RecruiterProfileResponse getMyProfile(UUID userId) {
@@ -114,6 +117,9 @@ public class RecruiterService {
                     req.getRejectionReason());
         }
 
-        return recruiterMapper.toResponse(recruiterProfileRepository.save(profile));
+        RecruiterProfile saved = recruiterProfileRepository.save(profile);
+        kafkaEventPublisher.publish(RecruiterVerifiedEvent.of(
+                saved.getId(), saved.getUser().getId(), req.getDecision().name()));
+        return recruiterMapper.toResponse(saved);
     }
 }
