@@ -574,6 +574,11 @@ OFFERED and REJECTED are terminal states (no further transitions allowed).
 
 **Why:** The `audit_log` table exists from Phase 1 but nothing writes to it. ARS-FR-001 requires logging all write operations. The correct implementation is an AOP aspect that intercepts service methods — not manual `auditLogRepository.save()` calls scattered across every service.
 
+**Post-implementation fixes (verified working):**
+- `AuditLog.action` required `@ColumnTransformer(write = "?::audit_action")` — PostgreSQL JDBC does not implicitly cast `character varying` to custom enum types
+- `AuditLog.ipAddress` required `@ColumnTransformer(write = "?::inet")` — same issue with the `inet` column type
+- Removed `@Transactional` from `AuditLogService.saveAsync` — the outer transaction was being marked rollback-only after a flush failure, causing `UnexpectedRollbackException` to escape the try/catch; Spring Data's own `@Transactional` on `save()` is sufficient
+
 #### Files to create
 | File | Purpose |
 |---|---|
