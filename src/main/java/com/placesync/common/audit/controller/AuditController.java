@@ -3,6 +3,8 @@ package com.placesync.common.audit.controller;
 import com.placesync.common.audit.dto.AuditLogResponse;
 import com.placesync.common.audit.dto.AuditSearchRequest;
 import com.placesync.common.audit.service.AuditLogService;
+import com.placesync.common.util.ApiResponse;
+import com.placesync.common.util.ApiResponseFactory;
 import com.placesync.common.util.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -29,15 +31,15 @@ public class AuditController {
 
     @GetMapping
     @Operation(summary = "Search audit log (paginated, filtered)")
-    public ResponseEntity<PagedResponse<AuditLogResponse>> search(
+    public ResponseEntity<ApiResponse<PagedResponse<AuditLogResponse>>> search(
             @ParameterObject AuditSearchRequest req,
             @ParameterObject @PageableDefault(size = 20, sort = "createdAt") Pageable pageable) {
-        return ResponseEntity.ok(auditLogService.search(req, pageable));
+        return ResponseEntity.ok(ApiResponseFactory.ok(auditLogService.search(req, pageable)));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Get single audit log entry")
-    public ResponseEntity<AuditLogResponse> getById(@PathVariable UUID id) {
-        return ResponseEntity.ok(auditLogService.getById(id));
+    public ResponseEntity<ApiResponse<AuditLogResponse>> getById(@PathVariable UUID id) {
+        return ResponseEntity.ok(ApiResponseFactory.ok(auditLogService.getById(id)));
     }
 }

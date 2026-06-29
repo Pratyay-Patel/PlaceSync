@@ -13,8 +13,8 @@ import java.util.UUID;
 
 public class MdcLoggingFilter extends OncePerRequestFilter {
 
-    static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
-    static final String CORRELATION_ID_MDC_KEY = "correlationId";
+    public static final String CORRELATION_ID_HEADER = "X-Correlation-ID";
+    public static final String CORRELATION_ID_MDC_KEY = "correlationId";
 
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request,

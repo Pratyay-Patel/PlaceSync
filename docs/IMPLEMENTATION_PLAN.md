@@ -631,7 +631,7 @@ Query parameters for `GET /api/v1/admin/audit-log`:
 
 ---
 
-### 4.7 Consistent API Response Format
+### 4.7 Consistent API Response Format ✅ COMPLETE
 
 **Why:** NFR-051 mandates a consistent error schema. Success responses currently return raw DTOs with no envelope. Adding an optional `ApiResponse<T>` wrapper makes it easier to include metadata (request ID, timestamp) without breaking the individual DTO shapes.
 
