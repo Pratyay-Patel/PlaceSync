@@ -3,6 +3,7 @@ package com.placesync.notification.entity;
 import com.placesync.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
 
@@ -29,6 +30,7 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
+    @ColumnTransformer(write = "?::notification_type")
     @Column(name = "type", nullable = false, columnDefinition = "notification_type")
     private NotificationType type;
 

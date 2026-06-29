@@ -790,7 +790,35 @@ Inject `KafkaEventPublisher` into `ApplicationService` and `InterviewService`. P
 
 ---
 
-### 4.10 Notification Module
+### 4.10 Notification Module ✅ COMPLETE
+
+#### What was built
+- `notification/entity/Notification.java` — added `@ColumnTransformer(write = "?::notification_type")` to prevent PostgreSQL type-cast failure in async threads
+- `notification/repository/NotificationRepository.java` — added `markAllAsRead()` bulk-update JPQL query
+- `common/event/KafkaDeliveryFailedEvent.java` — wrapper record emitted by `KafkaEventPublisher` when Kafka send fails (or when `KafkaTemplate` is absent)
+- `common/kafka/KafkaEventPublisher.java` — updated: publishes `KafkaDeliveryFailedEvent` on catch, and routes via fallback when `KafkaTemplate == null`
+- `notification/dto/NotificationResponse.java` — response DTO (id, type, title, body, referenceId, referenceType, isRead, readAt, createdAt)
+- `notification/mapper/NotificationMapper.java` — MapStruct mapper
+- `notification/service/NotificationService.java` — createForUser, getNotifications, countUnread, markAsRead, markAllAsRead
+- `notification/consumer/NotificationConsumer.java` — `@KafkaListener` on application-events, interview-events, offer-events; Java 21 pattern-switch dispatch
+- `notification/consumer/NotificationFallbackListener.java` — `@EventListener(KafkaDeliveryFailedEvent)` + `@Transactional`; same dispatch logic; fires when Kafka is down or unavailable
+- `notification/controller/NotificationController.java` — 4 endpoints wrapped in `ApiResponse<T>`
+
+#### Endpoints added
+| Method | Path | Auth | Description |
+|---|---|---|---|
+| GET | `/api/v1/notifications` | Any JWT | List own notifications (paginated, `?unreadOnly=true`) |
+| GET | `/api/v1/notifications/unread-count` | Any JWT | Count unread |
+| PATCH | `/api/v1/notifications/{id}/read` | Any JWT | Mark one as read |
+| PATCH | `/api/v1/notifications/read-all` | Any JWT | Mark all as read |
+
+#### Acceptance criteria
+- [x] `NotificationService.createForUser()` persists notification for any user ID
+- [x] `@KafkaListener` on all 3 topics — dispatches to correct notification type
+- [x] `NotificationFallbackListener` fires on `KafkaDeliveryFailedEvent` — creates notification directly (tested with Kafka excluded in test profile)
+- [x] All 4 notification endpoints implemented and wrapped in `ApiResponse<T>`
+- [x] `notification_type` PostgreSQL cast issue pre-empted via `@ColumnTransformer`
+- [x] `mvn clean verify` passes
 
 #### Files to create
 | File | Purpose |

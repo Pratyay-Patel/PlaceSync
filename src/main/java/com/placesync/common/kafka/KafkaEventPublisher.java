@@ -33,7 +33,8 @@ public class KafkaEventPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDomainEvent(DomainEvent event) {
         if (kafkaTemplate == null) {
-            log.debug("KafkaTemplate not available — skipping Kafka publish for {}", event.eventType());
+            log.debug("KafkaTemplate not available — routing {} via fallback", event.eventType());
+            applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
             return;
         }
         String topic = resolveTopic(event);
@@ -45,8 +46,9 @@ public class KafkaEventPublisher {
             kafkaTemplate.send(topic, event.eventId().toString(), event);
             log.info("Published event={} to topic={}", event.eventType(), topic);
         } catch (Exception e) {
-            log.warn("Kafka publish failed for event={} topic={} — notification service will use fallback",
+            log.warn("Kafka publish failed for event={} topic={} — activating fallback",
                     event.eventType(), topic, e);
+            applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
         }
     }
 
