@@ -7,7 +7,9 @@ import com.placesync.common.audit.AuditAction;
 import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.util.PagedResponse;
 import com.placesync.interview.dto.*;
+import org.springframework.data.domain.Pageable;
 import com.placesync.interview.entity.Interview;
 import com.placesync.interview.mapper.InterviewMapper;
 import com.placesync.interview.entity.InterviewStatus;
@@ -149,6 +151,11 @@ public class InterviewService {
 
         interview.setStatus(InterviewStatus.COMPLETED);
         return interviewMapper.toResponse(interviewRepository.save(interview));
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<InterviewResponse> getAllInterviewsForAdmin(Pageable pageable) {
+        return PagedResponse.of(interviewRepository.findAll(pageable).map(interviewMapper::toResponse));
     }
 
     private Interview loadInterviewForRecruiter(UUID userId, UUID interviewId) {

@@ -1,6 +1,7 @@
 package com.placesync.interview.controller;
 
 import com.placesync.common.security.UserPrincipal;
+import com.placesync.common.util.PagedResponse;
 import com.placesync.interview.dto.*;
 import com.placesync.interview.service.InterviewService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -8,6 +9,9 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -81,5 +85,13 @@ public class InterviewController {
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID interviewId) {
         return ResponseEntity.ok(interviewService.completeInterview(principal.getId(), interviewId));
+    }
+
+    @GetMapping("/admin/interviews")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Admin — view all interview schedules across all recruiters (paginated)")
+    public ResponseEntity<PagedResponse<InterviewResponse>> getAllInterviews(
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(interviewService.getAllInterviewsForAdmin(pageable));
     }
 }

@@ -11,6 +11,7 @@ import com.placesync.common.audit.AuditAction;
 import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.spec.ApplicationSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.entity.Job;
 import com.placesync.job.entity.JobStatus;
@@ -168,5 +169,12 @@ public class ApplicationService {
 
         application.setStatus(next);
         return applicationMapper.toResponse(applicationRepository.save(application));
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<ApplicationResponse> getAllApplicationsForAdmin(ApplicationStatus status, Pageable pageable) {
+        return PagedResponse.of(
+                applicationRepository.findAll(ApplicationSpecification.withFilters(null, null, status), pageable)
+                        .map(applicationMapper::toResponse));
     }
 }

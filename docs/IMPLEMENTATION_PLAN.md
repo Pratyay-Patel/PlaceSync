@@ -657,7 +657,7 @@ Apply to new endpoints added in Phase 4+. Existing Phase 2/3 endpoints keep thei
 
 ---
 
-### 4.8 Admin Module — User Management + Global Views
+### 4.8 Admin Module — User Management + Global Views ✅ COMPLETE
 
 **Why:** Several SRS requirements (USER-FR-002, USER-FR-004, ADM-FR-001 through ADM-FR-008) specify admin capabilities that have no endpoints yet: searching/deactivating users, viewing all applications, viewing all interviews globally.
 
