@@ -42,14 +42,16 @@ public class KafkaEventPublisher {
             log.warn("No topic mapping for event type: {}", event.eventType());
             return;
         }
-        try {
-            kafkaTemplate.send(topic, event.eventId().toString(), event);
-            log.info("Published event={} to topic={}", event.eventType(), topic);
-        } catch (Exception e) {
-            log.warn("Kafka publish failed for event={} topic={} — activating fallback",
-                    event.eventType(), topic, e);
-            applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
-        }
+        kafkaTemplate.send(topic, event.eventId().toString(), event)
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.warn("Kafka publish failed for event={} topic={} — activating fallback",
+                                event.eventType(), topic, ex);
+                        applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
+                    } else {
+                        log.info("Published event={} to topic={}", event.eventType(), topic);
+                    }
+                });
     }
 
     private String resolveTopic(DomainEvent event) {
