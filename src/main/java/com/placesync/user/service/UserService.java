@@ -3,9 +3,12 @@ package com.placesync.user.service;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.user.dto.*;
+import com.placesync.user.mapper.StudentProfileMapper;
 import com.placesync.user.entity.*;
 import com.placesync.user.repository.*;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +20,11 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class UserService {
 
+    private static final Logger log = LoggerFactory.getLogger(UserService.class);
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
     private final StudentProfileRepository studentProfileRepository;
+    private final StudentProfileMapper studentProfileMapper;
     private final StudentSkillRepository studentSkillRepository;
     private final StudentEducationRepository studentEducationRepository;
     private final StudentExperienceRepository studentExperienceRepository;
@@ -25,14 +32,15 @@ public class UserService {
     @Transactional(readOnly = true)
     public StudentProfileResponse getMyProfile(UUID userId) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
-        return StudentProfileResponse.from(profile);
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
+        return studentProfileMapper.toResponse(profile);
     }
 
     @Transactional
     public StudentProfileResponse updateProfile(UUID userId, UpdateStudentProfileRequest req) {
+        log.info("Updating student profile for userId={}", userId);
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         profile.setFirstName(req.getFirstName());
         profile.setLastName(req.getLastName());
@@ -48,11 +56,12 @@ public class UserService {
             profile.setIsProfilePublic(req.getIsProfilePublic());
         }
 
-        return StudentProfileResponse.from(studentProfileRepository.save(profile));
+        return studentProfileMapper.toResponse(studentProfileRepository.save(profile));
     }
 
     @Transactional
     public void addSkill(UUID userId, StudentSkillRequest req) {
+        log.info("Adding skill '{}' for userId={}", req.getSkillName(), userId);
         StudentProfile profile = requireStudentProfile(userId);
         if (studentSkillRepository.existsByStudentIdAndSkillName(profile.getId(), req.getSkillName())) {
             throw new ConflictException("Skill already added: " + req.getSkillName());
@@ -66,6 +75,7 @@ public class UserService {
 
     @Transactional
     public void removeSkill(UUID userId, UUID skillId) {
+        log.info("Removing skillId={} for userId={}", skillId, userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentSkill skill = studentSkillRepository.findById(skillId)
                 .orElseThrow(() -> new ResourceNotFoundException("Skill", skillId));
@@ -77,6 +87,7 @@ public class UserService {
 
     @Transactional
     public StudentEducation addEducation(UUID userId, StudentEducationRequest req) {
+        log.info("Adding education record for userId={}", userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = StudentEducation.builder()
                 .student(profile)
@@ -92,6 +103,7 @@ public class UserService {
 
     @Transactional
     public StudentEducation updateEducation(UUID userId, UUID educationId, StudentEducationRequest req) {
+        log.info("Updating educationId={} for userId={}", educationId, userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = studentEducationRepository.findById(educationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Education", educationId));
@@ -109,6 +121,7 @@ public class UserService {
 
     @Transactional
     public void deleteEducation(UUID userId, UUID educationId) {
+        log.info("Deleting educationId={} for userId={}", educationId, userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = studentEducationRepository.findById(educationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Education", educationId));
@@ -120,6 +133,7 @@ public class UserService {
 
     @Transactional
     public StudentExperience addExperience(UUID userId, StudentExperienceRequest req) {
+        log.info("Adding experience record for userId={}", userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = StudentExperience.builder()
                 .student(profile)
@@ -135,6 +149,7 @@ public class UserService {
 
     @Transactional
     public StudentExperience updateExperience(UUID userId, UUID experienceId, StudentExperienceRequest req) {
+        log.info("Updating experienceId={} for userId={}", experienceId, userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = studentExperienceRepository.findById(experienceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Experience", experienceId));
@@ -152,6 +167,7 @@ public class UserService {
 
     @Transactional
     public void deleteExperience(UUID userId, UUID experienceId) {
+        log.info("Deleting experienceId={} for userId={}", experienceId, userId);
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = studentExperienceRepository.findById(experienceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Experience", experienceId));
@@ -181,6 +197,6 @@ public class UserService {
 
     private StudentProfile requireStudentProfile(UUID userId) {
         return studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
     }
 }

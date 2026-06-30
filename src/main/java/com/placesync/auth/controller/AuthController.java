@@ -22,6 +22,8 @@ import java.util.Map;
 @Tag(name = "Auth", description = "Authentication and authorization endpoints")
 public class AuthController {
 
+    private static final String MESSAGE_KEY = "message";
+
     private final AuthService authService;
 
     @PostMapping("/register")
@@ -53,21 +55,21 @@ public class AuthController {
     @Operation(summary = "Verify email address with the token sent to the user's inbox")
     public ResponseEntity<Map<String, String>> verifyEmail(@RequestParam String token) {
         authService.verifyEmail(token);
-        return ResponseEntity.ok(Map.of("message", "Email verified successfully"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Email verified successfully"));
     }
 
     @PostMapping("/forgot-password")
     @Operation(summary = "Request a password reset email")
     public ResponseEntity<Map<String, String>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest req) {
         authService.forgotPassword(req.getEmail());
-        return ResponseEntity.ok(Map.of("message", "If that email exists, a reset link has been sent"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "If that email exists, a reset link has been sent"));
     }
 
     @PostMapping("/reset-password")
     @Operation(summary = "Reset password using the token from the reset email")
     public ResponseEntity<Map<String, String>> resetPassword(@Valid @RequestBody ResetPasswordRequest req) {
         authService.resetPassword(req);
-        return ResponseEntity.ok(Map.of("message", "Password reset successfully"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Password reset successfully"));
     }
 
     @PostMapping("/change-password")
@@ -78,7 +80,7 @@ public class AuthController {
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody ChangePasswordRequest req) {
         authService.changePassword(principal.getId(), req);
-        return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
+        return ResponseEntity.ok(Map.of(MESSAGE_KEY, "Password changed successfully"));
     }
 
     @GetMapping("/me")

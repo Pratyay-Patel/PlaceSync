@@ -3,11 +3,14 @@ package com.placesync.user.service;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.user.dto.CreateResumeRequest;
 import com.placesync.user.dto.ResumeResponse;
+import com.placesync.user.mapper.ResumeMapper;
 import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -21,23 +24,28 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ResumeService {
 
+    private static final Logger log = LoggerFactory.getLogger(ResumeService.class);
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
     private final ResumeRepository resumeRepository;
+    private final ResumeMapper resumeMapper;
     private final StudentProfileRepository studentProfileRepository;
 
     @Transactional(readOnly = true)
     public List<ResumeResponse> getMyResumes(UUID userId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return resumeRepository.findByStudentIdAndDeletedAtIsNullOrderByUploadedAtDesc(student.getId())
                 .stream()
-                .map(ResumeResponse::from)
+                .map(resumeMapper::toResponse)
                 .collect(Collectors.toList());
     }
 
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
+        log.info("Creating resume '{}' for userId={}", req.getLabel(), userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         if (Boolean.TRUE.equals(req.getIsDefault())) {
             resumeRepository.findByStudentIdAndIsDefaultTrueAndDeletedAtIsNull(student.getId())
@@ -59,13 +67,14 @@ public class ResumeService {
                 .isDefault(Boolean.TRUE.equals(req.getIsDefault()))
                 .build();
 
-        return ResumeResponse.from(resumeRepository.save(resume));
+        return resumeMapper.toResponse(resumeRepository.save(resume));
     }
 
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
+        log.info("Setting resumeId={} as default for userId={}", resumeId, userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
@@ -84,13 +93,14 @@ public class ResumeService {
                 });
 
         resume.setIsDefault(true);
-        return ResumeResponse.from(resumeRepository.save(resume));
+        return resumeMapper.toResponse(resumeRepository.save(resume));
     }
 
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
+        log.info("Soft-deleting resumeId={} for userId={}", resumeId, userId);
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
                 .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));

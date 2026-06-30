@@ -3,11 +3,19 @@ package com.placesync.application.service;
 import com.placesync.application.dto.ApplyRequest;
 import com.placesync.application.dto.ApplicationResponse;
 import com.placesync.application.dto.UpdateApplicationStatusRequest;
+import com.placesync.application.mapper.ApplicationMapper;
 import com.placesync.application.entity.Application;
 import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.repository.ApplicationRepository;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
+import com.placesync.common.event.ApplicationStatusChangedEvent;
+import com.placesync.common.event.ApplicationSubmittedEvent;
+import com.placesync.common.event.OfferReleasedEvent;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.kafka.KafkaEventPublisher;
+import com.placesync.common.spec.ApplicationSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.entity.Job;
 import com.placesync.job.entity.JobStatus;
@@ -19,27 +27,47 @@ import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class ApplicationService {
 
+    private static final Logger log = LoggerFactory.getLogger(ApplicationService.class);
+    private static final String STUDENT_PROFILE = "StudentProfile";
+
+    private static final Map<ApplicationStatus, Set<ApplicationStatus>> VALID_TRANSITIONS = Map.of(
+            ApplicationStatus.APPLIED,              Set.of(ApplicationStatus.UNDER_REVIEW, ApplicationStatus.REJECTED),
+            ApplicationStatus.UNDER_REVIEW,         Set.of(ApplicationStatus.SHORTLISTED, ApplicationStatus.REJECTED),
+            ApplicationStatus.SHORTLISTED,          Set.of(ApplicationStatus.INTERVIEW_SCHEDULED, ApplicationStatus.REJECTED),
+            ApplicationStatus.INTERVIEW_SCHEDULED,  Set.of(ApplicationStatus.OFFERED, ApplicationStatus.REJECTED),
+            ApplicationStatus.OFFERED,              Set.of(),
+            ApplicationStatus.REJECTED,             Set.of()
+    );
+
     private final ApplicationRepository applicationRepository;
+    private final ApplicationMapper applicationMapper;
     private final StudentProfileRepository studentProfileRepository;
     private final JobRepository jobRepository;
     private final ResumeRepository resumeRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
+    private final KafkaEventPublisher kafkaEventPublisher;
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
+        log.info("Student userId={} applying to jobId={}", userId, req.getJobId());
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Job job = jobRepository.findByIdAndDeletedAtIsNull(req.getJobId())
                 .orElseThrow(() -> new ResourceNotFoundException("Job", req.getJobId()));
@@ -81,22 +109,26 @@ public class ApplicationService {
                 .status(ApplicationStatus.APPLIED)
                 .build();
 
-        return ApplicationResponse.from(applicationRepository.save(application));
+        Application saved = applicationRepository.save(application);
+        kafkaEventPublisher.publish(ApplicationSubmittedEvent.of(
+                saved.getId(), student.getUser().getId(), job.getId(),
+                job.getTitle(), job.getCompany().getName(), student.getUser().getEmail()));
+        return applicationMapper.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<ApplicationResponse> getMyApplications(UUID userId, Pageable pageable) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
         return PagedResponse.of(
                 applicationRepository.findByStudentId(student.getId(), pageable)
-                        .map(ApplicationResponse::from));
+                        .map(applicationMapper::toResponse));
     }
 
     @Transactional(readOnly = true)
     public ApplicationResponse getMyApplication(UUID userId, UUID applicationId) {
         StudentProfile student = studentProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("StudentProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Application application = applicationRepository.findById(applicationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Application", applicationId));
@@ -104,7 +136,7 @@ public class ApplicationService {
         if (!application.getStudent().getId().equals(student.getId())) {
             throw new AccessDeniedException("Application does not belong to the student");
         }
-        return ApplicationResponse.from(application);
+        return applicationMapper.toResponse(application);
     }
 
     @Transactional(readOnly = true)
@@ -120,11 +152,13 @@ public class ApplicationService {
         }
         return PagedResponse.of(
                 applicationRepository.findByJobId(jobId, pageable)
-                        .map(ApplicationResponse::from));
+                        .map(applicationMapper::toResponse));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Application")
     @Transactional
     public ApplicationResponse updateStatus(UUID userId, UUID applicationId, UpdateApplicationStatusRequest req) {
+        log.info("Updating applicationId={} status to {} by userId={}", applicationId, req.getStatus(), userId);
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
 
@@ -135,7 +169,29 @@ public class ApplicationService {
             throw new AccessDeniedException("Application does not belong to the recruiter's job");
         }
 
-        application.setStatus(req.getStatus());
-        return ApplicationResponse.from(applicationRepository.save(application));
+        ApplicationStatus current = application.getStatus();
+        ApplicationStatus next = req.getStatus();
+        if (!VALID_TRANSITIONS.getOrDefault(current, Set.of()).contains(next)) {
+            throw new IllegalArgumentException(
+                    "Invalid status transition from " + current + " to " + next);
+        }
+
+        application.setStatus(next);
+        Application saved = applicationRepository.save(application);
+        kafkaEventPublisher.publish(ApplicationStatusChangedEvent.of(
+                saved.getId(), saved.getStudent().getUser().getId(), current, next));
+        if (next == ApplicationStatus.OFFERED) {
+            kafkaEventPublisher.publish(OfferReleasedEvent.of(
+                    saved.getId(), saved.getStudent().getUser().getId(),
+                    saved.getJob().getTitle(), saved.getJob().getCompany().getName()));
+        }
+        return applicationMapper.toResponse(saved);
+    }
+
+    @Transactional(readOnly = true)
+    public PagedResponse<ApplicationResponse> getAllApplicationsForAdmin(ApplicationStatus status, Pageable pageable) {
+        return PagedResponse.of(
+                applicationRepository.findAll(ApplicationSpecification.withFilters(null, null, status), pageable)
+                        .map(applicationMapper::toResponse));
     }
 }

@@ -2,6 +2,7 @@ package com.placesync.common.audit;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.ColumnTransformer;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.dialect.PostgreSQLEnumJdbcType;
@@ -28,11 +29,12 @@ public class AuditLog {
     @Column(name = "entity_type", nullable = false, length = 100)
     private String entityType;
 
-    @Column(name = "entity_id", nullable = false)
+    @Column(name = "entity_id")
     private UUID entityId;
 
     @Enumerated(EnumType.STRING)
     @JdbcType(PostgreSQLEnumJdbcType.class)
+    @ColumnTransformer(write = "?::audit_action")
     @Column(name = "action", nullable = false, columnDefinition = "audit_action")
     private AuditAction action;
 
@@ -53,7 +55,7 @@ public class AuditLog {
     @Column(name = "new_values", columnDefinition = "jsonb")
     private Map<String, Object> newValues;
 
-    // Stored as VARCHAR; PostgreSQL casts string to INET automatically on write.
+    @ColumnTransformer(write = "?::inet")
     @Column(name = "ip_address", columnDefinition = "inet")
     private String ipAddress;
 

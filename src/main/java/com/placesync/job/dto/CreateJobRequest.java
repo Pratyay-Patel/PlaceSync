@@ -1,5 +1,6 @@
 package com.placesync.job.dto;
 
+import com.placesync.common.validation.FutureDate;
 import com.placesync.job.entity.JobLocationType;
 import com.placesync.job.entity.JobType;
 import jakarta.validation.constraints.*;
@@ -32,7 +33,7 @@ public class CreateJobRequest {
     private String compensation;
 
     @NotNull
-    @Future
+    @FutureDate
     private OffsetDateTime applicationDeadline;
 
     @DecimalMin("0.0")

@@ -3,6 +3,7 @@ package com.placesync.application.controller;
 import com.placesync.application.dto.ApplyRequest;
 import com.placesync.application.dto.ApplicationResponse;
 import com.placesync.application.dto.UpdateApplicationStatusRequest;
+import com.placesync.application.entity.ApplicationStatus;
 import com.placesync.application.service.ApplicationService;
 import com.placesync.common.security.UserPrincipal;
 import com.placesync.common.util.PagedResponse;
@@ -77,5 +78,14 @@ public class ApplicationController {
             @PathVariable UUID applicationId,
             @Valid @RequestBody UpdateApplicationStatusRequest req) {
         return ResponseEntity.ok(applicationService.updateStatus(principal.getId(), applicationId, req));
+    }
+
+    @GetMapping("/admin/applications")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    @Operation(summary = "Admin — view all applications across all jobs (paginated, filterable by status)")
+    public ResponseEntity<PagedResponse<ApplicationResponse>> getAllApplications(
+            @RequestParam(required = false) ApplicationStatus status,
+            @ParameterObject @PageableDefault(size = 20) Pageable pageable) {
+        return ResponseEntity.ok(applicationService.getAllApplicationsForAdmin(status, pageable));
     }
 }

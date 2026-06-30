@@ -1,7 +1,6 @@
 package com.placesync.user.dto;
 
 import com.placesync.user.entity.GenderType;
-import com.placesync.user.entity.StudentProfile;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -30,23 +29,4 @@ public class StudentProfileResponse {
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;
 
-    public static StudentProfileResponse from(StudentProfile p) {
-        return StudentProfileResponse.builder()
-                .id(p.getId())
-                .userId(p.getUser().getId())
-                .firstName(p.getFirstName())
-                .lastName(p.getLastName())
-                .phone(p.getPhone())
-                .dateOfBirth(p.getDateOfBirth())
-                .gender(p.getGender())
-                .institution(p.getInstitution())
-                .department(p.getDepartment())
-                .graduationYear(p.getGraduationYear())
-                .cgpa(p.getCgpa())
-                .bio(p.getBio())
-                .profilePublic(Boolean.TRUE.equals(p.getIsProfilePublic()))
-                .createdAt(p.getCreatedAt())
-                .updatedAt(p.getUpdatedAt())
-                .build();
-    }
 }

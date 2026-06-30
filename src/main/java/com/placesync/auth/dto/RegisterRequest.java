@@ -1,5 +1,6 @@
 package com.placesync.auth.dto;
 
+import com.placesync.common.validation.ValidPassword;
 import com.placesync.user.entity.UserRole;
 import jakarta.validation.constraints.*;
 import lombok.Getter;
@@ -15,7 +16,7 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank
-    @Size(min = 8, max = 72, message = "Password must be between 8 and 72 characters")
+    @ValidPassword
     private String password;
 
     @NotNull

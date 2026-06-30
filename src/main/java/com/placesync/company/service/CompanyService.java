@@ -1,10 +1,13 @@
 package com.placesync.company.service;
 
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.company.dto.CompanyResponse;
 import com.placesync.company.dto.CompanyVerificationRequest;
+import com.placesync.company.mapper.CompanyMapper;
 import com.placesync.company.dto.CreateCompanyRequest;
 import com.placesync.company.dto.UpdateCompanyRequest;
 import com.placesync.company.entity.Company;
@@ -15,6 +18,8 @@ import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
@@ -28,25 +33,31 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class CompanyService {
 
+    private static final Logger log = LoggerFactory.getLogger(CompanyService.class);
+    private static final String COMPANY = "Company";
+
     private final CompanyRepository companyRepository;
+    private final CompanyMapper companyMapper;
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
 
     @Transactional(readOnly = true)
     public CompanyResponse getCompany(UUID companyId) {
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
-        return CompanyResponse.from(company);
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
+        return companyMapper.toResponse(company);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<CompanyResponse> getVerifiedCompanies(Pageable pageable) {
         Page<Company> page = companyRepository.findByStatusAndDeletedAtIsNull(CompanyStatus.VERIFIED, pageable);
-        return PagedResponse.of(page.map(CompanyResponse::from));
+        return PagedResponse.of(page.map(companyMapper::toResponse));
     }
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Company")
     @Transactional
     public CompanyResponse createCompany(UUID userId, CreateCompanyRequest req) {
+        log.info("Creating company '{}' by userId={}", req.getName(), userId);
         if (companyRepository.existsByNameAndDeletedAtIsNull(req.getName())) {
             throw new ConflictException("A company with this name already exists: " + req.getName());
         }
@@ -64,13 +75,14 @@ public class CompanyService {
                 .createdBy(creator)
                 .build();
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 
     @Transactional
     public CompanyResponse updateCompany(UUID userId, UUID companyId, UpdateCompanyRequest req) {
+        log.info("Updating companyId={} by userId={}", companyId, userId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (!company.getCreatedBy().getId().equals(userId)) {
             throw new AccessDeniedException("Only the company creator can update it");
@@ -86,13 +98,15 @@ public class CompanyService {
         company.setIndustry(req.getIndustry());
         company.setHeadquarters(req.getHeadquarters());
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 
+    @Auditable(action = AuditAction.SOFT_DELETE, entityType = "Company", entityIdParamIndex = 1)
     @Transactional
     public void softDeleteCompany(UUID userId, UUID companyId) {
+        log.info("Soft-deleting companyId={} by userId={}", companyId, userId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (!company.getCreatedBy().getId().equals(userId)) {
             throw new AccessDeniedException("Only the company creator can delete it");
@@ -109,14 +123,18 @@ public class CompanyService {
     public PagedResponse<CompanyResponse> getPendingCompanies(Pageable pageable) {
         Page<Company> page = companyRepository.findByStatusAndDeletedAtIsNull(
                 CompanyStatus.PENDING_VERIFICATION, pageable);
-        return PagedResponse.of(page.map(CompanyResponse::from));
+        return PagedResponse.of(page.map(companyMapper::toResponse));
     }
+
+    @Auditable(action = AuditAction.UPDATE, entityType = "Company")
 
     @Transactional
     public CompanyResponse processVerification(UUID adminUserId, UUID companyId,
                                                CompanyVerificationRequest req) {
+        log.info("Processing company verification: companyId={}, decision={}, adminUserId={}",
+                companyId, req.getDecision(), adminUserId);
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
-                .orElseThrow(() -> new ResourceNotFoundException("Company", companyId));
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
         if (company.getStatus() != CompanyStatus.PENDING_VERIFICATION) {
             throw new ConflictException("Company is not in PENDING_VERIFICATION state");
@@ -138,6 +156,6 @@ public class CompanyService {
             company.setVerifiedAt(OffsetDateTime.now());
         }
 
-        return CompanyResponse.from(companyRepository.save(company));
+        return companyMapper.toResponse(companyRepository.save(company));
     }
 }

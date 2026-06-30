@@ -1,10 +1,14 @@
 package com.placesync.job.service;
 
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.spec.JobSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.dto.*;
 import com.placesync.job.entity.*;
+import com.placesync.job.mapper.JobMapper;
 import com.placesync.job.repository.JobRepository;
 import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.entity.VerificationStatus;
@@ -12,6 +16,8 @@ import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.cache.annotation.Caching;
@@ -27,16 +33,21 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class JobService {
 
+    private static final Logger log = LoggerFactory.getLogger(JobService.class);
+    private static final String RECRUITER_PROFILE = "RecruiterProfile";
+
     private final JobRepository jobRepository;
+    private final JobMapper jobMapper;
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final UserRepository userRepository;
 
-    @Cacheable(value = "job-listings", key = "#pageable.pageNumber + '-' + #pageable.pageSize")
+    @Cacheable(value = "job-listings",
+            key = "#filter.cacheKey() + '-' + #pageable.pageNumber + '-' + #pageable.pageSize")
     @Transactional(readOnly = true)
-    public PagedResponse<JobSummaryResponse> getOpenJobs(Pageable pageable) {
+    public PagedResponse<JobSummaryResponse> getOpenJobs(JobFilterRequest filter, Pageable pageable) {
         return PagedResponse.of(
-                jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.OPEN, pageable)
-                        .map(JobSummaryResponse::from));
+                jobRepository.findAll(JobSpecification.withFilters(filter), pageable)
+                        .map(jobMapper::toSummaryResponse));
     }
 
     @Cacheable(value = "job-detail", key = "#jobId")
@@ -44,30 +55,32 @@ public class JobService {
     public JobResponse getJob(UUID jobId) {
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
-        return JobResponse.from(job);
+        return jobMapper.toResponse(job);
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<JobSummaryResponse> getRecruiterJobs(UUID userId, Pageable pageable) {
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
         return PagedResponse.of(
                 jobRepository.findByRecruiterIdAndDeletedAtIsNull(recruiter.getId(), pageable)
-                        .map(JobSummaryResponse::from));
+                        .map(jobMapper::toSummaryResponse));
     }
 
     @Transactional(readOnly = true)
     public PagedResponse<JobSummaryResponse> getPendingJobs(Pageable pageable) {
         return PagedResponse.of(
                 jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.PENDING_APPROVAL, pageable)
-                        .map(JobSummaryResponse::from));
+                        .map(jobMapper::toSummaryResponse));
     }
 
+    @Auditable(action = AuditAction.CREATE, entityType = "Job")
     @CacheEvict(value = "job-listings", allEntries = true)
     @Transactional
     public JobResponse createJob(UUID userId, CreateJobRequest req) {
+        log.info("Creating job '{}' by userId={}", req.getTitle(), userId);
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (recruiter.getVerificationStatus() != VerificationStatus.VERIFIED) {
             throw new ConflictException("Recruiter must be verified before posting jobs");
@@ -98,20 +111,22 @@ public class JobService {
                 job.getEligibleDepartments().add(
                         JobEligibleDepartment.builder().job(job).departmentName(dept).build()));
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
     })
     @Transactional
     public JobResponse updateJob(UUID userId, UUID jobId, UpdateJobRequest req) {
+        log.info("Updating jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can update it");
@@ -139,20 +154,22 @@ public class JobService {
                 job.getEligibleDepartments().add(
                         JobEligibleDepartment.builder().job(job).departmentName(dept).build()));
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.SOFT_DELETE, entityType = "Job", entityIdParamIndex = 1)
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
     })
     @Transactional
     public void softDeleteJob(UUID userId, UUID jobId) {
+        log.info("Soft-deleting jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can delete it");
@@ -162,17 +179,19 @@ public class JobService {
         jobRepository.save(job);
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
     })
     @Transactional
     public JobResponse closeJob(UUID userId, UUID jobId) {
+        log.info("Closing jobId={} by userId={}", jobId, userId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
+                .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
         if (!job.getRecruiter().getId().equals(recruiter.getId())) {
             throw new AccessDeniedException("Only the job poster can close it");
@@ -183,15 +202,18 @@ public class JobService {
 
         job.setStatus(JobStatus.CLOSED);
         job.setClosedAt(OffsetDateTime.now());
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 
+    @Auditable(action = AuditAction.UPDATE, entityType = "Job")
     @Caching(evict = {
             @CacheEvict(value = "job-listings", allEntries = true),
             @CacheEvict(value = "job-detail", key = "#jobId")
     })
     @Transactional
     public JobResponse processApproval(UUID adminUserId, UUID jobId, JobApprovalRequest req) {
+        log.info("Processing job approval: jobId={}, decision={}, adminUserId={}",
+                jobId, req.getDecision(), adminUserId);
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -215,6 +237,6 @@ public class JobService {
             job.setApprovedAt(OffsetDateTime.now());
         }
 
-        return JobResponse.from(jobRepository.save(job));
+        return jobMapper.toResponse(jobRepository.save(job));
     }
 }
