@@ -16,6 +16,9 @@ public class NotificationFallbackListener {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationFallbackListener.class);
 
+    private static final String REF_APPLICATION = "Application";
+    private static final String REF_INTERVIEW = "Interview";
+
     private final NotificationService notificationService;
 
     @EventListener
@@ -36,37 +39,37 @@ public class NotificationFallbackListener {
                     e.studentId(), NotificationType.APPLICATION_SUBMITTED,
                     "Application submitted",
                     "Your application for " + e.jobTitle() + " at " + e.companyName() + " was received.",
-                    e.applicationId(), "Application");
+                    e.applicationId(), REF_APPLICATION);
 
             case ApplicationStatusChangedEvent e -> notificationService.createForUser(
                     e.studentId(), NotificationType.APPLICATION_STATUS_CHANGED,
                     "Application status updated",
                     "Your application status is now " + e.newStatus() + ".",
-                    e.applicationId(), "Application");
+                    e.applicationId(), REF_APPLICATION);
 
             case OfferReleasedEvent e -> notificationService.createForUser(
                     e.studentId(), NotificationType.OFFER_RELEASED,
                     "Offer received!",
                     "Congratulations! You have received an offer from " + e.companyName() + " for " + e.jobTitle() + ".",
-                    e.applicationId(), "Application");
+                    e.applicationId(), REF_APPLICATION);
 
             case InterviewScheduledEvent e -> notificationService.createForUser(
                     e.studentId(), NotificationType.INTERVIEW_SCHEDULED,
                     "Interview scheduled",
                     "Round " + e.round() + " interview scheduled for " + e.scheduledAt() + ".",
-                    e.interviewId(), "Interview");
+                    e.interviewId(), REF_INTERVIEW);
 
             case InterviewRescheduledEvent e -> notificationService.createForUser(
                     e.studentId(), NotificationType.INTERVIEW_RESCHEDULED,
                     "Interview rescheduled",
                     "Your interview has been moved to " + e.newScheduledAt() + ".",
-                    e.interviewId(), "Interview");
+                    e.interviewId(), REF_INTERVIEW);
 
             case InterviewCancelledEvent e -> notificationService.createForUser(
                     e.studentId(), NotificationType.INTERVIEW_CANCELLED,
                     "Interview cancelled",
                     "Your interview was cancelled: " + e.cancellationReason() + ".",
-                    e.interviewId(), "Interview");
+                    e.interviewId(), REF_INTERVIEW);
 
             case RecruiterVerifiedEvent e -> {
                 if ("APPROVE".equals(e.decision())) {
