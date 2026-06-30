@@ -6,6 +6,7 @@ import com.placesync.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 
@@ -19,12 +20,13 @@ public class NotificationConsumer {
 
     @KafkaListener(topics = {"application-events", "interview-events", "offer-events"},
             groupId = "${spring.kafka.consumer.group-id:notification-group}")
-    public void consume(Object payload) {
+    public void consume(ConsumerRecord<String, Object> record) {
+        Object payload = record.value();
         try {
             dispatch(payload);
         } catch (Exception e) {
             log.error("Notification creation failed for Kafka payload type={}: {}",
-                    payload.getClass().getSimpleName(), e.getMessage(), e);
+                    payload != null ? payload.getClass().getSimpleName() : "null", e.getMessage(), e);
             throw e;
         }
     }

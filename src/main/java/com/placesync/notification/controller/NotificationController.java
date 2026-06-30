@@ -9,6 +9,7 @@ import com.placesync.notification.service.NotificationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -31,7 +32,7 @@ public class NotificationController {
     public ResponseEntity<ApiResponse<PagedResponse<NotificationResponse>>> getNotifications(
             @AuthenticationPrincipal UserPrincipal principal,
             @RequestParam(defaultValue = "false") boolean unreadOnly,
-            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
+            @ParameterObject @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable) {
         return ResponseEntity.ok(ApiResponseFactory.ok(
                 notificationService.getNotifications(principal.getId(), unreadOnly, pageable)));
     }
