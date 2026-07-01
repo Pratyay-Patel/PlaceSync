@@ -21,5 +21,7 @@ jobs:
           distribution: "temurin"
           cache: maven
 
-      - name: Build and run unit tests
-        run: mvn -B clean verify -Dspring.profiles.active=test
+      - name: Build, test, and analyse
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: mvn -B clean verify sonar:sonar -Dspring.profiles.active=test -Dsonar.token=$SONAR_TOKEN
