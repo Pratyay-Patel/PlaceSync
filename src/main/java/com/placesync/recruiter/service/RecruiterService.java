@@ -19,6 +19,7 @@ import com.placesync.recruiter.entity.VerificationStatus;
 import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -54,7 +55,7 @@ public class RecruiterService {
     @Auditable(action = AuditAction.UPDATE, entityType = "RecruiterProfile")
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
-        log.info("Updating recruiter profile for userId={}", userId);
+        log.info("Updating recruiter profile for userId={}", sanitize(userId));
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -85,7 +86,7 @@ public class RecruiterService {
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {
         log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
-                recruiterId, req.getDecision(), adminUserId);
+                sanitize(recruiterId), sanitize(req.getDecision()), sanitize(adminUserId));
         RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, recruiterId));
 

@@ -26,6 +26,7 @@ import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,7 @@ public class ApplicationService {
     @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
-        log.info("Student userId={} applying to jobId={}", userId, req.getJobId());
+        log.info("Student userId={} applying to jobId={}", sanitize(userId), sanitize(req.getJobId()));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -158,7 +159,7 @@ public class ApplicationService {
     @Auditable(action = AuditAction.UPDATE, entityType = "Application")
     @Transactional
     public ApplicationResponse updateStatus(UUID userId, UUID applicationId, UpdateApplicationStatusRequest req) {
-        log.info("Updating applicationId={} status to {} by userId={}", applicationId, req.getStatus(), userId);
+        log.info("Updating applicationId={} status to {} by userId={}", sanitize(applicationId), sanitize(req.getStatus()), sanitize(userId));
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
 

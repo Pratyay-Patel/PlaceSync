@@ -22,6 +22,7 @@ import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.repository.RecruiterProfileRepository;
 import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.StudentProfileRepository;
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +79,7 @@ public class InterviewService {
     @Auditable(action = AuditAction.CREATE, entityType = "Interview")
     @Transactional
     public InterviewResponse scheduleInterview(UUID userId, UUID applicationId, ScheduleInterviewRequest req) {
-        log.info("Scheduling interview round {} for applicationId={} by userId={}", req.getRoundNumber(), applicationId, userId);
+        log.info("Scheduling interview round {} for applicationId={} by userId={}", sanitize(req.getRoundNumber()), sanitize(applicationId), sanitize(userId));
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -115,7 +116,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewResponse rescheduleInterview(UUID userId, UUID interviewId, UpdateInterviewRequest req) {
-        log.info("Rescheduling interviewId={} by userId={}", interviewId, userId);
+        log.info("Rescheduling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() == InterviewStatus.CANCELLED
@@ -138,7 +139,7 @@ public class InterviewService {
     @Auditable(action = AuditAction.UPDATE, entityType = "Interview")
     @Transactional
     public InterviewResponse cancelInterview(UUID userId, UUID interviewId, CancelInterviewRequest req) {
-        log.info("Cancelling interviewId={} by userId={}", interviewId, userId);
+        log.info("Cancelling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() == InterviewStatus.CANCELLED) {
@@ -159,7 +160,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewResponse completeInterview(UUID userId, UUID interviewId) {
-        log.info("Completing interviewId={} by userId={}", interviewId, userId);
+        log.info("Completing interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() != InterviewStatus.SCHEDULED

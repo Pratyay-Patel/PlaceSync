@@ -9,6 +9,7 @@ import com.placesync.notification.mapper.NotificationMapper;
 import com.placesync.notification.repository.NotificationRepository;
 import com.placesync.user.entity.User;
 import com.placesync.user.repository.UserRepository;
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,6 +79,6 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(UUID userId) {
         int updated = notificationRepository.markAllAsRead(userId, OffsetDateTime.now());
-        log.info("Marked {} notifications as read for userId={}", updated, userId);
+        log.info("Marked {} notifications as read for userId={}", updated, sanitize(userId));
     }
 }

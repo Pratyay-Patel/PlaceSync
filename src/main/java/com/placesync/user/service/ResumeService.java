@@ -8,6 +8,7 @@ import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -43,7 +44,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
-        log.info("Creating resume '{}' for userId={}", req.getLabel(), userId);
+        log.info("Creating resume for userId={}", sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -72,7 +73,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
-        log.info("Setting resumeId={} as default for userId={}", resumeId, userId);
+        log.info("Setting resumeId={} as default for userId={}", sanitize(resumeId), sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -98,7 +99,7 @@ public class ResumeService {
 
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
-        log.info("Soft-deleting resumeId={} for userId={}", resumeId, userId);
+        log.info("Soft-deleting resumeId={} for userId={}", sanitize(resumeId), sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
