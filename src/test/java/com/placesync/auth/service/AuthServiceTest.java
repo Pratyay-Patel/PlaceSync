@@ -2,6 +2,7 @@ package com.placesync.auth.service;
 
 import com.placesync.auth.dto.*;
 import com.placesync.auth.entity.EmailVerificationToken;
+import com.placesync.auth.entity.PasswordResetToken;
 import com.placesync.auth.entity.RefreshToken;
 import com.placesync.auth.repository.EmailVerificationTokenRepository;
 import com.placesync.auth.repository.PasswordResetTokenRepository;
@@ -286,5 +287,99 @@ class AuthServiceTest {
         String hash2 = AuthService.hashToken(raw);
         assertThat(hash1).isEqualTo(hash2);
         assertThat(hash1).isNotEqualTo(raw);
+    }
+
+    @Test
+    void forgotPassword_existingUser_savesTokenAndSendsEmail() {
+        User user = activeUser("student@test.com");
+        when(userRepository.findByEmailAndDeletedAtIsNull("student@test.com")).thenReturn(Optional.of(user));
+
+        authService.forgotPassword("student@test.com");
+
+        verify(passwordResetTokenRepository).save(any());
+        verify(emailService).sendPasswordResetEmail(eq("student@test.com"), any());
+    }
+
+    @Test
+    void forgotPassword_unknownEmail_doesNotSendEmail() {
+        when(userRepository.findByEmailAndDeletedAtIsNull("unknown@test.com")).thenReturn(Optional.empty());
+
+        authService.forgotPassword("unknown@test.com");
+
+        verify(emailService, never()).sendPasswordResetEmail(any(), any());
+    }
+
+    @Test
+    void resetPassword_validToken_changesPasswordAndInvalidatesSessions() {
+        User user = activeUser("student@test.com");
+        String rawToken = UUID.randomUUID().toString();
+        String hash = AuthService.hashToken(rawToken);
+        PasswordResetToken token = PasswordResetToken.builder()
+                .user(user)
+                .tokenHash(hash)
+                .expiresAt(OffsetDateTime.now().plusHours(1))
+                .isUsed(false)
+                .build();
+        ResetPasswordRequest req = new ResetPasswordRequest();
+        req.setToken(rawToken);
+        req.setNewPassword("NewPassword1!");
+        when(passwordResetTokenRepository.findByTokenHashAndIsUsedFalse(hash)).thenReturn(Optional.of(token));
+        when(passwordEncoder.encode("NewPassword1!")).thenReturn("newHash");
+
+        authService.resetPassword(req);
+
+        assertThat(user.getPasswordHash()).isEqualTo("newHash");
+        assertThat(token.getIsUsed()).isTrue();
+        verify(refreshTokenRepository).deleteByUserId(user.getId());
+    }
+
+    @Test
+    void resetPassword_expiredToken_throwsUnauthorizedException() {
+        User user = activeUser("student@test.com");
+        String rawToken = UUID.randomUUID().toString();
+        String hash = AuthService.hashToken(rawToken);
+        PasswordResetToken token = PasswordResetToken.builder()
+                .user(user)
+                .tokenHash(hash)
+                .expiresAt(OffsetDateTime.now().minusHours(1))
+                .isUsed(false)
+                .build();
+        ResetPasswordRequest req = new ResetPasswordRequest();
+        req.setToken(rawToken);
+        when(passwordResetTokenRepository.findByTokenHashAndIsUsedFalse(hash)).thenReturn(Optional.of(token));
+
+        assertThatThrownBy(() -> authService.resetPassword(req))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("expired");
+    }
+
+    @Test
+    void changePassword_correctCurrentPassword_updatesAndInvalidatesSessions() {
+        User user = activeUser("student@test.com");
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setCurrentPassword("oldPassword");
+        req.setNewPassword("newPassword1!");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("oldPassword", "hashed")).thenReturn(true);
+        when(passwordEncoder.encode("newPassword1!")).thenReturn("newHash");
+
+        authService.changePassword(user.getId(), req);
+
+        assertThat(user.getPasswordHash()).isEqualTo("newHash");
+        verify(refreshTokenRepository).deleteByUserId(user.getId());
+    }
+
+    @Test
+    void changePassword_wrongCurrentPassword_throwsUnauthorizedException() {
+        User user = activeUser("student@test.com");
+        ChangePasswordRequest req = new ChangePasswordRequest();
+        req.setCurrentPassword("wrong");
+        req.setNewPassword("newPassword1!");
+        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
+
+        assertThatThrownBy(() -> authService.changePassword(user.getId(), req))
+                .isInstanceOf(UnauthorizedException.class)
+                .hasMessageContaining("Current password is incorrect");
     }
 }

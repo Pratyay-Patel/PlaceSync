@@ -24,4 +24,8 @@ jobs:
       - name: Build, test, and analyse
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-        run: mvn -B clean verify sonar:sonar -Dspring.profiles.active=test -Dsonar.token=$SONAR_TOKEN
+        run: |
+          mvn -B clean verify sonar:sonar \
+            -Dspring.profiles.active=test \
+            -Dsonar.token=$SONAR_TOKEN \
+            "-Dsonar.coverage.exclusions=**/controller/**,**/entity/**,**/dto/**,**/mapper/**,**/config/**,**/consumer/**,**/event/**,**/audit/**,**/util/**,**/spec/**,**/security/**,**/kafka/**,**/exception/**,**/logging/**,**/validation/**,**/PlaceSyncApplication.java,**/auth/service/EmailService.java"

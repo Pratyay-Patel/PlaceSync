@@ -30,11 +30,18 @@ import org.springframework.security.access.AccessDeniedException;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -259,5 +266,84 @@ class ApplicationServiceTest {
 
         assertThatThrownBy(() -> applicationService.updateStatus(userId, applicationId, req))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void getMyApplications_returnsPagedResponse() {
+        StudentProfile student = studentProfile();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(student));
+        when(applicationRepository.findByStudentId(eq(student.getId()), any())).thenReturn(new PageImpl<>(List.of()));
+
+        applicationService.getMyApplications(userId, Pageable.unpaged());
+
+        verify(applicationRepository).findByStudentId(eq(student.getId()), any());
+    }
+
+    @Test
+    void getMyApplication_ownedByStudent_returnsResponse() {
+        StudentProfile student = studentProfile();
+        Application application = new Application();
+        application.setId(applicationId);
+        application.setStudent(student);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(student));
+        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
+        when(applicationMapper.toResponse(application)).thenReturn(new ApplicationResponse());
+
+        ApplicationResponse result = applicationService.getMyApplication(userId, applicationId);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
+    void getMyApplication_notOwnedByStudent_throwsAccessDeniedException() {
+        StudentProfile student = studentProfile();
+        StudentProfile other = studentProfile();
+        Application application = new Application();
+        application.setId(applicationId);
+        application.setStudent(other);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(student));
+        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> applicationService.getMyApplication(userId, applicationId))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void getJobApplications_byJobOwner_returnsPagedResponse() {
+        RecruiterProfile recruiter = new RecruiterProfile();
+        recruiter.setId(UUID.randomUUID());
+        Job job = openJob();
+        job.setRecruiter(recruiter);
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(applicationRepository.findByJobId(eq(jobId), any())).thenReturn(new PageImpl<>(List.of()));
+
+        applicationService.getJobApplications(userId, jobId, Pageable.unpaged());
+
+        verify(applicationRepository).findByJobId(eq(jobId), any());
+    }
+
+    @Test
+    void getJobApplications_byNonOwnerRecruiter_throwsAccessDeniedException() {
+        RecruiterProfile recruiter = new RecruiterProfile();
+        recruiter.setId(UUID.randomUUID());
+        RecruiterProfile owner = new RecruiterProfile();
+        owner.setId(UUID.randomUUID());
+        Job job = openJob();
+        job.setRecruiter(owner);
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+
+        assertThatThrownBy(() -> applicationService.getJobApplications(userId, jobId, Pageable.unpaged()))
+                .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void getAllApplicationsForAdmin_returnsPagedResponse() {
+        when(applicationRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+
+        applicationService.getAllApplicationsForAdmin(null, Pageable.unpaged());
+
+        verify(applicationRepository).findAll(any(Specification.class), any(Pageable.class));
     }
 }

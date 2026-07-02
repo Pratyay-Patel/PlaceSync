@@ -17,6 +17,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.util.ArrayList;
@@ -211,10 +214,77 @@ class JobServiceTest {
     }
 
     @Test
+    void getJob_found_returnsJobResponse() {
+        Job job = new Job();
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(jobMapper.toResponse(job)).thenReturn(new JobResponse());
+
+        JobResponse result = jobService.getJob(jobId);
+
+        assertThat(result).isNotNull();
+    }
+
+    @Test
     void getJob_notFound_throwsResourceNotFoundException() {
         when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> jobService.getJob(jobId))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getOpenJobs_returnsPagedResponse() {
+        when(jobRepository.findAll(any(Specification.class), any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+
+        jobService.getOpenJobs(new JobFilterRequest(), Pageable.unpaged());
+
+        verify(jobRepository).findAll(any(Specification.class), any(Pageable.class));
+    }
+
+    @Test
+    void getRecruiterJobs_returnsPagedResponse() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(jobRepository.findByRecruiterIdAndDeletedAtIsNull(recruiter.getId(), Pageable.unpaged()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        jobService.getRecruiterJobs(userId, Pageable.unpaged());
+
+        verify(jobRepository).findByRecruiterIdAndDeletedAtIsNull(recruiter.getId(), Pageable.unpaged());
+    }
+
+    @Test
+    void getPendingJobs_returnsPagedResponse() {
+        when(jobRepository.findByStatusAndDeletedAtIsNull(JobStatus.PENDING_APPROVAL, Pageable.unpaged()))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        jobService.getPendingJobs(Pageable.unpaged());
+
+        verify(jobRepository).findByStatusAndDeletedAtIsNull(JobStatus.PENDING_APPROVAL, Pageable.unpaged());
+    }
+
+    @Test
+    void softDeleteJob_byOwner_setsDeletedAt() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        Job job = openJob(recruiter);
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+
+        jobService.softDeleteJob(userId, jobId);
+
+        assertThat(job.getDeletedAt()).isNotNull();
+        verify(jobRepository).save(job);
+    }
+
+    @Test
+    void softDeleteJob_byOtherRecruiter_throwsAccessDeniedException() {
+        RecruiterProfile owner = verifiedRecruiter();
+        RecruiterProfile other = verifiedRecruiter();
+        Job job = openJob(owner);
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(other));
+
+        assertThatThrownBy(() -> jobService.softDeleteJob(userId, jobId))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

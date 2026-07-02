@@ -25,8 +25,12 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.time.OffsetDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -239,5 +243,69 @@ class InterviewServiceTest {
 
         assertThatThrownBy(() -> interviewService.scheduleInterview(userId, applicationId, new ScheduleInterviewRequest()))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void getMyInterviews_returnsNonCancelledInterviews() {
+        StudentProfile student = new StudentProfile();
+        student.setId(UUID.randomUUID());
+        Interview scheduled = scheduledInterview(applicationFor(recruiter()));
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(student));
+        when(interviewRepository.findByApplication_StudentIdOrderByScheduledAtAsc(student.getId()))
+                .thenReturn(List.of(scheduled));
+        when(interviewMapper.toResponse(scheduled)).thenReturn(new InterviewResponse());
+
+        List<InterviewResponse> result = interviewService.getMyInterviews(userId);
+
+        assertThat(result).hasSize(1);
+    }
+
+    @Test
+    void getMyInterviews_filtersCancelledInterviews() {
+        StudentProfile student = new StudentProfile();
+        student.setId(UUID.randomUUID());
+        Interview cancelled = scheduledInterview(applicationFor(recruiter()));
+        cancelled.setStatus(InterviewStatus.CANCELLED);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(student));
+        when(interviewRepository.findByApplication_StudentIdOrderByScheduledAtAsc(student.getId()))
+                .thenReturn(List.of(cancelled));
+
+        List<InterviewResponse> result = interviewService.getMyInterviews(userId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getApplicationInterviews_byOwnerRecruiter_returnsList() {
+        RecruiterProfile recruiter = recruiter();
+        Application application = applicationFor(recruiter);
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
+        when(interviewRepository.findByApplicationIdOrderByRoundNumberAsc(applicationId)).thenReturn(List.of());
+
+        List<InterviewResponse> result = interviewService.getApplicationInterviews(userId, applicationId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getApplicationInterviews_byNonOwnerRecruiter_throwsAccessDeniedException() {
+        RecruiterProfile owner = recruiter();
+        RecruiterProfile other = recruiter();
+        Application application = applicationFor(owner);
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(other));
+        when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
+
+        assertThatThrownBy(() -> interviewService.getApplicationInterviews(userId, applicationId))
+                .isInstanceOf(org.springframework.security.access.AccessDeniedException.class);
+    }
+
+    @Test
+    void getAllInterviewsForAdmin_returnsPagedResponse() {
+        when(interviewRepository.findAll(any(Pageable.class))).thenReturn(new PageImpl<>(List.of()));
+
+        interviewService.getAllInterviewsForAdmin(Pageable.unpaged());
+
+        verify(interviewRepository).findAll(any(Pageable.class));
     }
 }

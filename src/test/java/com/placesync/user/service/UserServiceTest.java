@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.access.AccessDeniedException;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -187,5 +188,105 @@ class UserServiceTest {
 
         assertThatThrownBy(() -> userService.deleteExperience(userId, expId))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    @Test
+    void updateEducation_updatesFieldsAndSaves() {
+        StudentProfile profile = studentProfile();
+        UUID eduId = UUID.randomUUID();
+        StudentEducation edu = new StudentEducation();
+        edu.setStudent(profile);
+        StudentEducationRequest req = new StudentEducationRequest();
+        req.setDegree("M.Tech");
+        req.setInstitution("IIT");
+        req.setStartYear((short) 2022);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentEducationRepository.findById(eduId)).thenReturn(Optional.of(edu));
+        when(studentEducationRepository.save(edu)).thenReturn(edu);
+
+        StudentEducation result = userService.updateEducation(userId, eduId, req);
+
+        assertThat(result.getDegree()).isEqualTo("M.Tech");
+        verify(studentEducationRepository).save(edu);
+    }
+
+    @Test
+    void deleteEducation_ownedByStudent_deletesSuccessfully() {
+        StudentProfile profile = studentProfile();
+        UUID eduId = UUID.randomUUID();
+        StudentEducation edu = new StudentEducation();
+        edu.setStudent(profile);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentEducationRepository.findById(eduId)).thenReturn(Optional.of(edu));
+
+        userService.deleteEducation(userId, eduId);
+
+        verify(studentEducationRepository).delete(edu);
+    }
+
+    @Test
+    void updateExperience_updatesFieldsAndSaves() {
+        StudentProfile profile = studentProfile();
+        UUID expId = UUID.randomUUID();
+        StudentExperience exp = new StudentExperience();
+        exp.setStudent(profile);
+        StudentExperienceRequest req = new StudentExperienceRequest();
+        req.setCompanyName("TechCorp");
+        req.setRole("SDE");
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentExperienceRepository.findById(expId)).thenReturn(Optional.of(exp));
+        when(studentExperienceRepository.save(exp)).thenReturn(exp);
+
+        StudentExperience result = userService.updateExperience(userId, expId, req);
+
+        assertThat(result.getCompanyName()).isEqualTo("TechCorp");
+        verify(studentExperienceRepository).save(exp);
+    }
+
+    @Test
+    void deleteExperience_ownedByStudent_deletesSuccessfully() {
+        StudentProfile profile = studentProfile();
+        UUID expId = UUID.randomUUID();
+        StudentExperience exp = new StudentExperience();
+        exp.setStudent(profile);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentExperienceRepository.findById(expId)).thenReturn(Optional.of(exp));
+
+        userService.deleteExperience(userId, expId);
+
+        verify(studentExperienceRepository).delete(exp);
+    }
+
+    @Test
+    void getSkills_returnsListFromRepository() {
+        StudentProfile profile = studentProfile();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentSkillRepository.findByStudentId(profile.getId())).thenReturn(List.of());
+
+        List<StudentSkill> result = userService.getSkills(userId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getEducation_returnsListFromRepository() {
+        StudentProfile profile = studentProfile();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentEducationRepository.findByStudentIdOrderByStartYearDesc(profile.getId())).thenReturn(List.of());
+
+        List<StudentEducation> result = userService.getEducation(userId);
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void getExperience_returnsListFromRepository() {
+        StudentProfile profile = studentProfile();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentExperienceRepository.findByStudentIdOrderByStartDateDesc(profile.getId())).thenReturn(List.of());
+
+        List<StudentExperience> result = userService.getExperience(userId);
+
+        assertThat(result).isEmpty();
     }
 }
