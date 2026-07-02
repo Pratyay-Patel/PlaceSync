@@ -33,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class InterviewService {
@@ -78,9 +79,7 @@ public class InterviewService {
     @Auditable(action = AuditAction.CREATE, entityType = "Interview")
     @Transactional
     public InterviewResponse scheduleInterview(UUID userId, UUID applicationId, ScheduleInterviewRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Scheduling interview round {} for applicationId={} by userId={}", sanitize(req.getRoundNumber()), sanitize(applicationId), sanitize(userId));
-        }
+        log.info("Scheduling interview round {} for applicationId={} by userId={}", sanitize(req.getRoundNumber()), sanitize(applicationId), sanitize(userId));
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -117,9 +116,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewResponse rescheduleInterview(UUID userId, UUID interviewId, UpdateInterviewRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Rescheduling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
-        }
+        log.info("Rescheduling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() == InterviewStatus.CANCELLED
@@ -142,9 +139,7 @@ public class InterviewService {
     @Auditable(action = AuditAction.UPDATE, entityType = "Interview")
     @Transactional
     public InterviewResponse cancelInterview(UUID userId, UUID interviewId, CancelInterviewRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Cancelling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
-        }
+        log.info("Cancelling interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() == InterviewStatus.CANCELLED) {
@@ -165,9 +160,7 @@ public class InterviewService {
 
     @Transactional
     public InterviewResponse completeInterview(UUID userId, UUID interviewId) {
-        if (log.isInfoEnabled()) {
-            log.info("Completing interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
-        }
+        log.info("Completing interviewId={} by userId={}", sanitize(interviewId), sanitize(userId));
         Interview interview = loadInterviewForRecruiter(userId, interviewId);
 
         if (interview.getStatus() != InterviewStatus.SCHEDULED

@@ -20,6 +20,7 @@ import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class ResumeService {
@@ -43,9 +44,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Creating resume for userId={}", sanitize(userId));
-        }
+        log.info("Creating resume for userId={}", sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -74,9 +73,7 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
-        if (log.isInfoEnabled()) {
-            log.info("Setting resumeId={} as default for userId={}", sanitize(resumeId), sanitize(userId));
-        }
+        log.info("Setting resumeId={} as default for userId={}", sanitize(resumeId), sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -102,9 +99,7 @@ public class ResumeService {
 
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
-        if (log.isInfoEnabled()) {
-            log.info("Soft-deleting resumeId={} for userId={}", sanitize(resumeId), sanitize(userId));
-        }
+        log.info("Soft-deleting resumeId={} for userId={}", sanitize(resumeId), sanitize(userId));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 

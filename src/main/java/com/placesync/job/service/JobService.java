@@ -30,6 +30,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class JobService {
@@ -79,9 +80,7 @@ public class JobService {
     @CacheEvict(value = "job-listings", allEntries = true)
     @Transactional
     public JobResponse createJob(UUID userId, CreateJobRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Creating job for userId={}", sanitize(userId));
-        }
+        log.info("Creating job for userId={}", sanitize(userId));
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -124,9 +123,7 @@ public class JobService {
     })
     @Transactional
     public JobResponse updateJob(UUID userId, UUID jobId, UpdateJobRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Updating jobId={} by userId={}", sanitize(jobId), sanitize(userId));
-        }
+        log.info("Updating jobId={} by userId={}", sanitize(jobId), sanitize(userId));
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -169,9 +166,7 @@ public class JobService {
     })
     @Transactional
     public void softDeleteJob(UUID userId, UUID jobId) {
-        if (log.isInfoEnabled()) {
-            log.info("Soft-deleting jobId={} by userId={}", sanitize(jobId), sanitize(userId));
-        }
+        log.info("Soft-deleting jobId={} by userId={}", sanitize(jobId), sanitize(userId));
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -193,9 +188,7 @@ public class JobService {
     })
     @Transactional
     public JobResponse closeJob(UUID userId, UUID jobId) {
-        if (log.isInfoEnabled()) {
-            log.info("Closing jobId={} by userId={}", sanitize(jobId), sanitize(userId));
-        }
+        log.info("Closing jobId={} by userId={}", sanitize(jobId), sanitize(userId));
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 
@@ -221,10 +214,8 @@ public class JobService {
     })
     @Transactional
     public JobResponse processApproval(UUID adminUserId, UUID jobId, JobApprovalRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Processing job approval: jobId={}, decision={}, adminUserId={}",
-                    sanitize(jobId), sanitize(req.getDecision()), sanitize(adminUserId));
-        }
+        log.info("Processing job approval: jobId={}, decision={}, adminUserId={}",
+                sanitize(jobId), sanitize(req.getDecision()), sanitize(adminUserId));
         Job job = jobRepository.findByIdAndDeletedAtIsNull(jobId)
                 .orElseThrow(() -> new ResourceNotFoundException("Job", jobId));
 

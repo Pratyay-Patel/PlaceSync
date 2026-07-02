@@ -31,6 +31,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class RecruiterService {
@@ -55,9 +56,7 @@ public class RecruiterService {
     @Auditable(action = AuditAction.UPDATE, entityType = "RecruiterProfile")
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Updating recruiter profile for userId={}", sanitize(userId));
-        }
+        log.info("Updating recruiter profile for userId={}", sanitize(userId));
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -87,10 +86,8 @@ public class RecruiterService {
     @Transactional
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
-                    sanitize(recruiterId), sanitize(req.getDecision()), sanitize(adminUserId));
-        }
+        log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
+                sanitize(recruiterId), sanitize(req.getDecision()), sanitize(adminUserId));
         RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, recruiterId));
 

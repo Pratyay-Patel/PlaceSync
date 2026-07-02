@@ -39,6 +39,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class ApplicationService {
@@ -66,9 +67,7 @@ public class ApplicationService {
     @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
     public ApplicationResponse apply(UUID userId, ApplyRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Student userId={} applying to jobId={}", sanitize(userId), sanitize(req.getJobId()));
-        }
+        log.info("Student userId={} applying to jobId={}", sanitize(userId), sanitize(req.getJobId()));
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -161,9 +160,7 @@ public class ApplicationService {
     @Auditable(action = AuditAction.UPDATE, entityType = "Application")
     @Transactional
     public ApplicationResponse updateStatus(UUID userId, UUID applicationId, UpdateApplicationStatusRequest req) {
-        if (log.isInfoEnabled()) {
-            log.info("Updating applicationId={} status to {} by userId={}", sanitize(applicationId), sanitize(req.getStatus()), sanitize(userId));
-        }
+        log.info("Updating applicationId={} status to {} by userId={}", sanitize(applicationId), sanitize(req.getStatus()), sanitize(userId));
         RecruiterProfile recruiter = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", userId));
 

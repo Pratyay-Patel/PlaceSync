@@ -21,6 +21,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -79,8 +80,6 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(UUID userId) {
         int updated = notificationRepository.markAllAsRead(userId, OffsetDateTime.now());
-        if (log.isInfoEnabled()) {
-            log.info("Marked {} notifications as read for userId={}", updated, sanitize(userId));
-        }
+        log.info("Marked {} notifications as read for userId={}", updated, sanitize(userId));
     }
 }
