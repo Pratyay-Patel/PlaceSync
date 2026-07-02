@@ -2,7 +2,7 @@
 # PlaceSync — SaaS Placement Management Platform
 
 **Version:** 2.0.0
-**Last updated:** 2026-06-28
+**Last updated:** 2026-07-02
 **Author:** Pratyay Patel
 
 ---
@@ -28,7 +28,7 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 1 | Project bootstrap & infrastructure | ✅ Complete | `feat/backend` |
 | 2 | Database layer + Auth/User/Recruiter/Company modules | ✅ Complete | `feat/database-layer` |
 | 3 | Jobs, Applications, Interviews, Resumes + Redis caching | ✅ Complete | `feat/job-application-layer` |
-| 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ⬜ Not started | `feat/notification-kafka` |
+| 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ✅ Complete | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ⬜ Not started | `feat/analytics-s3-email` |
 | 6 | Testing suite + CI/CD + Nginx + Production hardening | ⬜ Not started | `feat/cicd-production` |
 | 7 | Frontend — React + TypeScript + Vite | ⬜ Not started | `feat/frontend` |
@@ -372,8 +372,8 @@ All 18 tables created with full constraints, indexes, and triggers:
 
 ## Phase 4 — Infrastructure Hardening + Notifications + Kafka + Admin Module
 
-**Status:** ⬜ Not started
-**Planned branch:** `feat/notification-kafka`
+**Status:** ✅ Complete
+**Branch:** `feat/notification-kafka` → merged to `main`
 **Depends on:** Phase 3
 
 ### Scope
@@ -895,27 +895,27 @@ Inject `KafkaEventPublisher` into `ApplicationService` and `InterviewService`. P
 ---
 
 ### Phase 4 acceptance criteria
-- [ ] SonarLint enabled in IDE; no blocker/critical findings in new code
+- [x] SonarLint enabled in IDE; no blocker/critical findings in new code
 - [x] `mvn verify` passes including all new unit tests
-- [ ] MapStruct mappers compile cleanly; no manual mapping code remains in service classes
-- [ ] Request/response log lines include `correlationId` field
-- [ ] `GET /api/v1/jobs?keyword=backend&locationType=REMOTE` returns filtered results
-- [ ] Invalid application status transition returns 400 with descriptive message
-- [ ] `@Auditable`-annotated methods produce rows in `audit_log` with `old_values` and `new_values`
-- [ ] Login success/failure recorded in `audit_log`
-- [ ] `GET /api/v1/admin/audit-log?entityType=Job&from=2026-01-01` returns paginated results
-- [ ] Admin can deactivate a user; deactivated user's login returns 401
-- [ ] Admin can search users by email partial match
-- [ ] Admin can view all applications and all interviews across all users
-- [ ] `docker-compose up` brings up PostgreSQL + Redis + Kafka + API (all healthy)
-- [ ] Student receives in-app notification after applying to a job
-- [ ] Student receives in-app notification when application status changes
-- [ ] Student receives in-app notification when interview is scheduled
-- [ ] Notifications visible at `GET /api/v1/notifications`
-- [ ] Unread count decrements on `PATCH /api/v1/notifications/{id}/read`
-- [ ] Kafka fallback verified: shutting down Kafka container does not prevent notifications from being created
-- [ ] Service layer unit test suite runs in < 30 seconds
-- [ ] Merged to `main` via PR
+- [x] MapStruct mappers compile cleanly; no manual mapping code remains in service classes
+- [x] Request/response log lines include `correlationId` field
+- [x] `GET /api/v1/jobs?keyword=backend&locationType=REMOTE` returns filtered results
+- [x] Invalid application status transition returns 400 with descriptive message
+- [x] `@Auditable`-annotated methods produce rows in `audit_log` with `old_values` and `new_values`
+- [x] Login success/failure recorded in `audit_log`
+- [x] `GET /api/v1/admin/audit-log?entityType=Job&from=2026-01-01` returns paginated results
+- [x] Admin can deactivate a user; deactivated user's login returns 401
+- [x] Admin can search users by email partial match
+- [x] Admin can view all applications and all interviews across all users
+- [x] `docker-compose up` brings up PostgreSQL + Redis + Kafka + API (all healthy)
+- [x] Student receives in-app notification after applying to a job
+- [x] Student receives in-app notification when application status changes
+- [x] Student receives in-app notification when interview is scheduled
+- [x] Notifications visible at `GET /api/v1/notifications`
+- [x] Unread count decrements on `PATCH /api/v1/notifications/{id}/read`
+- [x] Kafka fallback verified: shutting down Kafka container does not prevent notifications from being created
+- [x] Service layer unit test suite runs in < 30 seconds (129 tests, 0 failures)
+- [x] Merged to `main` via PR — SonarCloud quality gate passed at 90.32% coverage
 
 ---
 
