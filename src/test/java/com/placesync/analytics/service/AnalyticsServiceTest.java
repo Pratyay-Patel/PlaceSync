@@ -125,8 +125,8 @@ class AnalyticsServiceTest {
         var result = analyticsService.getDepartmentBreakdown();
 
         assertThat(result).hasSize(1);
-        assertThat(result.get(0).placedCount()).isEqualTo(0L);
-        assertThat(result.get(0).placementRate()).isEqualTo(0.0);
+        assertThat(result.get(0).placedCount()).isZero();
+        assertThat(result.get(0).placementRate()).isZero();
     }
 
     @Test
@@ -161,9 +161,9 @@ class AnalyticsServiceTest {
 
         var result = analyticsService.getRecruiterStats(userId);
 
-        assertThat(result.totalApplications()).isEqualTo(0L);
-        assertThat(result.shortlisted()).isEqualTo(0L);
-        assertThat(result.offers()).isEqualTo(0L);
+        assertThat(result.totalApplications()).isZero();
+        assertThat(result.shortlisted()).isZero();
+        assertThat(result.offers()).isZero();
     }
 
     @Test

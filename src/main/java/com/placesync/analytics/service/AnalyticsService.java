@@ -17,6 +17,8 @@ import com.placesync.user.entity.UserRole;
 import com.placesync.user.repository.StudentProfileRepository;
 import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+
+import static com.placesync.common.util.LogSanitizer.sanitize;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cache.CacheManager;
@@ -104,7 +106,7 @@ public class AnalyticsService {
     @Cacheable(value = "recruiter-analytics", key = "#userId")
     @Transactional(readOnly = true)
     public RecruiterStatsResponse getRecruiterStats(UUID userId) {
-        log.info("Computing recruiter analytics for userId={}", userId);
+        log.info("Computing recruiter analytics for userId={}", sanitize(userId));
         var profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Recruiter profile not found"));
         UUID recruiterId = profile.getId();
