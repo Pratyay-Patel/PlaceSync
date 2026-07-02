@@ -43,8 +43,10 @@ public class CacheConfig {
         return RedisCacheManager.builder(connectionFactory)
                 .cacheDefaults(defaults.entryTtl(Duration.ofMinutes(5)))
                 .withInitialCacheConfigurations(Map.of(
-                        "job-listings", defaults.entryTtl(Duration.ofMinutes(5)),
-                        "job-detail",   defaults.entryTtl(Duration.ofMinutes(10))
+                        "job-listings",          defaults.entryTtl(Duration.ofMinutes(5)),
+                        "job-detail",            defaults.entryTtl(Duration.ofMinutes(10)),
+                        "analytics-dashboard",   defaults.entryTtl(Duration.ofMinutes(10)),
+                        "recruiter-analytics",   defaults.entryTtl(Duration.ofMinutes(10))
                 ))
                 .build();
     }
