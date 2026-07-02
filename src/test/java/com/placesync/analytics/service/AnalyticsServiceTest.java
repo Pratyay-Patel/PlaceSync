@@ -26,6 +26,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.*;
 
@@ -201,17 +202,18 @@ class AnalyticsServiceTest {
     @Test
     void onOfferReleased_nullCache_doesNotThrow() {
         when(cacheManager.getCache("analytics-dashboard")).thenReturn(null);
+        OfferReleasedEvent event = OfferReleasedEvent.of(UUID.randomUUID(), UUID.randomUUID(), "SWE", "Acme");
 
-        analyticsService.onOfferReleased(OfferReleasedEvent.of(
-                UUID.randomUUID(), UUID.randomUUID(), "SWE", "Acme"));
+        assertThatNoException().isThrownBy(() -> analyticsService.onOfferReleased(event));
     }
 
     @Test
     void onApplicationStatusChanged_nullCache_doesNotThrow() {
         when(cacheManager.getCache("recruiter-analytics")).thenReturn(null);
-
-        analyticsService.onApplicationStatusChanged(ApplicationStatusChangedEvent.of(
+        ApplicationStatusChangedEvent event = ApplicationStatusChangedEvent.of(
                 UUID.randomUUID(), UUID.randomUUID(),
-                ApplicationStatus.APPLIED, ApplicationStatus.SHORTLISTED));
+                ApplicationStatus.APPLIED, ApplicationStatus.SHORTLISTED);
+
+        assertThatNoException().isThrownBy(() -> analyticsService.onApplicationStatusChanged(event));
     }
 }
