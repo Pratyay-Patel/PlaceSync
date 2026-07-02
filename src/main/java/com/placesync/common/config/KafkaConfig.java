@@ -1,5 +1,6 @@
 package com.placesync.common.config;
 
+import com.placesync.common.kafka.KafkaTopics;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
@@ -15,17 +16,17 @@ public class KafkaConfig {
 
     @Bean
     public NewTopic applicationEventsTopic() {
-        return TopicBuilder.name("application-events").partitions(3).replicas(1).build();
+        return TopicBuilder.name(KafkaTopics.APPLICATION_EVENTS).partitions(3).replicas(1).build();
     }
 
     @Bean
     public NewTopic interviewEventsTopic() {
-        return TopicBuilder.name("interview-events").partitions(3).replicas(1).build();
+        return TopicBuilder.name(KafkaTopics.INTERVIEW_EVENTS).partitions(3).replicas(1).build();
     }
 
     @Bean
     public NewTopic offerEventsTopic() {
-        return TopicBuilder.name("offer-events").partitions(3).replicas(1).build();
+        return TopicBuilder.name(KafkaTopics.OFFER_EVENTS).partitions(3).replicas(1).build();
     }
 
     @Bean

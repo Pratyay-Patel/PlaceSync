@@ -56,13 +56,13 @@ public class KafkaEventPublisher {
 
     private String resolveTopic(DomainEvent event) {
         return switch (event) {
-            case ApplicationSubmittedEvent ignored -> "application-events";
-            case ApplicationStatusChangedEvent ignored -> "application-events";
-            case OfferReleasedEvent ignored -> "offer-events";
-            case InterviewScheduledEvent ignored -> "interview-events";
-            case InterviewRescheduledEvent ignored -> "interview-events";
-            case InterviewCancelledEvent ignored -> "interview-events";
-            case RecruiterVerifiedEvent ignored -> "application-events";
+            case ApplicationSubmittedEvent ignored -> KafkaTopics.APPLICATION_EVENTS;
+            case ApplicationStatusChangedEvent ignored -> KafkaTopics.APPLICATION_EVENTS;
+            case OfferReleasedEvent ignored -> KafkaTopics.OFFER_EVENTS;
+            case InterviewScheduledEvent ignored -> KafkaTopics.INTERVIEW_EVENTS;
+            case InterviewRescheduledEvent ignored -> KafkaTopics.INTERVIEW_EVENTS;
+            case InterviewCancelledEvent ignored -> KafkaTopics.INTERVIEW_EVENTS;
+            case RecruiterVerifiedEvent ignored -> KafkaTopics.APPLICATION_EVENTS;
             default -> null;
         };
     }

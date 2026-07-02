@@ -1,6 +1,7 @@
 package com.placesync.notification.consumer;
 
 import com.placesync.common.event.*;
+import com.placesync.common.kafka.KafkaTopics;
 import com.placesync.notification.entity.NotificationType;
 import com.placesync.notification.service.NotificationService;
 import lombok.RequiredArgsConstructor;
@@ -16,15 +17,12 @@ public class NotificationConsumer {
 
     private static final Logger log = LoggerFactory.getLogger(NotificationConsumer.class);
 
-    private static final String TOPIC_APPLICATION_EVENTS = "application-events";
-    private static final String TOPIC_INTERVIEW_EVENTS = "interview-events";
-    private static final String TOPIC_OFFER_EVENTS = "offer-events";
     private static final String REF_APPLICATION = "Application";
     private static final String REF_INTERVIEW = "Interview";
 
     private final NotificationService notificationService;
 
-    @KafkaListener(topics = {TOPIC_APPLICATION_EVENTS, TOPIC_INTERVIEW_EVENTS, TOPIC_OFFER_EVENTS},
+    @KafkaListener(topics = {KafkaTopics.APPLICATION_EVENTS, KafkaTopics.INTERVIEW_EVENTS, KafkaTopics.OFFER_EVENTS},
             groupId = "${spring.kafka.consumer.group-id:notification-group}")
     public void consume(ConsumerRecord<String, Object> record) {
         Object payload = record.value();
