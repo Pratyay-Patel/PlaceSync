@@ -104,7 +104,8 @@ class AdminUserServiceTest {
     void updateUserStatus_userNotFound_throwsResourceNotFoundException() {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> adminUserService.updateUserStatus(userId, new UpdateUserStatusRequest()))
+        UpdateUserStatusRequest statusReq = new UpdateUserStatusRequest();
+        assertThatThrownBy(() -> adminUserService.updateUserStatus(userId, statusReq))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 }

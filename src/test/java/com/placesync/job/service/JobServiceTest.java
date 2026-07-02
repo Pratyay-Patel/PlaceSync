@@ -90,7 +90,8 @@ class JobServiceTest {
         recruiter.setVerificationStatus(VerificationStatus.PENDING_VERIFICATION);
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
 
-        assertThatThrownBy(() -> jobService.createJob(userId, createJobRequest()))
+        CreateJobRequest jobReq = createJobRequest();
+        assertThatThrownBy(() -> jobService.createJob(userId, jobReq))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("verified");
     }
@@ -102,7 +103,8 @@ class JobServiceTest {
         recruiter.setCompany(null);
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
 
-        assertThatThrownBy(() -> jobService.createJob(userId, createJobRequest()))
+        CreateJobRequest jobReq2 = createJobRequest();
+        assertThatThrownBy(() -> jobService.createJob(userId, jobReq2))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("company");
     }
@@ -135,7 +137,8 @@ class JobServiceTest {
         when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(other));
 
-        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, new UpdateJobRequest()))
+        UpdateJobRequest updateReq = new UpdateJobRequest();
+        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, updateReq))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -147,7 +150,8 @@ class JobServiceTest {
         when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
 
-        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, new UpdateJobRequest()))
+        UpdateJobRequest updateReq2 = new UpdateJobRequest();
+        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, updateReq2))
                 .isInstanceOf(ConflictException.class);
     }
 

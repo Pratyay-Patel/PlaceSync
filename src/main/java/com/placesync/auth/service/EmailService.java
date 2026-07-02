@@ -20,10 +20,10 @@ public class EmailService {
     }
 
     public void sendRecruiterApprovedEmail(String to, String recruiterName) {
-        log.info("[EMAIL STUB] Recruiter approved email → {}", to);
+        log.info("[EMAIL STUB] Recruiter approved email → {} ({})", to, recruiterName);
     }
 
     public void sendRecruiterRejectedEmail(String to, String recruiterName, String reason) {
-        log.info("[EMAIL STUB] Recruiter rejected email → {}", to);
+        log.info("[EMAIL STUB] Recruiter rejected email → {} ({}) reason={}", to, recruiterName, reason);
     }
 }

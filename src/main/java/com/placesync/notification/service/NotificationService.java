@@ -79,6 +79,8 @@ public class NotificationService {
     @Transactional
     public void markAllAsRead(UUID userId) {
         int updated = notificationRepository.markAllAsRead(userId, OffsetDateTime.now());
-        log.info("Marked {} notifications as read for userId={}", updated, sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Marked {} notifications as read for userId={}", updated, sanitize(userId));
+        }
     }
 }

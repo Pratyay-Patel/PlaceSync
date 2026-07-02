@@ -55,7 +55,9 @@ public class RecruiterService {
     @Auditable(action = AuditAction.UPDATE, entityType = "RecruiterProfile")
     @Transactional
     public RecruiterProfileResponse updateProfile(UUID userId, UpdateRecruiterProfileRequest req) {
-        log.info("Updating recruiter profile for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Updating recruiter profile for userId={}", sanitize(userId));
+        }
         RecruiterProfile profile = recruiterProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, userId));
 
@@ -85,8 +87,10 @@ public class RecruiterService {
     @Transactional
     public RecruiterProfileResponse processVerification(UUID adminUserId, UUID recruiterId,
                                                         RecruiterVerificationRequest req) {
-        log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
-                sanitize(recruiterId), sanitize(req.getDecision()), sanitize(adminUserId));
+        if (log.isInfoEnabled()) {
+            log.info("Processing recruiter verification: recruiterId={}, decision={}, adminUserId={}",
+                    sanitize(recruiterId), sanitize(req.getDecision()), sanitize(adminUserId));
+        }
         RecruiterProfile profile = recruiterProfileRepository.findById(recruiterId)
                 .orElseThrow(() -> new ResourceNotFoundException(RECRUITER_PROFILE, recruiterId));
 

@@ -25,7 +25,9 @@ public class NotificationFallbackListener {
     @Transactional
     public void onKafkaDeliveryFailed(KafkaDeliveryFailedEvent wrapper) {
         DomainEvent event = wrapper.domainEvent();
-        log.warn("Kafka delivery failed — creating notification via fallback for event={}", event.eventType());
+        if (log.isWarnEnabled()) {
+            log.warn("Kafka delivery failed — creating notification via fallback for event={}", event.eventType());
+        }
         try {
             dispatch(event);
         } catch (Exception e) {

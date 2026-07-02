@@ -39,7 +39,9 @@ public class UserService {
 
     @Transactional
     public StudentProfileResponse updateProfile(UUID userId, UpdateStudentProfileRequest req) {
-        log.info("Updating student profile for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Updating student profile for userId={}", sanitize(userId));
+        }
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -62,7 +64,9 @@ public class UserService {
 
     @Transactional
     public void addSkill(UUID userId, StudentSkillRequest req) {
-        log.info("Adding skill for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Adding skill for userId={}", sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         if (studentSkillRepository.existsByStudentIdAndSkillName(profile.getId(), req.getSkillName())) {
             throw new ConflictException("Skill already added: " + req.getSkillName());
@@ -76,7 +80,9 @@ public class UserService {
 
     @Transactional
     public void removeSkill(UUID userId, UUID skillId) {
-        log.info("Removing skillId={} for userId={}", sanitize(skillId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Removing skillId={} for userId={}", sanitize(skillId), sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentSkill skill = studentSkillRepository.findById(skillId)
                 .orElseThrow(() -> new ResourceNotFoundException("Skill", skillId));
@@ -88,7 +94,9 @@ public class UserService {
 
     @Transactional
     public StudentEducation addEducation(UUID userId, StudentEducationRequest req) {
-        log.info("Adding education record for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Adding education record for userId={}", sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = StudentEducation.builder()
                 .student(profile)
@@ -104,7 +112,9 @@ public class UserService {
 
     @Transactional
     public StudentEducation updateEducation(UUID userId, UUID educationId, StudentEducationRequest req) {
-        log.info("Updating educationId={} for userId={}", sanitize(educationId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Updating educationId={} for userId={}", sanitize(educationId), sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = studentEducationRepository.findById(educationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Education", educationId));
@@ -122,7 +132,9 @@ public class UserService {
 
     @Transactional
     public void deleteEducation(UUID userId, UUID educationId) {
-        log.info("Deleting educationId={} for userId={}", sanitize(educationId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Deleting educationId={} for userId={}", sanitize(educationId), sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = studentEducationRepository.findById(educationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Education", educationId));
@@ -134,7 +146,9 @@ public class UserService {
 
     @Transactional
     public StudentExperience addExperience(UUID userId, StudentExperienceRequest req) {
-        log.info("Adding experience record for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Adding experience record for userId={}", sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = StudentExperience.builder()
                 .student(profile)
@@ -150,7 +164,9 @@ public class UserService {
 
     @Transactional
     public StudentExperience updateExperience(UUID userId, UUID experienceId, StudentExperienceRequest req) {
-        log.info("Updating experienceId={} for userId={}", sanitize(experienceId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Updating experienceId={} for userId={}", sanitize(experienceId), sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = studentExperienceRepository.findById(experienceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Experience", experienceId));
@@ -168,7 +184,9 @@ public class UserService {
 
     @Transactional
     public void deleteExperience(UUID userId, UUID experienceId) {
-        log.info("Deleting experienceId={} for userId={}", sanitize(experienceId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Deleting experienceId={} for userId={}", sanitize(experienceId), sanitize(userId));
+        }
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = studentExperienceRepository.findById(experienceId)
                 .orElseThrow(() -> new ResourceNotFoundException("Experience", experienceId));

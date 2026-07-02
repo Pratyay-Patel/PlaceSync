@@ -103,7 +103,8 @@ class CompanyServiceTest {
         UUID otherUserId = UUID.randomUUID();
         when(companyRepository.findByIdAndDeletedAtIsNull(companyId)).thenReturn(Optional.of(company));
 
-        assertThatThrownBy(() -> companyService.updateCompany(otherUserId, companyId, new UpdateCompanyRequest()))
+        UpdateCompanyRequest companyReq = new UpdateCompanyRequest();
+        assertThatThrownBy(() -> companyService.updateCompany(otherUserId, companyId, companyReq))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -125,7 +126,8 @@ class CompanyServiceTest {
         Company company = pendingCompany(creator);
         when(companyRepository.findByIdAndDeletedAtIsNull(companyId)).thenReturn(Optional.of(company));
 
-        assertThatThrownBy(() -> companyService.softDeleteCompany(UUID.randomUUID(), companyId))
+        UUID randomId = UUID.randomUUID();
+        assertThatThrownBy(() -> companyService.softDeleteCompany(randomId, companyId))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

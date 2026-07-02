@@ -19,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -39,12 +38,14 @@ public class ResumeService {
         return resumeRepository.findByStudentIdAndDeletedAtIsNullOrderByUploadedAtDesc(student.getId())
                 .stream()
                 .map(resumeMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional
     public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
-        log.info("Creating resume for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Creating resume for userId={}", sanitize(userId));
+        }
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -73,7 +74,9 @@ public class ResumeService {
 
     @Transactional
     public ResumeResponse setDefault(UUID userId, UUID resumeId) {
-        log.info("Setting resumeId={} as default for userId={}", sanitize(resumeId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Setting resumeId={} as default for userId={}", sanitize(resumeId), sanitize(userId));
+        }
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
@@ -99,7 +102,9 @@ public class ResumeService {
 
     @Transactional
     public void softDelete(UUID userId, UUID resumeId) {
-        log.info("Soft-deleting resumeId={} for userId={}", sanitize(resumeId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Soft-deleting resumeId={} for userId={}", sanitize(resumeId), sanitize(userId));
+        }
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 

@@ -128,7 +128,8 @@ class InterviewServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(other));
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.of(application));
 
-        assertThatThrownBy(() -> interviewService.scheduleInterview(userId, applicationId, new ScheduleInterviewRequest()))
+        ScheduleInterviewRequest schedReq = new ScheduleInterviewRequest();
+        assertThatThrownBy(() -> interviewService.scheduleInterview(userId, applicationId, schedReq))
                 .isInstanceOf(AccessDeniedException.class);
     }
 
@@ -159,7 +160,8 @@ class InterviewServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
         when(interviewRepository.findById(interviewId)).thenReturn(Optional.of(interview));
 
-        assertThatThrownBy(() -> interviewService.rescheduleInterview(userId, interviewId, new UpdateInterviewRequest()))
+        UpdateInterviewRequest updateReq = new UpdateInterviewRequest();
+        assertThatThrownBy(() -> interviewService.rescheduleInterview(userId, interviewId, updateReq))
                 .isInstanceOf(ConflictException.class);
     }
 
@@ -190,7 +192,8 @@ class InterviewServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
         when(interviewRepository.findById(interviewId)).thenReturn(Optional.of(interview));
 
-        assertThatThrownBy(() -> interviewService.cancelInterview(userId, interviewId, new CancelInterviewRequest()))
+        CancelInterviewRequest cancelReq = new CancelInterviewRequest();
+        assertThatThrownBy(() -> interviewService.cancelInterview(userId, interviewId, cancelReq))
                 .isInstanceOf(ConflictException.class);
     }
 
@@ -203,7 +206,8 @@ class InterviewServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
         when(interviewRepository.findById(interviewId)).thenReturn(Optional.of(interview));
 
-        assertThatThrownBy(() -> interviewService.cancelInterview(userId, interviewId, new CancelInterviewRequest()))
+        CancelInterviewRequest cancelReq2 = new CancelInterviewRequest();
+        assertThatThrownBy(() -> interviewService.cancelInterview(userId, interviewId, cancelReq2))
                 .isInstanceOf(ConflictException.class);
     }
 
@@ -241,7 +245,8 @@ class InterviewServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
         when(applicationRepository.findById(applicationId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> interviewService.scheduleInterview(userId, applicationId, new ScheduleInterviewRequest()))
+        ScheduleInterviewRequest schedReq2 = new ScheduleInterviewRequest();
+        assertThatThrownBy(() -> interviewService.scheduleInterview(userId, applicationId, schedReq2))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

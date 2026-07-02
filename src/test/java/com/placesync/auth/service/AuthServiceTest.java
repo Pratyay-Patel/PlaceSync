@@ -122,7 +122,8 @@ class AuthServiceTest {
     void register_duplicateEmail_throwsConflictException() {
         when(userRepository.existsByEmail("recruiter@test.com")).thenReturn(true);
 
-        assertThatThrownBy(() -> authService.register(recruiterRegisterRequest()))
+        RegisterRequest req = recruiterRegisterRequest();
+        assertThatThrownBy(() -> authService.register(req))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("already registered");
     }
@@ -378,7 +379,8 @@ class AuthServiceTest {
         when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
         when(passwordEncoder.matches("wrong", "hashed")).thenReturn(false);
 
-        assertThatThrownBy(() -> authService.changePassword(user.getId(), req))
+        UUID userId = user.getId();
+        assertThatThrownBy(() -> authService.changePassword(userId, req))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessageContaining("Current password is incorrect");
     }

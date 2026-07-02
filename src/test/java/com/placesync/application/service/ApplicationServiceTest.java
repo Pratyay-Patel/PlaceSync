@@ -198,7 +198,8 @@ class ApplicationServiceTest {
     void apply_studentNotFound_throwsResourceNotFoundException() {
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> applicationService.apply(userId, new ApplyRequest()))
+        ApplyRequest applyReq = new ApplyRequest();
+        assertThatThrownBy(() -> applicationService.apply(userId, applyReq))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
@@ -334,7 +335,8 @@ class ApplicationServiceTest {
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
         when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
 
-        assertThatThrownBy(() -> applicationService.getJobApplications(userId, jobId, Pageable.unpaged()))
+        Pageable pageable = Pageable.unpaged();
+        assertThatThrownBy(() -> applicationService.getJobApplications(userId, jobId, pageable))
                 .isInstanceOf(AccessDeniedException.class);
     }
 

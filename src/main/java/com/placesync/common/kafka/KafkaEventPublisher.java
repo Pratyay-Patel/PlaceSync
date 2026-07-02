@@ -3,7 +3,7 @@ package com.placesync.common.kafka;
 import com.placesync.common.event.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.scheduling.annotation.Async;
@@ -17,12 +17,12 @@ public class KafkaEventPublisher {
     private static final Logger log = LoggerFactory.getLogger(KafkaEventPublisher.class);
 
     private final ApplicationEventPublisher applicationEventPublisher;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
 
-    @Autowired(required = false)
-    private KafkaTemplate<String, Object> kafkaTemplate;
-
-    public KafkaEventPublisher(ApplicationEventPublisher applicationEventPublisher) {
+    public KafkaEventPublisher(ApplicationEventPublisher applicationEventPublisher,
+                               ObjectProvider<KafkaTemplate<String, Object>> kafkaTemplateProvider) {
         this.applicationEventPublisher = applicationEventPublisher;
+        this.kafkaTemplate = kafkaTemplateProvider.getIfAvailable();
     }
 
     public void publish(DomainEvent event) {
@@ -33,13 +33,17 @@ public class KafkaEventPublisher {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void handleDomainEvent(DomainEvent event) {
         if (kafkaTemplate == null) {
-            log.debug("KafkaTemplate not available — routing {} via fallback", event.eventType());
+            if (log.isDebugEnabled()) {
+                log.debug("KafkaTemplate not available — routing {} via fallback", event.eventType());
+            }
             applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
             return;
         }
         String topic = resolveTopic(event);
         if (topic == null) {
-            log.warn("No topic mapping for event type: {}", event.eventType());
+            if (log.isWarnEnabled()) {
+                log.warn("No topic mapping for event type: {}", event.eventType());
+            }
             return;
         }
         kafkaTemplate.send(topic, event.eventId().toString(), event)

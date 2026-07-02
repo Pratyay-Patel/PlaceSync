@@ -58,7 +58,9 @@ public class CompanyService {
     @Auditable(action = AuditAction.CREATE, entityType = "Company")
     @Transactional
     public CompanyResponse createCompany(UUID userId, CreateCompanyRequest req) {
-        log.info("Creating company for userId={}", sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Creating company for userId={}", sanitize(userId));
+        }
         if (companyRepository.existsByNameAndDeletedAtIsNull(req.getName())) {
             throw new ConflictException("A company with this name already exists: " + req.getName());
         }
@@ -81,7 +83,9 @@ public class CompanyService {
 
     @Transactional
     public CompanyResponse updateCompany(UUID userId, UUID companyId, UpdateCompanyRequest req) {
-        log.info("Updating companyId={} by userId={}", sanitize(companyId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Updating companyId={} by userId={}", sanitize(companyId), sanitize(userId));
+        }
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
@@ -105,7 +109,9 @@ public class CompanyService {
     @Auditable(action = AuditAction.SOFT_DELETE, entityType = "Company", entityIdParamIndex = 1)
     @Transactional
     public void softDeleteCompany(UUID userId, UUID companyId) {
-        log.info("Soft-deleting companyId={} by userId={}", sanitize(companyId), sanitize(userId));
+        if (log.isInfoEnabled()) {
+            log.info("Soft-deleting companyId={} by userId={}", sanitize(companyId), sanitize(userId));
+        }
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 
@@ -132,8 +138,10 @@ public class CompanyService {
     @Transactional
     public CompanyResponse processVerification(UUID adminUserId, UUID companyId,
                                                CompanyVerificationRequest req) {
-        log.info("Processing company verification: companyId={}, decision={}, adminUserId={}",
-                sanitize(companyId), sanitize(req.getDecision()), sanitize(adminUserId));
+        if (log.isInfoEnabled()) {
+            log.info("Processing company verification: companyId={}, decision={}, adminUserId={}",
+                    sanitize(companyId), sanitize(req.getDecision()), sanitize(adminUserId));
+        }
         Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
                 .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
 

@@ -24,14 +24,14 @@ public class NotificationConsumer {
 
     @KafkaListener(topics = {KafkaTopics.APPLICATION_EVENTS, KafkaTopics.INTERVIEW_EVENTS, KafkaTopics.OFFER_EVENTS},
             groupId = "${spring.kafka.consumer.group-id:notification-group}")
-    public void consume(ConsumerRecord<String, Object> record) {
-        Object payload = record.value();
+    public void consume(ConsumerRecord<String, Object> consumerRecord) {
+        Object payload = consumerRecord.value();
         try {
             dispatch(payload);
         } catch (Exception e) {
-            log.error("Notification creation failed for Kafka payload type={}: {}",
-                    payload != null ? payload.getClass().getSimpleName() : "null", e.getMessage(), e);
-            throw e;
+            throw new RuntimeException(
+                    "Failed to create notification for payload type="
+                    + (payload != null ? payload.getClass().getSimpleName() : "null"), e);
         }
     }
 

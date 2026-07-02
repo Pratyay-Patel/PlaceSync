@@ -57,8 +57,9 @@ class NotificationServiceTest {
     void createForUser_userNotFound_throwsResourceNotFoundException() {
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
+        UUID refId = UUID.randomUUID();
         assertThatThrownBy(() -> notificationService.createForUser(userId,
-                NotificationType.APPLICATION_SUBMITTED, "T", "B", UUID.randomUUID(), "Application"))
+                NotificationType.APPLICATION_SUBMITTED, "T", "B", refId, "Application"))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 

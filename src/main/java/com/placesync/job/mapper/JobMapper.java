@@ -10,7 +10,6 @@ import org.mapstruct.Mapping;
 import org.mapstruct.Named;
 
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Mapper(componentModel = "spring")
 public interface JobMapper {
@@ -30,11 +29,11 @@ public interface JobMapper {
 
     @Named("skillNames")
     default List<String> skillNames(List<JobRequiredSkill> skills) {
-        return skills.stream().map(JobRequiredSkill::getSkillName).collect(Collectors.toList());
+        return skills.stream().map(JobRequiredSkill::getSkillName).toList();
     }
 
     @Named("departmentNames")
     default List<String> departmentNames(List<JobEligibleDepartment> departments) {
-        return departments.stream().map(JobEligibleDepartment::getDepartmentName).collect(Collectors.toList());
+        return departments.stream().map(JobEligibleDepartment::getDepartmentName).toList();
     }
 }
