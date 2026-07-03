@@ -1,24 +1,33 @@
 package com.placesync.user.service;
 
+import com.placesync.application.repository.ApplicationRepository;
 import com.placesync.common.exception.ResourceNotFoundException;
-import com.placesync.user.dto.CreateResumeRequest;
+import com.placesync.common.storage.FileValidationService;
+import com.placesync.common.storage.S3StorageService;
+import com.placesync.recruiter.repository.RecruiterProfileRepository;
+import com.placesync.user.dto.ResumeDownloadUrlResponse;
 import com.placesync.user.dto.ResumeResponse;
-import com.placesync.user.mapper.ResumeMapper;
 import com.placesync.user.entity.Resume;
 import com.placesync.user.entity.StudentProfile;
+import com.placesync.user.entity.UserRole;
+import com.placesync.user.mapper.ResumeMapper;
 import com.placesync.user.repository.ResumeRepository;
 import com.placesync.user.repository.StudentProfileRepository;
-import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.UUID;
+
+import static com.placesync.common.util.LogSanitizer.sanitize;
 
 @SuppressWarnings("java:S2629")
 @Service
@@ -31,6 +40,13 @@ public class ResumeService {
     private final ResumeRepository resumeRepository;
     private final ResumeMapper resumeMapper;
     private final StudentProfileRepository studentProfileRepository;
+    private final RecruiterProfileRepository recruiterProfileRepository;
+    private final ApplicationRepository applicationRepository;
+    private final S3StorageService s3StorageService;
+    private final FileValidationService fileValidationService;
+
+    @Value("${app.aws.bucket-resumes}")
+    private String resumesBucket;
 
     @Transactional(readOnly = true)
     public List<ResumeResponse> getMyResumes(UUID userId) {
@@ -43,12 +59,14 @@ public class ResumeService {
     }
 
     @Transactional
-    public ResumeResponse createResume(UUID userId, CreateResumeRequest req) {
-        log.info("Creating resume for userId={}", sanitize(userId));
+    public ResumeResponse uploadResume(UUID userId, MultipartFile file, String label, boolean isDefault) {
+        log.info("Uploading resume for userId={}", sanitize(userId));
+        fileValidationService.validatePdf(file);
+
         StudentProfile student = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
-        if (Boolean.TRUE.equals(req.getIsDefault())) {
+        if (isDefault) {
             resumeRepository.findByStudentIdAndIsDefaultTrueAndDeletedAtIsNull(student.getId())
                     .ifPresent(existing -> {
                         existing.setIsDefault(false);
@@ -56,19 +74,58 @@ public class ResumeService {
                     });
         }
 
-        // Phase 3: placeholder s3Key — replaced by actual S3 key in Phase 5 after file upload
-        String placeholderS3Key = "pending/" + student.getId() + "/" + UUID.randomUUID();
+        UUID resumeId = UUID.randomUUID();
+        String s3Key = buildResumeKey(student.getId(), resumeId, file.getOriginalFilename());
+
+        try {
+            s3StorageService.uploadFile(resumesBucket, s3Key,
+                    file.getInputStream(), "application/pdf", file.getSize());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read uploaded file");
+        }
 
         Resume resume = Resume.builder()
+                .id(resumeId)
                 .student(student)
-                .label(req.getLabel())
-                .originalFilename(req.getOriginalFilename())
-                .s3Key(placeholderS3Key)
-                .fileSizeBytes(req.getFileSizeBytes())
-                .isDefault(Boolean.TRUE.equals(req.getIsDefault()))
+                .label(label)
+                .originalFilename(file.getOriginalFilename())
+                .s3Key(s3Key)
+                .fileSizeBytes(file.getSize())
+                .isDefault(isDefault)
                 .build();
 
         return resumeMapper.toResponse(resumeRepository.save(resume));
+    }
+
+    @Transactional(readOnly = true)
+    public ResumeDownloadUrlResponse getDownloadUrl(UUID callerId, UUID resumeId, UserRole callerRole) {
+        log.info("Generating download URL for resumeId={} callerId={}", sanitize(resumeId), sanitize(callerId));
+        Resume resume = resumeRepository.findById(resumeId)
+                .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
+
+        if (resume.getDeletedAt() != null) {
+            throw new ResourceNotFoundException("Resume", resumeId);
+        }
+
+        if (callerRole == UserRole.ROLE_STUDENT) {
+            StudentProfile caller = studentProfileRepository.findByUserId(callerId)
+                    .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, callerId));
+            if (!resume.getStudent().getId().equals(caller.getId())) {
+                throw new AccessDeniedException("Resume does not belong to you");
+            }
+        } else if (callerRole == UserRole.ROLE_RECRUITER) {
+            var recruiterProfile = recruiterProfileRepository.findByUserId(callerId)
+                    .orElseThrow(() -> new ResourceNotFoundException("RecruiterProfile", callerId));
+            long count = applicationRepository.countByStudentAndRecruiter(
+                    resume.getStudent().getId(), recruiterProfile.getId());
+            if (count == 0) {
+                throw new AccessDeniedException("Student has not applied to any of your jobs");
+            }
+        }
+
+        int expiryMinutes = 15;
+        String url = s3StorageService.generatePresignedGetUrl(resumesBucket, resume.getS3Key(), expiryMinutes);
+        return new ResumeDownloadUrlResponse(url, OffsetDateTime.now().plusMinutes(expiryMinutes));
     }
 
     @Transactional
@@ -118,5 +175,15 @@ public class ResumeService {
             resume.setIsDefault(false);
         }
         resumeRepository.save(resume);
+    }
+
+    private String buildResumeKey(UUID studentId, UUID resumeId, String originalFilename) {
+        String safe = (originalFilename != null)
+                ? originalFilename.replaceAll("[^a-zA-Z0-9._-]", "-")
+                : resumeId + ".pdf";
+        if (!safe.toLowerCase().endsWith(".pdf")) {
+            safe = safe.replaceAll("\\.[^.]*$", "") + ".pdf";
+        }
+        return "resumes/" + studentId + "/" + resumeId + "/" + safe;
     }
 }

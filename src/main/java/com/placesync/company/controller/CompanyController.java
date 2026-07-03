@@ -16,10 +16,12 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -75,6 +77,16 @@ public class CompanyController {
             @PathVariable UUID companyId) {
         companyService.softDeleteCompany(principal.getId(), companyId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(value = "/companies/{companyId}/logo", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasAuthority('ROLE_RECRUITER')")
+    @Operation(summary = "Upload company logo (JPEG or PNG, max 2 MB)")
+    public ResponseEntity<CompanyResponse> uploadLogo(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @PathVariable UUID companyId,
+            @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(companyService.uploadLogo(principal.getId(), companyId, file));
     }
 
     // ── Admin endpoints ───────────────────────────────────────────────────────

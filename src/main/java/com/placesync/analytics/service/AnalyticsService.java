@@ -111,7 +111,8 @@ public class AnalyticsService {
                 .orElseThrow(() -> new ResourceNotFoundException("Recruiter profile not found"));
         UUID recruiterId = profile.getId();
         long jobsPosted = jobRepository.countByRecruiterIdAndDeletedAtIsNull(recruiterId);
-        Object[] stats = applicationRepository.findRecruiterApplicationStats(recruiterId);
+        List<Object[]> statsList = applicationRepository.findRecruiterApplicationStats(recruiterId);
+        Object[] stats = statsList.isEmpty() ? new Object[]{0L, 0L, 0L} : statsList.get(0);
         long total = stats[0] != null ? ((Number) stats[0]).longValue() : 0L;
         long shortlisted = stats[1] != null ? ((Number) stats[1]).longValue() : 0L;
         long offers = stats[2] != null ? ((Number) stats[2]).longValue() : 0L;

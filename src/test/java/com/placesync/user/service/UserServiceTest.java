@@ -2,6 +2,8 @@ package com.placesync.user.service;
 
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.storage.FileValidationService;
+import com.placesync.common.storage.S3StorageService;
 import com.placesync.user.dto.*;
 import com.placesync.user.entity.*;
 import com.placesync.user.mapper.StudentProfileMapper;
@@ -11,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.util.List;
@@ -30,6 +33,8 @@ class UserServiceTest {
     @Mock StudentSkillRepository studentSkillRepository;
     @Mock StudentEducationRepository studentEducationRepository;
     @Mock StudentExperienceRepository studentExperienceRepository;
+    @Mock S3StorageService s3StorageService;
+    @Mock FileValidationService fileValidationService;
 
     @InjectMocks UserService userService;
 
@@ -288,5 +293,40 @@ class UserServiceTest {
         List<StudentExperience> result = userService.getExperience(userId);
 
         assertThat(result).isEmpty();
+    }
+
+    @Test
+    void uploadProfilePicture_validImage_savesKeyAndReturnsUrl() {
+        StudentProfile profile = studentProfile();
+        byte[] jpegHeader = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF, (byte) 0xE0, 0, 0, 0, 0};
+        MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", jpegHeader);
+        StudentProfileResponse baseResponse = StudentProfileResponse.builder()
+                .id(profile.getId())
+                .firstName("Test")
+                .lastName("User")
+                .institution("IIT")
+                .department("CS")
+                .graduationYear((short) 2025)
+                .build();
+
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentProfileRepository.save(any())).thenReturn(profile);
+        when(studentProfileMapper.toResponse(profile)).thenReturn(baseResponse);
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/pic");
+
+        StudentProfileResponse result = userService.uploadProfilePicture(userId, file);
+
+        verify(fileValidationService).validateProfileImage(file);
+        verify(s3StorageService).uploadFile(any(), any(), any(), any(), anyLong());
+        assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
+    }
+
+    @Test
+    void uploadProfilePicture_studentNotFound_throwsResourceNotFoundException() {
+        MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", new byte[]{});
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.uploadProfilePicture(userId, file))
+                .isInstanceOf(ResourceNotFoundException.class);
     }
 }

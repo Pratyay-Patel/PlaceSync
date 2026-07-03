@@ -8,7 +8,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class CompanyResponse {
 
     private UUID id;
@@ -17,6 +17,7 @@ public class CompanyResponse {
     private String websiteUrl;
     private String industry;
     private String headquarters;
+    private String logoUrl;
     private CompanyStatus status;
     private UUID createdById;
     private OffsetDateTime verifiedAt;

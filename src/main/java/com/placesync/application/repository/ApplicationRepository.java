@@ -53,6 +53,9 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID>,
             """, nativeQuery = true)
     List<Object[]> countOfferedByDepartment();
 
+    @Query(value = "SELECT COUNT(a.id) FROM applications a INNER JOIN jobs j ON j.id = a.job_id WHERE a.student_id = :studentId AND j.recruiter_id = :recruiterId", nativeQuery = true)
+    long countByStudentAndRecruiter(@Param("studentId") UUID studentId, @Param("recruiterId") UUID recruiterId);
+
     @Query(value = """
             SELECT COUNT(a.id),
                    SUM(CASE WHEN a.status = 'SHORTLISTED' THEN 1 ELSE 0 END),
@@ -61,5 +64,5 @@ public interface ApplicationRepository extends JpaRepository<Application, UUID>,
             INNER JOIN jobs j ON j.id = a.job_id
             WHERE j.recruiter_id = :recruiterId
             """, nativeQuery = true)
-    Object[] findRecruiterApplicationStats(@Param("recruiterId") UUID recruiterId);
+    List<Object[]> findRecruiterApplicationStats(@Param("recruiterId") UUID recruiterId);
 }

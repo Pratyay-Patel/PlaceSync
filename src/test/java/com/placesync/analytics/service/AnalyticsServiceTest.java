@@ -138,7 +138,7 @@ class AnalyticsServiceTest {
 
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(jobRepository.countByRecruiterIdAndDeletedAtIsNull(recruiterId)).thenReturn(8L);
-        when(applicationRepository.findRecruiterApplicationStats(recruiterId)).thenReturn(stats);
+        when(applicationRepository.findRecruiterApplicationStats(recruiterId)).thenReturn(List.<Object[]>of(stats));
 
         var result = analyticsService.getRecruiterStats(userId);
 
@@ -157,7 +157,7 @@ class AnalyticsServiceTest {
 
         when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(jobRepository.countByRecruiterIdAndDeletedAtIsNull(recruiterId)).thenReturn(0L);
-        when(applicationRepository.findRecruiterApplicationStats(recruiterId)).thenReturn(stats);
+        when(applicationRepository.findRecruiterApplicationStats(recruiterId)).thenReturn(List.<Object[]>of(stats));
 
         var result = analyticsService.getRecruiterStats(userId);
 

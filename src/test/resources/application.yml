@@ -37,6 +37,12 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
 
+app:
+  aws:
+    region: us-east-1
+    bucket-resumes: test-resumes
+    bucket-pictures: test-pictures
+
 logging:
   level:
     root: WARN

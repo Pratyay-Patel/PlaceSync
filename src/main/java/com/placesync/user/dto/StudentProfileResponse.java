@@ -10,7 +10,7 @@ import java.time.OffsetDateTime;
 import java.util.UUID;
 
 @Getter
-@Builder
+@Builder(toBuilder = true)
 public class StudentProfileResponse {
 
     private UUID id;
@@ -25,6 +25,7 @@ public class StudentProfileResponse {
     private Short graduationYear;
     private BigDecimal cgpa;
     private String bio;
+    private String profilePictureUrl;
     private boolean profilePublic;
     private OffsetDateTime createdAt;
     private OffsetDateTime updatedAt;

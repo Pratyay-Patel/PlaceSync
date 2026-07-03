@@ -81,6 +81,13 @@
             <artifactId>spring-kafka</artifactId>
         </dependency>
 
+        <!-- ─── AWS SDK v2 S3 ────────────────────────────────────────── -->
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.25.0</version>
+        </dependency>
+
         <!-- ─── Validation ───────────────────────────────────────────── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
