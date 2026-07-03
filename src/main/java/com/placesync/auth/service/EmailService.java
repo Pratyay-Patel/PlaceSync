@@ -114,7 +114,7 @@ public class EmailService {
             mailSender.send(message);
             log.info("Email sent template={}", template);
         } catch (MailException | MessagingException e) {
-            log.warn("Failed to send email template={}: {}", template, e.getMessage());
+            log.warn("Failed to send email template={}", template, e);
         }
     }
 }
