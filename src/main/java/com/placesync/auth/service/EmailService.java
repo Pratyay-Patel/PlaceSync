@@ -102,10 +102,9 @@ public class EmailService {
         send(to, "Your interview has been cancelled", "email/interview-cancelled", ctx);
     }
 
-    @SuppressWarnings("java:S5145")
     private void send(String to, String subject, String template, Context ctx) {
         try {
-            String html = templateEngine.process(template, ctx);
+            String html = templateEngine.process(template, ctx); // NOSONAR S5145: user data is intentionally rendered into email content, not into logs
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
             helper.setFrom(from);
