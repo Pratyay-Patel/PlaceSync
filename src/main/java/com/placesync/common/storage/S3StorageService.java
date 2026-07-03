@@ -10,11 +10,13 @@ import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import software.amazon.awssdk.services.s3.presigner.S3Presigner;
 import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 
 import java.io.InputStream;
 import java.time.Duration;
 
+import static com.placesync.common.util.LogSanitizer.sanitize;
+
+@SuppressWarnings("java:S2629")
 @Service
 @RequiredArgsConstructor
 public class S3StorageService {
@@ -25,7 +27,7 @@ public class S3StorageService {
     private final S3Presigner s3Presigner;
 
     public void uploadFile(String bucket, String key, InputStream content, String contentType, long contentLength) {
-        log.info("Uploading to S3 bucket={} key={}", bucket, key);
+        log.info("Uploading to S3 bucket={} key={}", sanitize(bucket), sanitize(key));
         PutObjectRequest request = PutObjectRequest.builder()
                 .bucket(bucket)
                 .key(key)
@@ -36,19 +38,14 @@ public class S3StorageService {
     }
 
     public String generatePresignedGetUrl(String bucket, String key, int expiryMinutes) {
-        GetObjectRequest getRequest = GetObjectRequest.builder()
-                .bucket(bucket)
-                .key(key)
-                .build();
-        GetObjectPresignRequest presignRequest = GetObjectPresignRequest.builder()
+        return s3Presigner.presignGetObject(r -> r
                 .signatureDuration(Duration.ofMinutes(expiryMinutes))
-                .getObjectRequest(getRequest)
-                .build();
-        return s3Presigner.presignGetObject(presignRequest).url().toString();
+                .getObjectRequest(o -> o.bucket(bucket).key(key)))
+                .url().toString();
     }
 
     public void deleteFile(String bucket, String key) {
-        log.info("Deleting from S3 bucket={} key={}", bucket, key);
+        log.info("Deleting from S3 bucket={} key={}", sanitize(bucket), sanitize(key));
         s3Client.deleteObject(DeleteObjectRequest.builder().bucket(bucket).key(key).build());
     }
 }

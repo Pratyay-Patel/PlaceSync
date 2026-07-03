@@ -24,6 +24,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,6 +37,7 @@ public class ResumeService {
 
     private static final Logger log = LoggerFactory.getLogger(ResumeService.class);
     private static final String STUDENT_PROFILE = "StudentProfile";
+    private static final String RESUME = "Resume";
 
     private final ResumeRepository resumeRepository;
     private final ResumeMapper resumeMapper;
@@ -101,10 +103,10 @@ public class ResumeService {
     public ResumeDownloadUrlResponse getDownloadUrl(UUID callerId, UUID resumeId, UserRole callerRole) {
         log.info("Generating download URL for resumeId={} callerId={}", sanitize(resumeId), sanitize(callerId));
         Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
+                .orElseThrow(() -> new ResourceNotFoundException(RESUME, resumeId));
 
         if (resume.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Resume", resumeId);
+            throw new ResourceNotFoundException(RESUME, resumeId);
         }
 
         if (callerRole == UserRole.ROLE_STUDENT) {
@@ -125,7 +127,7 @@ public class ResumeService {
 
         int expiryMinutes = 15;
         String url = s3StorageService.generatePresignedGetUrl(resumesBucket, resume.getS3Key(), expiryMinutes);
-        return new ResumeDownloadUrlResponse(url, OffsetDateTime.now().plusMinutes(expiryMinutes));
+        return new ResumeDownloadUrlResponse(url, OffsetDateTime.now(ZoneOffset.UTC).plusMinutes(expiryMinutes));
     }
 
     @Transactional
@@ -135,13 +137,13 @@ public class ResumeService {
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
+                .orElseThrow(() -> new ResourceNotFoundException(RESUME, resumeId));
 
         if (!resume.getStudent().getId().equals(student.getId())) {
             throw new AccessDeniedException("Resume does not belong to the student");
         }
         if (resume.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Resume", resumeId);
+            throw new ResourceNotFoundException(RESUME, resumeId);
         }
 
         resumeRepository.findByStudentIdAndIsDefaultTrueAndDeletedAtIsNull(student.getId())
@@ -161,16 +163,16 @@ public class ResumeService {
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
 
         Resume resume = resumeRepository.findById(resumeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Resume", resumeId));
+                .orElseThrow(() -> new ResourceNotFoundException(RESUME, resumeId));
 
         if (!resume.getStudent().getId().equals(student.getId())) {
             throw new AccessDeniedException("Resume does not belong to the student");
         }
         if (resume.getDeletedAt() != null) {
-            throw new ResourceNotFoundException("Resume", resumeId);
+            throw new ResourceNotFoundException(RESUME, resumeId);
         }
 
-        resume.setDeletedAt(OffsetDateTime.now());
+        resume.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
         if (Boolean.TRUE.equals(resume.getIsDefault())) {
             resume.setIsDefault(false);
         }

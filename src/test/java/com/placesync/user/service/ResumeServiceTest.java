@@ -102,8 +102,9 @@ class ResumeServiceTest {
     @Test
     void uploadResume_studentNotFound_throwsResourceNotFoundException() {
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        MockMultipartFile file = pdfFile();
 
-        assertThatThrownBy(() -> resumeService.uploadResume(userId, pdfFile(), "CV", false))
+        assertThatThrownBy(() -> resumeService.uploadResume(userId, file, "CV", false))
                 .isInstanceOf(ResourceNotFoundException.class);
     }
 
