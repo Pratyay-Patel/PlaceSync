@@ -14,6 +14,8 @@ import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
+import static com.placesync.common.util.LogSanitizer.sanitize;
+
 @Service
 @RequiredArgsConstructor
 public class EmailService {
@@ -112,9 +114,9 @@ public class EmailService {
             helper.setSubject(subject);
             helper.setText(html, true);
             mailSender.send(message);
-            log.info("Email sent template={} to={}", template, to);
+            log.info("Email sent template={} to={}", template, sanitize(to));
         } catch (MailException | MessagingException e) {
-            log.warn("Failed to send email template={} to={}: {}", template, to, e.getMessage());
+            log.warn("Failed to send email template={} to={}: {}", template, sanitize(to), e.getMessage());
         }
     }
 }
