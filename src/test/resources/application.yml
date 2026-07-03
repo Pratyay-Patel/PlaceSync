@@ -37,7 +37,14 @@ spring:
     exclude:
       - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
 
+  mail:
+    host: localhost
+    port: 25
+    username: test@localhost
+    password: test-password
+
 app:
+  base-url: http://localhost:8080
   aws:
     region: us-east-1
     bucket-resumes: test-resumes
