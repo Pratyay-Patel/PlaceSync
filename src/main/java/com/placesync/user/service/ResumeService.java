@@ -74,6 +74,7 @@ public class ResumeService {
                         existing.setIsDefault(false);
                         resumeRepository.save(existing);
                     });
+            resumeRepository.flush();
         }
 
         UUID resumeId = UUID.randomUUID();
@@ -151,6 +152,7 @@ public class ResumeService {
                     existing.setIsDefault(false);
                     resumeRepository.save(existing);
                 });
+        resumeRepository.flush();
 
         resume.setIsDefault(true);
         return resumeMapper.toResponse(resumeRepository.save(resume));
