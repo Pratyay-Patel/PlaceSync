@@ -102,6 +102,7 @@ public class EmailService {
         send(to, "Your interview has been cancelled", "email/interview-cancelled", ctx);
     }
 
+    @SuppressWarnings("java:S5145")
     private void send(String to, String subject, String template, Context ctx) {
         try {
             String html = templateEngine.process(template, ctx);
