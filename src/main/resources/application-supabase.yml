@@ -1,0 +1,21 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# Profile: supabase
+# Activate with: -Dspring-boot.run.profiles=dev,supabase
+#
+# Overrides the datasource to point at Supabase (transaction pooler, port 6543).
+# All three env vars must be set before running — load them from .env.prod first.
+#
+# PowerShell — load .env.prod then run:
+#   Get-Content .env.prod | ForEach-Object {
+#       if ($_ -match '^([A-Z_]+)=(.+)$') { Set-Item "env:$($matches[1])" $matches[2] }
+#   }
+#   mvn spring-boot:run "-Dspring-boot.run.profiles=dev,supabase"
+# ─────────────────────────────────────────────────────────────────────────────
+
+spring:
+  datasource:
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
+    hikari:
+      pool-name: PlaceSyncSupabasePool

@@ -26,6 +26,7 @@ spring-shell.log
 # ─── Environment / Secrets ────────────────────────────────────────────────────
 # NEVER commit the real .env file — it contains database credentials and API keys.
 .env
+.env.prod
 !.env.example
 
 # ─── Logs ─────────────────────────────────────────────────────────────────────
@@ -38,5 +39,5 @@ Thumbs.db
 desktop.ini
 
 
-# Documentation
-docs/
+# Documentation (only ignore generated javadoc output, not hand-written markdown)
+docs/site/
