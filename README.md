@@ -11,7 +11,7 @@ Replacing spreadsheets and email chains with a unified, role-aware system for st
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Pratyay-Patel_PlaceSync&metric=coverage)](https://sonarcloud.io/summary/new_code?id=Pratyay-Patel_PlaceSync)
 ![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-3.3.6-6DB33F?logo=springboot&logoColor=white)
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 [Features](#features) · [Tech Stack](#tech-stack) · [Architecture](#architecture) · [Quick Start](#quick-start) · [API Docs](#api-documentation) · [Roadmap](#roadmap)
 
