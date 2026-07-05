@@ -7,7 +7,7 @@
 #
 # PowerShell — load .env.prod then run:
 #   Get-Content .env.prod | ForEach-Object {
-#       if ($_ -match '^([A-Z_]+)=(.+)$') { Set-Item "env:$($matches[1])" $matches[2] }
+#       if ($_ -match '^([A-Z0-9_]+)=(.+)$') { Set-Item "env:$($matches[1])" $matches[2] }
 #   }
 #   mvn spring-boot:run "-Dspring-boot.run.profiles=dev,supabase"
 # ─────────────────────────────────────────────────────────────────────────────
@@ -19,3 +19,10 @@ spring:
     password: ${DATABASE_PASSWORD}
     hikari:
       pool-name: PlaceSyncSupabasePool
+
+  # Flyway must not run through the transaction pooler (port 6543) — PgBouncer
+  # in transaction mode breaks Flyway's advisory locks and prepared-statement
+  # lifecycle. Migrations are always run separately via the direct connection
+  # (port 5432) using `mvn flyway:migrate`. Schema is already up to date.
+  flyway:
+    enabled: false
