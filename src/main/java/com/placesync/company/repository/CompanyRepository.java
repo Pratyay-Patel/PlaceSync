@@ -18,4 +18,6 @@ public interface CompanyRepository extends JpaRepository<Company, UUID> {
     Page<Company> findByStatusAndDeletedAtIsNull(CompanyStatus status, Pageable pageable);
 
     boolean existsByNameAndDeletedAtIsNull(String name);
+
+    long countByDeletedAtIsNull();
 }

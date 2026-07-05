@@ -21,4 +21,8 @@ public interface JobRepository extends JpaRepository<Job, UUID>, JpaSpecificatio
     Page<Job> findByRecruiterIdAndDeletedAtIsNull(UUID recruiterId, Pageable pageable);
 
     Page<Job> findByCompanyIdAndDeletedAtIsNull(UUID companyId, Pageable pageable);
+
+    long countByRecruiterIdAndDeletedAtIsNull(UUID recruiterId);
+
+    long countByStatusAndDeletedAtIsNull(JobStatus status);
 }

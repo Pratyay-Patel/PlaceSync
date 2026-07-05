@@ -2,6 +2,8 @@ package com.placesync.user.service;
 
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.storage.FileValidationService;
+import com.placesync.common.storage.S3StorageService;
 import com.placesync.user.dto.*;
 import com.placesync.user.mapper.StudentProfileMapper;
 import com.placesync.user.entity.*;
@@ -10,10 +12,14 @@ import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,6 +36,11 @@ public class UserService {
     private final StudentSkillRepository studentSkillRepository;
     private final StudentEducationRepository studentEducationRepository;
     private final StudentExperienceRepository studentExperienceRepository;
+    private final S3StorageService s3StorageService;
+    private final FileValidationService fileValidationService;
+
+    @Value("${app.aws.bucket-pictures}")
+    private String picturesBucket;
 
     @Transactional(readOnly = true)
     public StudentProfileResponse getMyProfile(UUID userId) {
@@ -195,6 +206,30 @@ public class UserService {
     public List<StudentExperience> getExperience(UUID userId) {
         StudentProfile profile = requireStudentProfile(userId);
         return studentExperienceRepository.findByStudentIdOrderByStartDateDesc(profile.getId());
+    }
+
+    @Transactional
+    public StudentProfileResponse uploadProfilePicture(UUID userId, MultipartFile file) {
+        log.info("Uploading profile picture for userId={}", sanitize(userId));
+        fileValidationService.validateProfileImage(file);
+
+        StudentProfile profile = requireStudentProfile(userId);
+        String s3Key = "profile-pictures/" + userId + "/" + Instant.now().toEpochMilli() + "-" + UUID.randomUUID() + ".jpg";
+
+        try {
+            s3StorageService.uploadFile(picturesBucket, s3Key,
+                    file.getInputStream(), file.getContentType(), file.getSize());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read uploaded file");
+        }
+
+        profile.setProfilePictureS3Key(s3Key);
+        studentProfileRepository.save(profile);
+
+        String pictureUrl = s3StorageService.generatePresignedGetUrl(picturesBucket, s3Key, 60);
+        return studentProfileMapper.toResponse(profile).toBuilder()
+                .profilePictureUrl(pictureUrl)
+                .build();
     }
 
     private StudentProfile requireStudentProfile(UUID userId) {

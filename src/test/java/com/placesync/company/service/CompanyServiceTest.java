@@ -2,6 +2,8 @@ package com.placesync.company.service;
 
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.storage.FileValidationService;
+import com.placesync.common.storage.S3StorageService;
 import com.placesync.company.dto.CompanyResponse;
 import com.placesync.company.dto.CompanyVerificationRequest;
 import com.placesync.company.dto.CreateCompanyRequest;
@@ -18,6 +20,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.security.access.AccessDeniedException;
 
 import java.util.Optional;
@@ -35,6 +38,8 @@ class CompanyServiceTest {
     @Mock CompanyMapper companyMapper;
     @Mock UserRepository userRepository;
     @Mock RecruiterProfileRepository recruiterProfileRepository;
+    @Mock S3StorageService s3StorageService;
+    @Mock FileValidationService fileValidationService;
 
     @InjectMocks CompanyService companyService;
 
@@ -179,5 +184,38 @@ class CompanyServiceTest {
 
         assertThatThrownBy(() -> companyService.getCompany(companyId))
                 .isInstanceOf(ResourceNotFoundException.class);
+    }
+
+    @Test
+    void uploadLogo_creatorUploads_savesKeyAndReturnsLogoUrl() {
+        User creator = user();
+        Company company = pendingCompany(creator);
+        byte[] pngHeader = {(byte) 0x89, 0x50, 0x4E, 0x47, 0, 0, 0, 0};
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", pngHeader);
+        CompanyResponse base = CompanyResponse.builder().id(companyId).name("Acme").build();
+
+        when(companyRepository.findByIdAndDeletedAtIsNull(companyId)).thenReturn(Optional.of(company));
+        when(companyRepository.save(any())).thenReturn(company);
+        when(companyMapper.toResponse(company)).thenReturn(base);
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/logo");
+
+        CompanyResponse result = companyService.uploadLogo(userId, companyId, file);
+
+        verify(fileValidationService).validateLogoImage(file);
+        verify(s3StorageService).uploadFile(any(), any(), any(), any(), anyLong());
+        assertThat(result.getLogoUrl()).isEqualTo("https://s3.example.com/logo");
+    }
+
+    @Test
+    void uploadLogo_notCreator_throwsAccessDeniedException() {
+        User other = new User();
+        other.setId(UUID.randomUUID());
+        Company company = pendingCompany(other);
+        MockMultipartFile file = new MockMultipartFile("file", "logo.png", "image/png", new byte[]{});
+
+        when(companyRepository.findByIdAndDeletedAtIsNull(companyId)).thenReturn(Optional.of(company));
+
+        assertThatThrownBy(() -> companyService.uploadLogo(userId, companyId, file))
+                .isInstanceOf(AccessDeniedException.class);
     }
 }

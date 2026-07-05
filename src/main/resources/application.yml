@@ -2,6 +2,24 @@ spring:
   application:
     name: placesync
 
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 11MB
+
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_APP_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+
   # Redis caching (Phase 3)
   data:
     redis:
@@ -88,3 +106,7 @@ app:
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:3000}
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  aws:
+    region: ${AWS_REGION:ap-south-1}
+    bucket-resumes: ${AWS_S3_BUCKET_RESUMES:placesync-resumes}
+    bucket-pictures: ${AWS_S3_BUCKET_PICTURES:placesync-profile-pictures}

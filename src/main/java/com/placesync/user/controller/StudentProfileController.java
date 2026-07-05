@@ -12,10 +12,12 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 import java.util.Map;
@@ -35,6 +37,14 @@ public class StudentProfileController {
     @Operation(summary = "Get own student profile")
     public ResponseEntity<StudentProfileResponse> getProfile(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getMyProfile(principal.getId()));
+    }
+
+    @PatchMapping(value = "/profile/picture", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload profile picture (JPEG or PNG, max 5 MB)")
+    public ResponseEntity<StudentProfileResponse> uploadProfilePicture(
+            @AuthenticationPrincipal UserPrincipal principal,
+            @RequestPart("file") MultipartFile file) {
+        return ResponseEntity.ok(userService.uploadProfilePicture(principal.getId(), file));
     }
 
     @PutMapping("/profile")

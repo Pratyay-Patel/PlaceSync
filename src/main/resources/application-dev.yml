@@ -29,7 +29,7 @@ spring:
     enabled: true
 
   kafka:
-    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9093}
     consumer:
       group-id: notification-group
       auto-offset-reset: earliest
@@ -41,9 +41,9 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
       properties:
-        delivery.timeout.ms: 10000     # fail fast so fallback fires within 10s if broker is unreachable
-        request.timeout.ms: 5000
-        max.block.ms: 5000
+        delivery.timeout.ms: 3000      # fail fast so fallback fires within 3s if broker is unreachable
+        request.timeout.ms: 2000
+        max.block.ms: 2000
 
 logging:
   level:

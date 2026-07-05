@@ -4,6 +4,8 @@ import com.placesync.common.audit.AuditAction;
 import com.placesync.common.audit.Auditable;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
+import com.placesync.common.storage.FileValidationService;
+import com.placesync.common.storage.S3StorageService;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.company.dto.CompanyResponse;
 import com.placesync.company.dto.CompanyVerificationRequest;
@@ -21,12 +23,16 @@ import static com.placesync.common.util.LogSanitizer.sanitize;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.UUID;
 
@@ -42,6 +48,11 @@ public class CompanyService {
     private final CompanyMapper companyMapper;
     private final UserRepository userRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
+    private final S3StorageService s3StorageService;
+    private final FileValidationService fileValidationService;
+
+    @Value("${app.aws.bucket-pictures}")
+    private String picturesBucket;
 
     @Transactional(readOnly = true)
     public CompanyResponse getCompany(UUID companyId) {
@@ -159,5 +170,33 @@ public class CompanyService {
         }
 
         return companyMapper.toResponse(companyRepository.save(company));
+    }
+
+    @Transactional
+    public CompanyResponse uploadLogo(UUID userId, UUID companyId, MultipartFile file) {
+        log.info("Uploading logo for companyId={} by userId={}", sanitize(companyId), sanitize(userId));
+        fileValidationService.validateLogoImage(file);
+
+        Company company = companyRepository.findByIdAndDeletedAtIsNull(companyId)
+                .orElseThrow(() -> new ResourceNotFoundException(COMPANY, companyId));
+
+        if (!company.getCreatedBy().getId().equals(userId)) {
+            throw new AccessDeniedException("Only the company creator can upload a logo");
+        }
+
+        String s3Key = "company-logos/" + companyId + "/" + Instant.now().toEpochMilli() + "-" + UUID.randomUUID() + ".jpg";
+
+        try {
+            s3StorageService.uploadFile(picturesBucket, s3Key,
+                    file.getInputStream(), file.getContentType(), file.getSize());
+        } catch (IOException e) {
+            throw new IllegalArgumentException("Could not read uploaded file");
+        }
+
+        company.setLogoS3Key(s3Key);
+        companyRepository.save(company);
+
+        String logoUrl = s3StorageService.generatePresignedGetUrl(picturesBucket, s3Key, 60);
+        return companyMapper.toResponse(company).toBuilder().logoUrl(logoUrl).build();
     }
 }
