@@ -1,5 +1,6 @@
 import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
+import DashboardLayout from '../components/layout/DashboardLayout';
 import RoleRoute from './RoleRoute';
 
 import PublicLanding from '../pages/PublicLanding';
@@ -41,6 +42,7 @@ const router = createBrowserRouter([
   {
     element: <RootLayout />,
     children: [
+      // Public routes — no sidebar
       { path: '/', element: <PublicLanding /> },
       { path: '/login', element: <LoginPage /> },
       { path: '/register', element: <RegisterPage /> },
@@ -49,48 +51,54 @@ const router = createBrowserRouter([
       { path: '/verify-email', element: <EmailVerificationPage /> },
       { path: '/403', element: <ForbiddenPage /> },
 
-      // Student routes
+      // Authenticated routes — wrapped in sidebar + topbar shell
       {
-        element: <RoleRoute allowedRoles={['ROLE_STUDENT']} />,
+        element: <DashboardLayout />,
         children: [
-          { path: '/student/dashboard', element: <StudentDashboard /> },
-          { path: '/student/profile', element: <StudentProfilePage /> },
-          { path: '/student/resumes', element: <ResumesPage /> },
-          { path: '/student/jobs', element: <StudentJobsPage /> },
-          { path: '/student/jobs/:jobId', element: <JobDetailPage /> },
-          { path: '/student/applications', element: <StudentApplicationsPage /> },
-          { path: '/student/interviews', element: <InterviewsPage /> },
-        ],
-      },
+          // Student routes
+          {
+            element: <RoleRoute allowedRoles={['ROLE_STUDENT']} />,
+            children: [
+              { path: '/student/dashboard', element: <StudentDashboard /> },
+              { path: '/student/profile', element: <StudentProfilePage /> },
+              { path: '/student/resumes', element: <ResumesPage /> },
+              { path: '/student/jobs', element: <StudentJobsPage /> },
+              { path: '/student/jobs/:jobId', element: <JobDetailPage /> },
+              { path: '/student/applications', element: <StudentApplicationsPage /> },
+              { path: '/student/interviews', element: <InterviewsPage /> },
+            ],
+          },
 
-      // Recruiter routes
-      {
-        element: <RoleRoute allowedRoles={['ROLE_RECRUITER']} />,
-        children: [
-          { path: '/recruiter/dashboard', element: <RecruiterDashboard /> },
-          { path: '/recruiter/profile', element: <RecruiterProfilePage /> },
-          { path: '/recruiter/jobs', element: <RecruiterJobsPage /> },
-          { path: '/recruiter/jobs/create', element: <CreateJobPage /> },
-          { path: '/recruiter/jobs/:jobId/edit', element: <RecruiterJobsPage /> },
-          { path: '/recruiter/jobs/:jobId/applications', element: <RecruiterApplicationsPage /> },
-          { path: '/recruiter/jobs/:jobId/applications/:applicationId', element: <ScheduleInterviewPage /> },
-        ],
-      },
+          // Recruiter routes
+          {
+            element: <RoleRoute allowedRoles={['ROLE_RECRUITER']} />,
+            children: [
+              { path: '/recruiter/dashboard', element: <RecruiterDashboard /> },
+              { path: '/recruiter/profile', element: <RecruiterProfilePage /> },
+              { path: '/recruiter/jobs', element: <RecruiterJobsPage /> },
+              { path: '/recruiter/jobs/create', element: <CreateJobPage /> },
+              { path: '/recruiter/jobs/:jobId/edit', element: <RecruiterJobsPage /> },
+              { path: '/recruiter/jobs/:jobId/applications', element: <RecruiterApplicationsPage /> },
+              { path: '/recruiter/jobs/:jobId/applications/:applicationId', element: <ScheduleInterviewPage /> },
+            ],
+          },
 
-      // Admin routes
-      {
-        element: <RoleRoute allowedRoles={['ROLE_ADMIN']} />,
-        children: [
-          { path: '/admin/dashboard', element: <AdminDashboard /> },
-          { path: '/admin/users', element: <UsersPage /> },
-          { path: '/admin/users/:userId', element: <UserDetailPage /> },
-          { path: '/admin/recruiters/pending', element: <RecruitersPage /> },
-          { path: '/admin/companies/pending', element: <CompaniesPage /> },
-          { path: '/admin/jobs/pending', element: <AdminJobsPage /> },
-          { path: '/admin/applications', element: <AdminApplicationsPage /> },
-          { path: '/admin/interviews', element: <AdminInterviewsPage /> },
-          { path: '/admin/analytics', element: <AnalyticsPage /> },
-          { path: '/admin/audit-log', element: <AuditLogPage /> },
+          // Admin routes
+          {
+            element: <RoleRoute allowedRoles={['ROLE_ADMIN']} />,
+            children: [
+              { path: '/admin/dashboard', element: <AdminDashboard /> },
+              { path: '/admin/users', element: <UsersPage /> },
+              { path: '/admin/users/:userId', element: <UserDetailPage /> },
+              { path: '/admin/recruiters/pending', element: <RecruitersPage /> },
+              { path: '/admin/companies/pending', element: <CompaniesPage /> },
+              { path: '/admin/jobs/pending', element: <AdminJobsPage /> },
+              { path: '/admin/applications', element: <AdminApplicationsPage /> },
+              { path: '/admin/interviews', element: <AdminInterviewsPage /> },
+              { path: '/admin/analytics', element: <AnalyticsPage /> },
+              { path: '/admin/audit-log', element: <AuditLogPage /> },
+            ],
+          },
         ],
       },
     ],

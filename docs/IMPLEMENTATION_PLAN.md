@@ -1645,6 +1645,15 @@ Create `common/scheduler/MaintenanceScheduler.java` with `@EnableScheduling`:
 | Expired password reset token cleanup | Daily at 02:30 UTC | `DELETE FROM password_reset_tokens WHERE expires_at < NOW()` |
 | Job deadline expiry | Every hour | `UPDATE jobs SET status = 'EXPIRED' WHERE application_deadline < NOW() AND status = 'OPEN'` (SRS JOB-FR-005) |
 
+#### HttpOnly cookie for refresh token (deferred from Phase 6)
+
+The Phase 6 frontend stores the refresh token in `localStorage` (acceptable for V1 — React's JSX auto-escaping makes XSS unlikely). Upgrade to an HttpOnly cookie in this phase:
+
+- `AuthController`: set `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict` on login and refresh responses instead of returning it in the JSON body; clear it with `Max-Age=0` on logout
+- `AuthService.refresh()`: read the cookie from `HttpServletRequest` instead of the request body DTO
+- `SecurityConfig`: enable CSRF protection for the cookie-based flow (stateless JWT APIs can use `CookieCsrfTokenRepository`)
+- Frontend: remove all `localStorage.getItem/setItem('refreshToken')` calls from `axiosClient.ts`, `authStore.ts`, and `useSessionRestore.ts` — the browser attaches the cookie automatically
+
 #### Google OAuth2 (deferred from Phase 2)
 Add `spring-boot-starter-oauth2-client`. Implement `OAuth2LoginSuccessHandler`:
 - If user exists: load and issue PlaceSync JWT pair
