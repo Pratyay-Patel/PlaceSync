@@ -243,8 +243,8 @@ src/main/java/com/placesync/
 | `AWS_S3_BUCKET_PICTURES` | S3 bucket for profile pictures | Yes |
 | `MAIL_USERNAME` | Gmail address for SMTP | Yes |
 | `MAIL_APP_PASSWORD` | Gmail App Password | Yes |
-| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID | Phase 6 |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret | Phase 6 |
+| `GOOGLE_CLIENT_ID` | Google OAuth2 client ID | Phase 7 |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth2 client secret | Phase 7 |
 
 See `.env.example` for the full reference with defaults.
 
@@ -259,8 +259,8 @@ See `.env.example` for the full reference with defaults.
 | 3 | Jobs, applications, interviews, Redis caching | ✅ Complete |
 | 4 | Kafka, notifications, AOP audit logging, admin module, unit tests | ✅ Complete |
 | 5 | Analytics, AWS S3, email delivery, Supabase production integration | ✅ Complete |
-| 6 | Integration tests, Testcontainers, Nginx, Render deployment, Google OAuth2, scheduled jobs | 🔄 In progress |
-| 7 | React 18 + TypeScript frontend — student, recruiter, and admin dashboards | ⬜ Planned |
+| 6 | React 18 + TypeScript frontend — student, recruiter, and admin dashboards | ⬜ Not started |
+| 7 | Integration tests, Testcontainers, CI/CD, Nginx, Render deployment, Google OAuth2, production hardening | ⬜ Not started |
 
 ---
 

@@ -30,8 +30,8 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 3 | Jobs, Applications, Interviews, Resumes + Redis caching | ✅ Complete | `feat/job-application-layer` |
 | 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ✅ Complete | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ✅ Complete | `feat/analytics-s3-email` |
-| 6 | Testing suite + CI/CD + Nginx + Production hardening | ⬜ Not started | `feat/cicd-production` |
-| 7 | Frontend — React + TypeScript + Vite | ⬜ Not started | `feat/frontend` |
+| 6 | Frontend — React + TypeScript + Vite | ⬜ Not started | `feat/frontend` |
+| 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | ⬜ Not started | `feat/cicd-production` |
 
 ---
 
@@ -1297,25 +1297,34 @@ This subphase produces no Java source changes. The application is already provid
 
 ---
 
-## Phase 6 — Testing Suite + CI/CD + Deployment + Production Hardening
+## Phase 6 — Frontend: React + TypeScript + Vite
 
 **Status:** ⬜ Not started
-**Planned branch:** `feat/cicd-production`
-**Depends on:** Phase 5 (all features complete before CI enforces quality gates)
+**Planned branch:** `feat/frontend`
+**Depends on:** Phase 5 (all backend endpoints stable before frontend integration)
 
 ### Scope
 
-1. **Comprehensive test suite** — repository tests, controller integration tests, security tests, Testcontainers
-2. **GitHub Actions CI pipeline** — build, test, SonarCloud quality gate
-3. **Render + Vercel deployment** — backend live on Render (PaaS, no server management), frontend on Vercel; fast first deployment milestone
-4. **Nginx reverse proxy** — TLS termination, rate limiting, static SPA serving, security headers (VPS deployment)
-5. **Production hardening** — structured JSON logging, Micrometer metrics, scheduled maintenance jobs, scheduled job expiry, Google OAuth2, VPS hardening documentation, request size limits, rate limiting
+A React 18 SPA with TypeScript and Vite, consuming the PlaceSync REST API. Three distinct role-aware dashboards: Student, Recruiter, and Admin. Serves static files via Nginx in production.
 
-**Deployment sequence rationale:** Render gets the backend live quickly without infrastructure overhead, proving the Docker container deploys correctly against Supabase. VPS + Nginx follows as the production-grade target — it is where real DevOps skills (reverse proxy, TLS, Linux server management) are demonstrated.
+### Technology stack
+
+| Technology | Role |
+|---|---|
+| React 18 | Component framework |
+| TypeScript 5 | Static typing |
+| Vite 5 | Build tool (fast HMR in dev, optimized bundle in production) |
+| React Router v6 | Client-side routing with nested layouts |
+| TanStack Query (React Query v5) | Server state — fetching, caching, background refetch |
+| Axios | HTTP client with interceptors for auth token injection and 401 handling |
+| Material UI (MUI) v5 | Component library — consistent, accessible, responsive UI |
+| React Hook Form + Zod | Form state management + schema-driven validation |
+| Zustand | Lightweight client state management for auth context |
+| Vitest + React Testing Library | Component and hook unit tests |
 
 ---
 
-### 6.1 Comprehensive Testing Suite
+### 7.1 Comprehensive Testing Suite
 
 #### Repository tests (Spring Data slice tests)
 Use `@DataJpaTest` with an embedded H2 or a real PostgreSQL via Testcontainers.
@@ -1395,7 +1404,7 @@ Expose `/actuator/prometheus` (restricted to internal network via Nginx). Key cu
 
 ---
 
-### 6.2 GitHub Actions CI Pipeline — Advanced
+### 7.2 GitHub Actions CI Pipeline — Advanced
 
 The basic workflow (checkout, Java 21 setup, Maven cache, `mvn clean verify`) was established in subphase 4.0. This subphase **expands** `.github/workflows/ci.yml` in place — do not create a new file, edit the existing one.
 
@@ -1485,7 +1494,7 @@ Production secrets (AWS, Gmail, JWT) are never stored in CI.
 
 ---
 
-### 6.3 Render + Vercel Deployment
+### 7.3 Render + Vercel Deployment
 
 Deploy the backend as a public service for the first time. No server management required — Render runs the Docker container, handles HTTPS, and auto-deploys from GitHub. The React frontend (Phase 7) will deploy to Vercel separately; this subphase covers the backend only.
 
@@ -1591,7 +1600,7 @@ Render free tier services sleep after 15 minutes of inactivity. First request af
 
 ---
 
-### 6.4 Nginx Reverse Proxy
+### 7.4 Nginx Reverse Proxy
 
 #### Files to create
 | File | Purpose |
@@ -1613,7 +1622,7 @@ Add `nginx` service to `docker-compose.yml` (production variant).
 
 ---
 
-### 6.5 Production Hardening
+### 7.5 Production Hardening
 
 #### Structured JSON logging (production profile)
 Update `application-prod.yml`:
@@ -1688,7 +1697,7 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 
 ---
 
-### Phase 6 acceptance criteria
+### Phase 7 acceptance criteria
 - [ ] `mvn verify` passes — all unit + integration + security tests pass
 - [ ] Repository tests run against real PostgreSQL via Testcontainers
 - [ ] `GET /api/v1/admin/applications` (admin token) → 200; `GET /api/v1/admin/applications` (student token) → 403
@@ -1712,34 +1721,25 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 
 ---
 
-## Phase 7 — Frontend: React + TypeScript + Vite
+## Phase 7 — Testing Suite + CI/CD + Deployment + Production Hardening
 
 **Status:** ⬜ Not started
-**Planned branch:** `feat/frontend`
-**Depends on:** Phase 6 (all backend endpoints must be stable before frontend integration)
+**Planned branch:** `feat/cicd-production`
+**Depends on:** Phase 6 (complete frontend before enforcing integration test quality gates and deploying a full product)
 
 ### Scope
 
-A React 18 SPA with TypeScript and Vite, consuming the PlaceSync REST API. Three distinct role-aware dashboards: Student, Recruiter, and Admin. Serves static files via Nginx in production.
+1. **Comprehensive test suite** — repository tests, controller integration tests, security tests, Testcontainers, frontend Vitest coverage
+2. **GitHub Actions CI pipeline** — build, test, SonarCloud quality gate (Java + TypeScript unified)
+3. **Render + Vercel deployment** — backend on Render, React SPA on Vercel; fast first public deployment
+4. **Nginx reverse proxy** — TLS termination, rate limiting, static SPA serving, security headers (VPS deployment)
+5. **Production hardening** — structured JSON logging, Micrometer metrics, scheduled maintenance jobs, Google OAuth2, VPS hardening documentation
 
-### Technology stack
-
-| Technology | Role |
-|---|---|
-| React 18 | Component framework |
-| TypeScript 5 | Static typing |
-| Vite 5 | Build tool (fast HMR in dev, optimized bundle in production) |
-| React Router v6 | Client-side routing with nested layouts |
-| TanStack Query (React Query v5) | Server state — fetching, caching, background refetch |
-| Axios | HTTP client with interceptors for auth token injection and 401 handling |
-| Material UI (MUI) v5 | Component library — consistent, accessible, responsive UI |
-| React Hook Form + Zod | Form state management + schema-driven validation |
-| Zustand | Lightweight client state management for auth context |
-| Vitest + React Testing Library | Component and hook unit tests |
+**Deployment sequence rationale:** Render gets the backend live quickly without infrastructure overhead, proving the Docker container deploys correctly against Supabase. Vercel deploys the React SPA pointing at the Render API. VPS + Nginx follows as the production-grade target.
 
 ---
 
-### 7.1 Project Setup
+### 6.1 Project Setup
 
 #### Scaffold
 ```bash
@@ -1782,7 +1782,7 @@ src/
 
 ---
 
-### 7.2 Authentication & Token Management
+### 6.2 Authentication & Token Management
 
 #### Axios interceptor (`src/api/axiosClient.ts`)
 ```
@@ -1855,7 +1855,7 @@ interface AuthState {
 
 ---
 
-### 7.3 Student Dashboard & Features
+### 6.3 Student Dashboard & Features
 
 | Page | Key components | API calls |
 |---|---|---|
@@ -1871,7 +1871,7 @@ interface AuthState {
 
 ---
 
-### 7.4 Recruiter Dashboard & Features
+### 6.4 Recruiter Dashboard & Features
 
 | Page | Key components | API calls |
 |---|---|---|
@@ -1884,7 +1884,7 @@ interface AuthState {
 
 ---
 
-### 7.5 Admin Dashboard & Features
+### 6.5 Admin Dashboard & Features
 
 | Page | Key components | API calls |
 |---|---|---|
@@ -1900,7 +1900,7 @@ interface AuthState {
 
 ---
 
-### 7.6 Shared UI Components
+### 6.6 Shared UI Components
 
 | Component | Purpose |
 |---|---|
@@ -1915,7 +1915,7 @@ interface AuthState {
 
 ---
 
-### 7.7 Frontend Testing
+### 6.7 Frontend Testing
 
 Use Vitest + React Testing Library. All tests run headlessly in CI.
 
@@ -1934,7 +1934,7 @@ Mock Axios calls using `vi.mock` or MSW (Mock Service Worker) for more realistic
 
 ---
 
-### 7.8 Docker Build & Nginx Static Serving
+### 6.8 Docker Build & Nginx Static Serving
 
 #### Dockerfile for frontend (multi-stage)
 ```dockerfile
@@ -1979,7 +1979,7 @@ This lets `npm run dev` hit the local Spring Boot API without CORS issues during
 
 ---
 
-### Phase 7 acceptance criteria
+### Phase 6 acceptance criteria
 - [ ] `npm run build` completes without TypeScript errors
 - [ ] `npm test` passes all Vitest tests
 - [ ] Unauthenticated user visiting `/student/dashboard` is redirected to `/login`
@@ -2059,20 +2059,20 @@ Each phase should be one PR from its feature branch into `main`.
 
 | SRS Module | Requirements | Covered in Phase |
 |---|---|---|
-| AUTH | FR-001–042 | 2 (core), 6 (OAuth2, account lock email) |
+| AUTH | FR-001–042 | 2 (core), 7 (OAuth2, account lock email) |
 | USER | FR-001–005 | 2 (profile), 4 (admin activate/deactivate/search) |
-| STU | FR-001–009 | 2 (profile CRUD), 5 (profile picture, S3), 7 (frontend completeness bar) |
+| STU | FR-001–009 | 2 (profile CRUD), 5 (profile picture, S3), 6 (frontend completeness bar) |
 | REC | FR-001–006 | 2 (profile), 4 (email notification on verify) |
 | COM | FR-001–005 | 2 (CRUD), 5 (logo S3) |
 | RES | FR-001–008 | 3 (metadata), 5 (S3 upload + pre-signed URL) |
-| JOB | FR-001–011 | 3 (CRUD, approval), 4 (filtering/search), 6 (deadline expiry scheduler) |
-| APP | FR-001–011 | 3 (lifecycle), 4 (Kafka event, notification, status transition validation), 6 (admin global view) |
+| JOB | FR-001–011 | 3 (CRUD, approval), 4 (filtering/search), 7 (deadline expiry scheduler) |
+| APP | FR-001–011 | 3 (lifecycle), 4 (Kafka event, notification, status transition validation), 7 (admin global view) |
 | INT | FR-001–007 | 3 (schedule/reschedule/cancel/complete), 4 (Kafka event, notification) |
 | NOTIF | FR-001–008 | 4 (Kafka consumer, fallback, inbox endpoints) |
 | EMAIL | FR-001–005 | 5 (Thymeleaf templates, Gmail SMTP, async) |
 | ANL | FR-001–007 | 5 (aggregation, Redis cache) |
 | AUD | FR-001–005 | 4 (AOP aspect, auth events, admin search API) |
-| ADM | FR-001–008 | 4 (user mgmt, global views), 5 (analytics), 7 (admin frontend) |
+| ADM | FR-001–008 | 4 (user mgmt, global views), 5 (analytics), 6 (admin frontend) |
 | NFR | All NFRs | Progressively across phases 1–7 |
 
 ---
