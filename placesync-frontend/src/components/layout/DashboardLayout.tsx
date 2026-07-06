@@ -94,7 +94,9 @@ const pageTransition = { type: 'tween', ease: 'easeOut', duration: 0.18 };
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
+  const [hovered, setHovered] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const isExpanded = !collapsed || hovered;
   const location = useLocation();
   const navigate = useNavigate();
   const { role, email, logout } = useAuthStore();
@@ -114,13 +116,15 @@ export default function DashboardLayout() {
       {/* ── Sidebar ── */}
       <Drawer
         variant="permanent"
+        onMouseEnter={() => { if (collapsed) setHovered(true); }}
+        onMouseLeave={() => setHovered(false)}
         sx={{
-          width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
+          width: isExpanded ? DRAWER_WIDTH : COLLAPSED_WIDTH,
           flexShrink: 0,
           '& .MuiDrawer-paper': {
-            width: collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH,
+            width: isExpanded ? DRAWER_WIDTH : COLLAPSED_WIDTH,
             overflowX: 'hidden',
-            transition: 'width 225ms cubic-bezier(0.4, 0, 0.6, 1)',
+            transition: `width ${hovered ? 160 : 225}ms cubic-bezier(0.4, 0, 0.6, 1)`,
             display: 'flex',
             flexDirection: 'column',
           },
@@ -131,8 +135,8 @@ export default function DashboardLayout() {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: collapsed ? 'center' : 'space-between',
-            px: collapsed ? 1 : 2,
+            justifyContent: isExpanded ? 'space-between' : 'center',
+            px: isExpanded ? 2 : 1,
             py: 1.5,
             minHeight: 64,
           }}
@@ -163,7 +167,7 @@ export default function DashboardLayout() {
                 fontSize: '1rem',
                 color: 'text.primary',
                 whiteSpace: 'nowrap',
-                opacity: collapsed ? 0 : 1,
+                opacity: isExpanded ? 1 : 0,
                 transition: 'opacity 200ms',
               }}
             >
@@ -193,7 +197,7 @@ export default function DashboardLayout() {
             return (
               <Tooltip
                 key={item.path}
-                title={collapsed ? item.label : ''}
+                title={!isExpanded ? item.label : ''}
                 placement="right"
                 arrow
               >
@@ -204,13 +208,13 @@ export default function DashboardLayout() {
                     mx: 0,
                     mb: 0.25,
                     minHeight: 42,
-                    justifyContent: collapsed ? 'center' : 'flex-start',
-                    px: collapsed ? 1.5 : 1.5,
+                    justifyContent: isExpanded ? 'flex-start' : 'center',
+                    px: 1.5,
                   }}
                 >
                   <ListItemIcon
                     sx={{
-                      minWidth: collapsed ? 'auto' : 34,
+                      minWidth: isExpanded ? 34 : 'auto',
                       justifyContent: 'center',
                       color: isActive ? 'primary.main' : 'text.secondary',
                     }}
@@ -222,7 +226,7 @@ export default function DashboardLayout() {
                     primary={item.label}
                     primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500, noWrap: true }}
                     sx={{
-                      opacity: collapsed ? 0 : 1,
+                      opacity: isExpanded ? 1 : 0,
                       transition: 'opacity 200ms',
                       ml: 0.5,
                     }}
@@ -238,12 +242,12 @@ export default function DashboardLayout() {
         {/* User info footer */}
         <Box
           sx={{
-            px: collapsed ? 1 : 2,
+            px: isExpanded ? 2 : 1,
             py: 1.5,
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
-            justifyContent: collapsed ? 'center' : 'flex-start',
+            justifyContent: isExpanded ? 'flex-start' : 'center',
           }}
         >
           <Avatar
@@ -259,7 +263,7 @@ export default function DashboardLayout() {
             {initials}
           </Avatar>
 
-          {!collapsed && (
+          {isExpanded && (
             <Box sx={{ overflow: 'hidden', flexGrow: 1 }}>
               <Typography
                 variant="body2"
