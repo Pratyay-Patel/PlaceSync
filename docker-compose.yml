@@ -110,6 +110,7 @@ services:
       AWS_REGION: ${AWS_REGION:-ap-south-1}
       AWS_S3_BUCKET_RESUMES: ${AWS_S3_BUCKET_RESUMES:-placesync-resumes-340541182878-ap-south-1-an}
       AWS_S3_BUCKET_PICTURES: ${AWS_S3_BUCKET_PICTURES:-placesync-profile-pictures-340541182878-ap-south-1-an}
+      FRONTEND_URL: http://localhost:5173
     depends_on:
       postgres:
         condition: service_healthy

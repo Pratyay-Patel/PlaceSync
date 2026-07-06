@@ -1,30 +1,65 @@
-import { useNavigate } from 'react-router-dom';
-import { Box, Button, Typography, Stack } from '@mui/material';
+import { useState } from 'react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
+import {
+  Box,
+  Card,
+  CardContent,
+  TextField,
+  Button,
+  Typography,
+  Alert,
+  Link,
+  InputAdornment,
+  IconButton,
+} from '@mui/material';
+import { VisibilityRounded, VisibilityOffRounded } from '@mui/icons-material';
+import { motion } from 'framer-motion';
 import { useAuthStore } from '../../store/authStore';
-import type { AuthResponse } from '../../types/auth';
+import { authApi } from '../../api/authApi';
+import type { UserRole } from '../../types/auth';
 
-// DEV ONLY — removed when real login form is implemented in 6.3
-const DEV_BASE: Omit<AuthResponse, 'role'> = {
-  accessToken: 'dev-token',
-  refreshToken: 'dev-refresh',
-  expiresIn: 3600,
-  userId: 'dev-user-id',
-  email: 'pratyay@placesync.dev',
-};
+const schema = z.object({
+  email: z.string().email('Enter a valid email address'),
+  password: z.string().min(1, 'Password is required'),
+});
 
-const ROLE_REDIRECTS: Record<AuthResponse['role'], string> = {
+type FormData = z.infer<typeof schema>;
+
+const ROLE_REDIRECTS: Record<UserRole, string> = {
   ROLE_STUDENT: '/student/dashboard',
   ROLE_RECRUITER: '/recruiter/dashboard',
   ROLE_ADMIN: '/admin/dashboard',
 };
 
 export default function LoginPage() {
-  const login = useAuthStore((s) => s.login);
+  const [showPassword, setShowPassword] = useState(false);
+  const [serverError, setServerError] = useState('');
   const navigate = useNavigate();
+  const login = useAuthStore((s) => s.login);
 
-  const preview = (role: AuthResponse['role']) => {
-    login({ ...DEV_BASE, role });
-    navigate(ROLE_REDIRECTS[role], { replace: true });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+  } = useForm<FormData>({ resolver: zodResolver(schema) });
+
+  const onSubmit = async (data: FormData) => {
+    setServerError('');
+    try {
+      const authResponse = await authApi.login(data);
+      login(authResponse);
+      navigate(ROLE_REDIRECTS[authResponse.role], { replace: true });
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 400 || status === 403) {
+        setServerError('Invalid email or password.');
+      } else {
+        setServerError('Something went wrong. Please try again.');
+      }
+    }
   };
 
   return (
@@ -32,27 +67,136 @@ export default function LoginPage() {
       sx={{
         minHeight: '100vh',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
         bgcolor: 'background.default',
-        gap: 2,
+        px: 2,
       }}
     >
-      <Typography variant="h5" sx={{ mb: 1 }}>
-        DEV PREVIEW — choose a role to test the dashboard shell
-      </Typography>
-      <Stack direction="row" spacing={2}>
-        <Button variant="contained" onClick={() => preview('ROLE_STUDENT')}>
-          Student Dashboard
-        </Button>
-        <Button variant="contained" color="secondary" onClick={() => preview('ROLE_RECRUITER')}>
-          Recruiter Dashboard
-        </Button>
-        <Button variant="outlined" onClick={() => preview('ROLE_ADMIN')}>
-          Admin Dashboard
-        </Button>
-      </Stack>
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        style={{ width: '100%', maxWidth: 420 }}
+      >
+        {/* Logo */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, justifyContent: 'center' }}>
+          <Box
+            sx={{
+              width: 38,
+              height: 38,
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 2px 10px rgba(79, 70, 229, 0.4)',
+            }}
+          >
+            <Typography sx={{ color: '#FFF', fontWeight: 700, fontSize: '0.875rem', lineHeight: 1 }}>
+              PS
+            </Typography>
+          </Box>
+          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
+            PlaceSync
+          </Typography>
+        </Box>
+
+        <Card sx={{ p: 1 }}>
+          <CardContent>
+            <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+              Welcome back
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+              Sign in to your PlaceSync account
+            </Typography>
+
+            {serverError && (
+              <Alert severity="error" sx={{ mb: 2.5 }}>
+                {serverError}
+              </Alert>
+            )}
+
+            <Box
+              component="form"
+              onSubmit={handleSubmit(onSubmit)}
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+            >
+              <TextField
+                {...register('email')}
+                label="Email address"
+                type="email"
+                autoComplete="email"
+                autoFocus
+                fullWidth
+                error={!!errors.email}
+                helperText={errors.email?.message}
+              />
+
+              <Box>
+                <TextField
+                  {...register('password')}
+                  label="Password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="current-password"
+                  fullWidth
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowPassword((p) => !p)}
+                            edge="end"
+                            tabIndex={-1}
+                          >
+                            {showPassword
+                              ? <VisibilityOffRounded fontSize="small" />
+                              : <VisibilityRounded fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 0.75 }}>
+                  <Link
+                    component={RouterLink}
+                    to="/forgot-password"
+                    variant="caption"
+                    sx={{ fontWeight: 500, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+                  >
+                    Forgot password?
+                  </Link>
+                </Box>
+              </Box>
+
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? 'Signing in…' : 'Sign in'}
+              </Button>
+            </Box>
+          </CardContent>
+        </Card>
+
+        <Typography variant="body2" sx={{ textAlign: 'center', mt: 2.5, color: 'text.secondary' }}>
+          Don't have an account?{' '}
+          <Link
+            component={RouterLink}
+            to="/register"
+            sx={{ fontWeight: 600, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+          >
+            Create one
+          </Link>
+        </Typography>
+      </motion.div>
     </Box>
   );
 }
