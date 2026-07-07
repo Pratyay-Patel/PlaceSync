@@ -61,15 +61,16 @@ public class AuthService {
         if (req.getRole() == UserRole.ROLE_ADMIN) {
             throw new IllegalArgumentException("Cannot self-register as ADMIN");
         }
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new ConflictException("Email already registered: " + req.getEmail());
+        String normalizedEmail = req.getEmail().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new ConflictException("Email already registered: " + normalizedEmail);
         }
         if (req.getRole() == UserRole.ROLE_STUDENT) {
             validateStudentFields(req);
         }
 
         User user = User.builder()
-                .email(req.getEmail())
+                .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .role(req.getRole())
                 .isEmailVerified(false)
@@ -108,7 +109,7 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest req) {
-        User user = userRepository.findByEmailAndDeletedAtIsNull(req.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(req.getEmail().toLowerCase())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (!Boolean.TRUE.equals(user.getIsActive())) {
@@ -191,7 +192,7 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(String email) {
-        userRepository.findByEmailAndDeletedAtIsNull(email).ifPresent(user -> {
+        userRepository.findByEmailAndDeletedAtIsNull(email.toLowerCase()).ifPresent(user -> {
             String rawToken = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.builder()
                     .user(user)

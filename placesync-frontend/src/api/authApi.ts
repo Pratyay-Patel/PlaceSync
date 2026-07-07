@@ -11,6 +11,11 @@ export interface RegisterRequest {
   email: string;
   password: string;
   role: 'ROLE_STUDENT' | 'ROLE_RECRUITER';
+  firstName: string;
+  lastName: string;
+  institution?: string;
+  department?: string;
+  graduationYear?: number;
 }
 
 export const authApi = {

@@ -106,6 +106,7 @@ app:
   cors:
     allowed-origins: ${FRONTEND_URL:http://localhost:3000}
   base-url: ${APP_BASE_URL:http://localhost:8080}
+  frontend-url: ${FRONTEND_URL:http://localhost:5173}
   aws:
     region: ${AWS_REGION:ap-south-1}
     bucket-resumes: ${AWS_S3_BUCKET_RESUMES:placesync-resumes}
