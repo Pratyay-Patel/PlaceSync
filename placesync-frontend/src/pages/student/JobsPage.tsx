@@ -160,53 +160,56 @@ export default function StudentJobsPage() {
         ) : (
           <>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2, mb: 3 }}>
-              {jobs.map((job) => (
-                <Card key={job.id} sx={{ height: '100%' }}>
-                  <CardActionArea
-                    onClick={() => navigate(`/student/jobs/${job.id}`)}
-                    sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
-                  >
-                    <CardContent sx={{ flexGrow: 1, width: '100%' }}>
-                      <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
-                        {job.title}
-                      </Typography>
-                      <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
-                        {job.companyName}
-                      </Typography>
-
-                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
-                        <Chip
-                          icon={<LocationOnRounded />}
-                          label={LOCATION_LABEL[job.locationType]}
-                          size="small"
-                          variant="outlined"
-                        />
-                        <Chip
-                          icon={<WorkRounded />}
-                          label={TYPE_LABEL[job.jobType]}
-                          size="small"
-                          variant="outlined"
-                        />
-                      </Box>
-
-                      {job.compensation && (
-                        <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
-                          {job.compensation}
+              {jobs.map((job) => {
+                const deadlinePast = new Date(job.applicationDeadline) < new Date();
+                return (
+                  <Card key={job.id} sx={{ height: '100%' }}>
+                    <CardActionArea
+                      onClick={() => navigate(`/student/jobs/${job.id}`)}
+                      sx={{ height: '100%', alignItems: 'flex-start', display: 'flex', flexDirection: 'column' }}
+                    >
+                      <CardContent sx={{ flexGrow: 1, width: '100%' }}>
+                        <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 0.5 }}>
+                          {job.title}
                         </Typography>
-                      )}
-
-                      <Divider sx={{ my: 1 }} />
-
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <AccessTimeRounded fontSize="small" sx={{ color: 'text.secondary', fontSize: '0.875rem' }} />
-                        <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-                          Deadline: {fmtDeadline(job.applicationDeadline)}
+                        <Typography variant="body2" sx={{ color: 'text.secondary', mb: 1.5 }}>
+                          {job.companyName}
                         </Typography>
-                      </Box>
-                    </CardContent>
-                  </CardActionArea>
-                </Card>
-              ))}
+
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 1.5 }}>
+                          <Chip
+                            icon={<LocationOnRounded />}
+                            label={LOCATION_LABEL[job.locationType]}
+                            size="small"
+                            variant="outlined"
+                          />
+                          <Chip
+                            icon={<WorkRounded />}
+                            label={TYPE_LABEL[job.jobType]}
+                            size="small"
+                            variant="outlined"
+                          />
+                        </Box>
+
+                        {job.compensation && (
+                          <Typography variant="body2" sx={{ fontWeight: 500, mb: 1 }}>
+                            {job.compensation}
+                          </Typography>
+                        )}
+
+                        <Divider sx={{ my: 1 }} />
+
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <AccessTimeRounded fontSize="small" sx={{ color: deadlinePast ? 'error.main' : 'text.secondary', fontSize: '0.875rem' }} />
+                          <Typography variant="caption" sx={{ color: deadlinePast ? 'error.main' : 'text.secondary' }}>
+                            Deadline: {fmtDeadline(job.applicationDeadline)}
+                          </Typography>
+                        </Box>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                );
+              })}
             </Box>
 
             {totalPages > 1 && (

@@ -48,7 +48,7 @@ function EducationDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{initial.degree ? 'Edit Education' : 'Add Education'}</DialogTitle>
-      <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField label="Degree" value={form.degree} onChange={(e) => set('degree', e.target.value)} size="small" fullWidth required />
         <TextField label="Institution" value={form.institution} onChange={(e) => set('institution', e.target.value)} size="small" fullWidth required />
         <TextField label="Field of Study" value={form.fieldOfStudy ?? ''} onChange={(e) => set('fieldOfStudy', e.target.value)} size="small" fullWidth />
@@ -90,7 +90,7 @@ function ExperienceDialog({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{initial.companyName ? 'Edit Experience' : 'Add Experience'}</DialogTitle>
-      <DialogContent sx={{ pt: 2, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
         <TextField label="Company" value={form.companyName} onChange={(e) => set('companyName', e.target.value)} size="small" fullWidth required />
         <TextField label="Role" value={form.role} onChange={(e) => set('role', e.target.value)} size="small" fullWidth required />
         <TextField label="Description" value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} size="small" fullWidth multiline rows={3} />
@@ -122,6 +122,7 @@ export default function StudentProfilePage() {
   const pictureInputRef = useRef<HTMLInputElement>(null);
 
   const [profileSaved, setProfileSaved] = useState(false);
+  const [pictureError, setPictureError] = useState('');
   const [skillInput, setSkillInput] = useState('');
   const [eduDialog, setEduDialog] = useState<{ open: boolean; id?: string; initial: EducationRequest }>({ open: false, initial: EMPTY_EDU });
   const [expDialog, setExpDialog] = useState<{ open: boolean; id?: string; initial: ExperienceRequest }>({ open: false, initial: EMPTY_EXP });
@@ -186,6 +187,7 @@ export default function StudentProfilePage() {
   const pictureMutation = useMutation({
     mutationFn: (file: File) => studentApi.uploadPicture(file),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['student-profile'] }),
+    onError: () => setPictureError('Photo upload failed. S3 storage must be configured.'),
   });
 
   const addSkillMutation = useMutation({
@@ -309,6 +311,9 @@ export default function StudentProfilePage() {
 
           {profileSaved && (
             <Alert severity="success" sx={{ mb: 2 }}>Profile saved successfully.</Alert>
+          )}
+          {pictureError && (
+            <Alert severity="error" sx={{ mb: 2 }} onClose={() => setPictureError('')}>{pictureError}</Alert>
           )}
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
