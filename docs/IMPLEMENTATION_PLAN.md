@@ -1299,7 +1299,7 @@ This subphase produces no Java source changes. The application is already provid
 
 ## Phase 6 — Frontend: React + TypeScript + Vite
 
-**Status:** ⬜ Not started
+**Status:** 🔄 In progress (6.1, 6.2, 6.3 complete)
 **Planned branch:** `feat/frontend`
 **Depends on:** Phase 5 (all backend endpoints stable before frontend integration)
 
@@ -1864,7 +1864,7 @@ interface AuthState {
 
 ---
 
-### 6.3 Student Dashboard & Features
+### 6.3 Student Dashboard & Features ✅ COMPLETE
 
 | Page | Key components | API calls |
 |---|---|---|

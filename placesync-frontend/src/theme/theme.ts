@@ -127,18 +127,26 @@ export const theme = createTheme({
         },
         sizeSmall: { padding: '4px 12px', fontSize: '0.8125rem' },
         sizeLarge: { padding: '12px 28px' },
-        containedPrimary: {
-          background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)',
-          '&:hover': {
-            background: 'linear-gradient(135deg, #4338CA 0%, #3730A3 100%)',
-            boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+      },
+      variants: [
+        {
+          props: { variant: 'contained', color: 'primary' },
+          style: {
+            background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #4338CA 0%, #3730A3 100%)',
+              boxShadow: '0 4px 14px rgba(79, 70, 229, 0.35)',
+            },
           },
         },
-        outlinedPrimary: {
-          borderColor: '#4F46E5',
-          '&:hover': { backgroundColor: '#EEF2FF', borderColor: '#4338CA' },
+        {
+          props: { variant: 'outlined', color: 'primary' },
+          style: {
+            borderColor: '#4F46E5',
+            '&:hover': { backgroundColor: '#EEF2FF', borderColor: '#4338CA' },
+          },
         },
-      },
+      ],
     },
 
     MuiIconButton: {

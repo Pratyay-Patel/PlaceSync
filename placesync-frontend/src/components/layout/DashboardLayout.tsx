@@ -38,7 +38,9 @@ import {
   PendingActionsRounded,
 } from '@mui/icons-material';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
+import { notificationApi } from '../../api/notificationApi';
 import type { UserRole } from '../../types/auth';
 
 const DRAWER_WIDTH = 240;
@@ -90,7 +92,7 @@ const pageVariants = {
   out: { opacity: 0, y: -8 },
 };
 
-const pageTransition = { type: 'tween', ease: 'easeOut', duration: 0.18 };
+const pageTransition = { type: 'tween' as const, ease: 'easeOut' as const, duration: 0.18 };
 
 export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
@@ -100,6 +102,12 @@ export default function DashboardLayout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { role, email, logout } = useAuthStore();
+
+  const { data: unreadCount = 0 } = useQuery({
+    queryKey: ['notification-count'],
+    queryFn: notificationApi.getUnreadCount,
+    refetchInterval: 60_000,
+  });
 
   const navItems = role ? NAV_ITEMS[role] : [];
   const initials = email ? email[0].toUpperCase() : 'U';
@@ -224,8 +232,8 @@ export default function DashboardLayout() {
 
                   <ListItemText
                     primary={item.label}
-                    primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 500, noWrap: true }}
                     sx={{
+                      '& .MuiListItemText-primary': { fontSize: '0.875rem', fontWeight: 500, whiteSpace: 'nowrap' },
                       opacity: isExpanded ? 1 : 0,
                       transition: 'opacity 200ms',
                       ml: 0.5,
@@ -307,7 +315,7 @@ export default function DashboardLayout() {
             {/* Notification bell — count wired in 6.3 */}
             <Tooltip title="Notifications">
               <IconButton size="small" sx={{ color: 'text.secondary' }}>
-                <Badge badgeContent={0} color="error" invisible>
+                <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0}>
                   <NotificationsRounded fontSize="small" />
                 </Badge>
               </IconButton>
