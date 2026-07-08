@@ -59,13 +59,8 @@ export default function JobDetailPage() {
       setDialogOpen(false);
       setApplied(true);
     },
-    onError: (err: { response?: { data?: { message?: string }; status?: number } }) => {
-      const status = err?.response?.status;
-      if (status === 409) {
-        setApplyError('You have already applied for this job.');
-      } else {
-        setApplyError(err?.response?.data?.message ?? 'Failed to submit application. Please try again.');
-      }
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setApplyError(err?.response?.data?.message ?? 'Failed to submit application. Please try again.');
     },
   });
 

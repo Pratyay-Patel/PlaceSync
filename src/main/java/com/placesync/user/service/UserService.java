@@ -46,7 +46,12 @@ public class UserService {
     public StudentProfileResponse getMyProfile(UUID userId) {
         StudentProfile profile = studentProfileRepository.findByUserId(userId)
                 .orElseThrow(() -> new ResourceNotFoundException(STUDENT_PROFILE, userId));
-        return studentProfileMapper.toResponse(profile);
+        StudentProfileResponse response = studentProfileMapper.toResponse(profile);
+        if (profile.getProfilePictureS3Key() != null) {
+            String pictureUrl = s3StorageService.generatePresignedGetUrl(picturesBucket, profile.getProfilePictureS3Key(), 60);
+            response = response.toBuilder().profilePictureUrl(pictureUrl).build();
+        }
+        return response;
     }
 
     @Transactional
@@ -69,7 +74,13 @@ public class UserService {
             profile.setIsProfilePublic(req.getIsProfilePublic());
         }
 
-        return studentProfileMapper.toResponse(studentProfileRepository.save(profile));
+        StudentProfile saved = studentProfileRepository.save(profile);
+        StudentProfileResponse response = studentProfileMapper.toResponse(saved);
+        if (saved.getProfilePictureS3Key() != null) {
+            String pictureUrl = s3StorageService.generatePresignedGetUrl(picturesBucket, saved.getProfilePictureS3Key(), 60);
+            response = response.toBuilder().profilePictureUrl(pictureUrl).build();
+        }
+        return response;
     }
 
     @Transactional
@@ -99,7 +110,7 @@ public class UserService {
     }
 
     @Transactional
-    public StudentEducation addEducation(UUID userId, StudentEducationRequest req) {
+    public StudentEducationResponse addEducation(UUID userId, StudentEducationRequest req) {
         log.info("Adding education record for userId={}", sanitize(userId));
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = StudentEducation.builder()
@@ -111,11 +122,11 @@ public class UserService {
                 .endYear(req.getEndYear())
                 .percentageOrCgpa(req.getPercentageOrCgpa())
                 .build();
-        return studentEducationRepository.save(education);
+        return studentProfileMapper.toEducationResponse(studentEducationRepository.save(education));
     }
 
     @Transactional
-    public StudentEducation updateEducation(UUID userId, UUID educationId, StudentEducationRequest req) {
+    public StudentEducationResponse updateEducation(UUID userId, UUID educationId, StudentEducationRequest req) {
         log.info("Updating educationId={} for userId={}", sanitize(educationId), sanitize(userId));
         StudentProfile profile = requireStudentProfile(userId);
         StudentEducation education = studentEducationRepository.findById(educationId)
@@ -129,7 +140,7 @@ public class UserService {
         education.setStartYear(req.getStartYear());
         education.setEndYear(req.getEndYear());
         education.setPercentageOrCgpa(req.getPercentageOrCgpa());
-        return studentEducationRepository.save(education);
+        return studentProfileMapper.toEducationResponse(studentEducationRepository.save(education));
     }
 
     @Transactional
@@ -145,7 +156,7 @@ public class UserService {
     }
 
     @Transactional
-    public StudentExperience addExperience(UUID userId, StudentExperienceRequest req) {
+    public StudentExperienceResponse addExperience(UUID userId, StudentExperienceRequest req) {
         log.info("Adding experience record for userId={}", sanitize(userId));
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = StudentExperience.builder()
@@ -157,11 +168,11 @@ public class UserService {
                 .endDate(req.getEndDate())
                 .isCurrent(Boolean.TRUE.equals(req.getIsCurrent()))
                 .build();
-        return studentExperienceRepository.save(experience);
+        return studentProfileMapper.toExperienceResponse(studentExperienceRepository.save(experience));
     }
 
     @Transactional
-    public StudentExperience updateExperience(UUID userId, UUID experienceId, StudentExperienceRequest req) {
+    public StudentExperienceResponse updateExperience(UUID userId, UUID experienceId, StudentExperienceRequest req) {
         log.info("Updating experienceId={} for userId={}", sanitize(experienceId), sanitize(userId));
         StudentProfile profile = requireStudentProfile(userId);
         StudentExperience experience = studentExperienceRepository.findById(experienceId)
@@ -175,7 +186,7 @@ public class UserService {
         experience.setStartDate(req.getStartDate());
         experience.setEndDate(req.getEndDate());
         experience.setIsCurrent(Boolean.TRUE.equals(req.getIsCurrent()));
-        return studentExperienceRepository.save(experience);
+        return studentProfileMapper.toExperienceResponse(studentExperienceRepository.save(experience));
     }
 
     @Transactional
@@ -191,21 +202,30 @@ public class UserService {
     }
 
     @Transactional(readOnly = true)
-    public List<StudentSkill> getSkills(UUID userId) {
+    public List<StudentSkillResponse> getSkills(UUID userId) {
         StudentProfile profile = requireStudentProfile(userId);
-        return studentSkillRepository.findByStudentId(profile.getId());
+        return studentSkillRepository.findByStudentId(profile.getId())
+                .stream()
+                .map(studentProfileMapper::toSkillResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<StudentEducation> getEducation(UUID userId) {
+    public List<StudentEducationResponse> getEducation(UUID userId) {
         StudentProfile profile = requireStudentProfile(userId);
-        return studentEducationRepository.findByStudentIdOrderByStartYearDesc(profile.getId());
+        return studentEducationRepository.findByStudentIdOrderByStartYearDesc(profile.getId())
+                .stream()
+                .map(studentProfileMapper::toEducationResponse)
+                .toList();
     }
 
     @Transactional(readOnly = true)
-    public List<StudentExperience> getExperience(UUID userId) {
+    public List<StudentExperienceResponse> getExperience(UUID userId) {
         StudentProfile profile = requireStudentProfile(userId);
-        return studentExperienceRepository.findByStudentIdOrderByStartDateDesc(profile.getId());
+        return studentExperienceRepository.findByStudentIdOrderByStartDateDesc(profile.getId())
+                .stream()
+                .map(studentProfileMapper::toExperienceResponse)
+                .toList();
     }
 
     @Transactional

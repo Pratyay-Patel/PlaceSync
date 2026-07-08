@@ -15,5 +15,7 @@ public interface ResumeRepository extends JpaRepository<Resume, UUID> {
 
     Optional<Resume> findByStudentIdAndIsDefaultTrueAndDeletedAtIsNull(UUID studentId);
 
+    Optional<Resume> findFirstByStudentIdAndIdNotAndDeletedAtIsNullOrderByUploadedAtDesc(UUID studentId, UUID excludeId);
+
     boolean existsByS3Key(String s3Key);
 }

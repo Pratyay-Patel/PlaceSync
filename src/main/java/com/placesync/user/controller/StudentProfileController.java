@@ -2,9 +2,6 @@ package com.placesync.user.controller;
 
 import com.placesync.common.security.UserPrincipal;
 import com.placesync.user.dto.*;
-import com.placesync.user.entity.StudentEducation;
-import com.placesync.user.entity.StudentExperience;
-import com.placesync.user.entity.StudentSkill;
 import com.placesync.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -59,7 +56,7 @@ public class StudentProfileController {
 
     @GetMapping("/profile/skills")
     @Operation(summary = "List all skills on the student profile")
-    public ResponseEntity<List<StudentSkill>> getSkills(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<List<StudentSkillResponse>> getSkills(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getSkills(principal.getId()));
     }
 
@@ -85,13 +82,13 @@ public class StudentProfileController {
 
     @GetMapping("/profile/education")
     @Operation(summary = "List all education records")
-    public ResponseEntity<List<StudentEducation>> getEducation(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<List<StudentEducationResponse>> getEducation(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getEducation(principal.getId()));
     }
 
     @PostMapping("/profile/education")
     @Operation(summary = "Add an education record")
-    public ResponseEntity<StudentEducation> addEducation(
+    public ResponseEntity<StudentEducationResponse> addEducation(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody StudentEducationRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.addEducation(principal.getId(), req));
@@ -99,7 +96,7 @@ public class StudentProfileController {
 
     @PutMapping("/profile/education/{educationId}")
     @Operation(summary = "Update an education record")
-    public ResponseEntity<StudentEducation> updateEducation(
+    public ResponseEntity<StudentEducationResponse> updateEducation(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID educationId,
             @Valid @RequestBody StudentEducationRequest req) {
@@ -119,13 +116,13 @@ public class StudentProfileController {
 
     @GetMapping("/profile/experience")
     @Operation(summary = "List all experience records")
-    public ResponseEntity<List<StudentExperience>> getExperience(@AuthenticationPrincipal UserPrincipal principal) {
+    public ResponseEntity<List<StudentExperienceResponse>> getExperience(@AuthenticationPrincipal UserPrincipal principal) {
         return ResponseEntity.ok(userService.getExperience(principal.getId()));
     }
 
     @PostMapping("/profile/experience")
     @Operation(summary = "Add an experience record")
-    public ResponseEntity<StudentExperience> addExperience(
+    public ResponseEntity<StudentExperienceResponse> addExperience(
             @AuthenticationPrincipal UserPrincipal principal,
             @Valid @RequestBody StudentExperienceRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.addExperience(principal.getId(), req));
@@ -133,7 +130,7 @@ public class StudentProfileController {
 
     @PutMapping("/profile/experience/{experienceId}")
     @Operation(summary = "Update an experience record")
-    public ResponseEntity<StudentExperience> updateExperience(
+    public ResponseEntity<StudentExperienceResponse> updateExperience(
             @AuthenticationPrincipal UserPrincipal principal,
             @PathVariable UUID experienceId,
             @Valid @RequestBody StudentExperienceRequest req) {
