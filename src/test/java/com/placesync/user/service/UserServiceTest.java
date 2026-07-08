@@ -330,6 +330,37 @@ class UserServiceTest {
     }
 
     @Test
+    void getMyProfile_withProfilePicture_returnsPresignedUrl() {
+        StudentProfile profile = studentProfile();
+        profile.setProfilePictureS3Key("profile-pictures/key.jpg");
+        StudentProfileResponse baseResponse = StudentProfileResponse.builder().build();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentProfileMapper.toResponse(profile)).thenReturn(baseResponse);
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/pic");
+
+        StudentProfileResponse result = userService.getMyProfile(userId);
+
+        assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
+    }
+
+    @Test
+    void updateProfile_withProfilePicture_returnsPresignedUrl() {
+        StudentProfile profile = studentProfile();
+        profile.setProfilePictureS3Key("profile-pictures/key.jpg");
+        UpdateStudentProfileRequest req = new UpdateStudentProfileRequest();
+        req.setFirstName("Jane");
+        req.setLastName("Doe");
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentProfileRepository.save(profile)).thenReturn(profile);
+        when(studentProfileMapper.toResponse(profile)).thenReturn(StudentProfileResponse.builder().build());
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/pic");
+
+        StudentProfileResponse result = userService.updateProfile(userId, req);
+
+        assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
+    }
+
+    @Test
     void uploadProfilePicture_studentNotFound_throwsResourceNotFoundException() {
         MockMultipartFile file = new MockMultipartFile("file", "photo.jpg", "image/jpeg", new byte[]{});
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.empty());

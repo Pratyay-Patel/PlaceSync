@@ -238,4 +238,43 @@ class ResumeServiceTest {
         assertThatThrownBy(() -> resumeService.softDelete(userId, resumeId))
                 .isInstanceOf(AccessDeniedException.class);
     }
+
+    @Test
+    void softDelete_defaultResume_withSuccessor_promotesNextResume() {
+        StudentProfile profile = profile();
+        Resume r = resume(profile);
+        r.setIsDefault(true);
+        Resume next = new Resume();
+        next.setId(UUID.randomUUID());
+        next.setStudent(profile);
+        next.setIsDefault(false);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(resumeRepository.findById(resumeId)).thenReturn(Optional.of(r));
+        when(resumeRepository.findFirstByStudentIdAndIdNotAndDeletedAtIsNullOrderByUploadedAtDesc(profile.getId(), resumeId))
+                .thenReturn(Optional.of(next));
+
+        resumeService.softDelete(userId, resumeId);
+
+        assertThat(r.getDeletedAt()).isNotNull();
+        assertThat(r.getIsDefault()).isFalse();
+        assertThat(next.getIsDefault()).isTrue();
+        verify(resumeRepository, times(2)).save(any());
+    }
+
+    @Test
+    void softDelete_defaultResume_noSuccessor_noPromotion() {
+        StudentProfile profile = profile();
+        Resume r = resume(profile);
+        r.setIsDefault(true);
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(resumeRepository.findById(resumeId)).thenReturn(Optional.of(r));
+        when(resumeRepository.findFirstByStudentIdAndIdNotAndDeletedAtIsNullOrderByUploadedAtDesc(profile.getId(), resumeId))
+                .thenReturn(Optional.empty());
+
+        resumeService.softDelete(userId, resumeId);
+
+        assertThat(r.getDeletedAt()).isNotNull();
+        assertThat(r.getIsDefault()).isFalse();
+        verify(resumeRepository, times(1)).save(r);
+    }
 }
