@@ -1880,16 +1880,42 @@ interface AuthState {
 
 ---
 
-### 6.4 Recruiter Dashboard & Features
+### 6.4 Recruiter Dashboard & Features ✅ COMPLETE
 
 | Page | Key components | API calls |
 |---|---|---|
 | `RecruiterDashboard` | Stats: open jobs, total applications, shortlisted, offers; recent applicants | `GET /api/v1/recruiters/jobs`, `GET /api/v1/analytics/recruiter-stats` |
 | `ProfilePage` | Name, title, contact, company selector (dropdown of verified companies); verification status badge | `GET/PUT /api/v1/recruiters/profile`, `GET /api/v1/companies` |
-| `JobsPage` | Jobs table with status, application count, deadline; Create Job button | `GET /api/v1/recruiters/jobs` |
+| `JobsPage` | Jobs table with status, application count, deadline; Create Job button; Close Job confirm dialog | `GET /api/v1/recruiters/jobs`, `PATCH /api/v1/jobs/:id/close` |
 | `CreateJobPage` | Multi-section form: basic info, eligibility (CGPA, departments), skills chip input, deadline picker | `POST /api/v1/jobs` |
-| `ApplicationsPage` (per job) | Applicant table with status selector dropdown; view student profile button; download resume button | `GET /api/v1/recruiters/jobs/:jobId/applications`, `PATCH /api/v1/recruiters/applications/:id/status` |
-| `ScheduleInterviewPage` | Form: round, type, date/time, duration, meeting link; reschedule and cancel actions | `POST/PUT/PATCH /api/v1/recruiters/applications/:id/interviews` |
+| `EditJobPage` | Pre-populated form reusing `JobForm`; saves via PUT | `GET /api/v1/jobs/:id`, `PUT /api/v1/jobs/:id` |
+| `ApplicationsPage` (per job) | Applicant table with inline status selector dropdown; view student profile modal; download resume button | `GET /api/v1/recruiters/jobs/:jobId/applications`, `PATCH /api/v1/recruiters/applications/:id/status`, `GET /api/v1/students/resumes/:id/url` |
+| `ScheduleInterviewPage` | Rounds table + schedule-new form; reschedule dialog; cancel dialog with reason; complete action | `GET/POST /api/v1/recruiters/applications/:id/interviews`, `PUT /api/v1/recruiters/interviews/:id`, `PATCH /api/v1/recruiters/interviews/:id/cancel`, `PATCH /api/v1/recruiters/interviews/:id/complete` |
+
+#### New files created
+| File | Purpose |
+|---|---|
+| `src/types/recruiter.ts` | RecruiterProfile, UpdateRecruiterProfileRequest, RecruiterStats, Company |
+| `src/api/recruiterApi.ts` | All recruiter-scoped API calls (profile, stats, jobs, applications, interviews, resume URL) |
+| `src/api/companyApi.ts` | List verified companies for the profile page company selector |
+| `src/pages/recruiter/EditJobPage.tsx` | Edit job form — pre-populated; reuses `JobForm` from CreateJobPage |
+
+#### Updated files
+| File | Change |
+|---|---|
+| `src/api/jobApi.ts` | Added `JobFormData` interface, `create`, `update`, `close` methods |
+| `src/routes/router.tsx` | Imported `EditJobPage`; updated `/recruiter/jobs/:jobId/edit` route to use it |
+| All 6 recruiter page stubs | Replaced placeholder `<div>` returns with full implementations |
+
+#### Acceptance criteria
+- [x] `RecruiterDashboard` shows 4 stats cards (jobs posted, total applications, shortlisted, offers) and a recent-jobs list
+- [x] `ProfilePage` loads recruiter profile; company dropdown shows verified companies only; verification status badge rendered
+- [x] `JobsPage` lists all recruiter jobs in a table with status chip; Close Job confirm dialog; Edit and View Applicants actions
+- [x] `CreateJobPage` multi-section form posts to `POST /api/v1/jobs`; skills and departments added as chips
+- [x] `EditJobPage` pre-populates from `GET /api/v1/jobs/:id` and saves via `PUT /api/v1/jobs/:id`
+- [x] `ApplicationsPage` shows applicant table per job; inline status selector respects valid transition matrix; resume download opens presigned URL; student profile modal shows applicant name and resume label
+- [x] `ScheduleInterviewPage` lists existing rounds; schedule-new form; reschedule and cancel dialogs; complete button
+- [x] `npx tsc --noEmit` passes — zero TypeScript errors
 
 ---
 

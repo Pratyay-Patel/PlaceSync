@@ -24,6 +24,7 @@ import RecruiterDashboard from '../pages/recruiter/RecruiterDashboard';
 import RecruiterProfilePage from '../pages/recruiter/ProfilePage';
 import RecruiterJobsPage from '../pages/recruiter/JobsPage';
 import CreateJobPage from '../pages/recruiter/CreateJobPage';
+import EditJobPage from '../pages/recruiter/EditJobPage';
 import RecruiterApplicationsPage from '../pages/recruiter/ApplicationsPage';
 import ScheduleInterviewPage from '../pages/recruiter/ScheduleInterviewPage';
 
@@ -77,7 +78,7 @@ const router = createBrowserRouter([
               { path: '/recruiter/profile', element: <RecruiterProfilePage /> },
               { path: '/recruiter/jobs', element: <RecruiterJobsPage /> },
               { path: '/recruiter/jobs/create', element: <CreateJobPage /> },
-              { path: '/recruiter/jobs/:jobId/edit', element: <RecruiterJobsPage /> },
+              { path: '/recruiter/jobs/:jobId/edit', element: <EditJobPage /> },
               { path: '/recruiter/jobs/:jobId/applications', element: <RecruiterApplicationsPage /> },
               { path: '/recruiter/jobs/:jobId/applications/:applicationId', element: <ScheduleInterviewPage /> },
             ],
