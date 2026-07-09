@@ -280,15 +280,18 @@ export default function ScheduleInterviewPage() {
                 </FormControl>
               </Box>
 
-              <TextField
-                label="Date & Time"
-                type="datetime-local"
-                value={form.scheduledAt}
-                onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-                required
-                size="small"
-                InputLabelProps={{ shrink: true }}
-              />
+              <Box>
+                <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                  Date &amp; Time *
+                </Typography>
+                <TextField
+                  type="datetime-local"
+                  value={form.scheduledAt}
+                  onChange={(e) => setForm((f) => ({ ...f, scheduledAt: e.target.value }))}
+                  size="small"
+                  fullWidth
+                />
+              </Box>
 
               <TextField
                 label="Duration (minutes)"
@@ -366,15 +369,18 @@ export default function ScheduleInterviewPage() {
         <DialogContent>
           {rescheduleError && <Alert severity="error" sx={{ mb: 2 }}>{rescheduleError}</Alert>}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1 }}>
-            <TextField
-              label="New Date & Time"
-              type="datetime-local"
-              value={rescheduleForm.scheduledAt}
-              onChange={(e) => setRescheduleForm((f) => ({ ...f, scheduledAt: e.target.value }))}
-              required
-              size="small"
-              InputLabelProps={{ shrink: true }}
-            />
+            <Box>
+              <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+                New Date &amp; Time *
+              </Typography>
+              <TextField
+                type="datetime-local"
+                value={rescheduleForm.scheduledAt}
+                onChange={(e) => setRescheduleForm((f) => ({ ...f, scheduledAt: e.target.value }))}
+                size="small"
+                fullWidth
+              />
+            </Box>
             <TextField
               label="Meeting Link"
               value={rescheduleForm.meetingLink}

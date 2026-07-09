@@ -58,6 +58,7 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
 
   const [skillInput, setSkillInput] = useState('');
   const [deptInput, setDeptInput] = useState('');
+  const [deadlineError, setDeadlineError] = useState('');
 
   const addSkill = () => {
     const v = skillInput.trim();
@@ -77,6 +78,11 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!form.applicationDeadline) {
+      setDeadlineError('Application deadline is required.');
+      return;
+    }
+    setDeadlineError('');
     onSubmit({
       ...form,
       applicationDeadline: toISOFromLocalDatetime(form.applicationDeadline as string),
@@ -162,15 +168,23 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
             />
           </Box>
 
-          <TextField
-            label="Application Deadline"
-            type="datetime-local"
-            value={form.applicationDeadline}
-            onChange={(e) => setForm((f) => ({ ...f, applicationDeadline: e.target.value }))}
-            required
-            size="small"
-            InputLabelProps={{ shrink: true }}
-          />
+          <Box>
+            <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block', mb: 0.5 }}>
+              Application Deadline *
+            </Typography>
+            <TextField
+              type="datetime-local"
+              value={form.applicationDeadline}
+              onChange={(e) => {
+                setDeadlineError('');
+                setForm((f) => ({ ...f, applicationDeadline: e.target.value }));
+              }}
+              size="small"
+              fullWidth
+              error={!!deadlineError}
+              helperText={deadlineError}
+            />
+          </Box>
         </CardContent>
       </Card>
 
@@ -289,8 +303,15 @@ export default function CreateJobPage() {
     onSuccess: (job) => {
       navigate(`/recruiter/jobs/${job.id}/applications`);
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => {
-      setError(err?.response?.data?.message ?? 'Failed to create job posting.');
+    onError: (err: { response?: { data?: { message?: string; fieldErrors?: Array<{ field: string; message: string }> } } }) => {
+      const data = err?.response?.data;
+      if (data?.message && data.message !== 'Validation failed') {
+        setError(data.message);
+      } else if (data?.fieldErrors?.[0]) {
+        setError(`${data.fieldErrors[0].field}: ${data.fieldErrors[0].message}`);
+      } else {
+        setError(data?.message ?? 'Failed to create job posting.');
+      }
     },
   });
 
