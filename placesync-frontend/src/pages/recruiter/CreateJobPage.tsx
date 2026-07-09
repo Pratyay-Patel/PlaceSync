@@ -9,7 +9,7 @@ import { AddRounded, ArrowBackRounded } from '@mui/icons-material';
 import { jobApi, type JobFormData } from '../../api/jobApi';
 
 const LOCATION_TYPES = ['ONSITE', 'REMOTE', 'HYBRID'];
-const JOB_TYPES = ['FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'CONTRACT'];
+const JOB_TYPES = ['FULL_TIME', 'INTERNSHIP', 'CONTRACT'];
 
 const LOCATION_LABEL: Record<string, string> = {
   ONSITE: 'On-site',
@@ -18,7 +18,6 @@ const LOCATION_LABEL: Record<string, string> = {
 };
 const TYPE_LABEL: Record<string, string> = {
   FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
   INTERNSHIP: 'Internship',
   CONTRACT: 'Contract',
 };

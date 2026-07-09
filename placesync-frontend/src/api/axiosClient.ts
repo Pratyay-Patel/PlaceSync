@@ -1,5 +1,6 @@
 import axios, { type InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '../store/authStore';
+import { queryClient } from '../lib/queryClient';
 import type { AuthResponse } from '../types/auth';
 
 interface RetryableRequest extends InternalAxiosRequestConfig {
@@ -58,6 +59,7 @@ axiosClient.interceptors.response.use(
 
     const refreshToken = localStorage.getItem('refreshToken');
     if (!refreshToken) {
+      queryClient.clear();
       useAuthStore.getState().logout();
       window.location.href = '/login';
       return Promise.reject(error);
@@ -72,6 +74,7 @@ axiosClient.interceptors.response.use(
       return axiosClient(original);
     } catch (refreshError) {
       flushQueue(refreshError, null);
+      queryClient.clear();
       useAuthStore.getState().logout();
       window.location.href = '/login';
       return Promise.reject(refreshError);

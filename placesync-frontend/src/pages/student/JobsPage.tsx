@@ -22,7 +22,6 @@ const LOCATION_OPTIONS: { value: JobLocationType | ''; label: string }[] = [
 const TYPE_OPTIONS: { value: JobType | ''; label: string }[] = [
   { value: '', label: 'All types' },
   { value: 'FULL_TIME', label: 'Full-time' },
-  { value: 'PART_TIME', label: 'Part-time' },
   { value: 'INTERNSHIP', label: 'Internship' },
   { value: 'CONTRACT', label: 'Contract' },
 ];
@@ -35,7 +34,6 @@ const LOCATION_LABEL: Record<JobLocationType, string> = {
 
 const TYPE_LABEL: Record<JobType, string> = {
   FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
   INTERNSHIP: 'Internship',
   CONTRACT: 'Contract',
 };

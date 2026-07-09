@@ -23,7 +23,6 @@ const LOCATION_LABEL: Record<JobLocationType, string> = {
 
 const TYPE_LABEL: Record<JobType, string> = {
   FULL_TIME: 'Full-time',
-  PART_TIME: 'Part-time',
   INTERNSHIP: 'Internship',
   CONTRACT: 'Contract',
 };

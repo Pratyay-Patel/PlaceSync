@@ -1,6 +1,6 @@
 export type JobStatus = 'PENDING_APPROVAL' | 'OPEN' | 'CLOSED' | 'EXPIRED';
 export type JobLocationType = 'ONSITE' | 'REMOTE' | 'HYBRID';
-export type JobType = 'FULL_TIME' | 'PART_TIME' | 'INTERNSHIP' | 'CONTRACT';
+export type JobType = 'FULL_TIME' | 'INTERNSHIP' | 'CONTRACT';
 
 export interface JobSummary {
   id: string;

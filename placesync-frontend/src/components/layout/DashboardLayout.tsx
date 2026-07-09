@@ -40,6 +40,7 @@ import {
 import { AnimatePresence, motion } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
+import { queryClient } from '../../lib/queryClient';
 import { notificationApi } from '../../api/notificationApi';
 import type { UserRole } from '../../types/auth';
 
@@ -115,6 +116,7 @@ export default function DashboardLayout() {
 
   const handleLogout = () => {
     setAnchorEl(null);
+    queryClient.clear();
     logout();
     navigate('/login', { replace: true });
   };
