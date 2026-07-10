@@ -4,6 +4,7 @@ import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.job.dto.*;
 import com.placesync.job.entity.Job;
+import com.placesync.job.entity.JobLocationType;
 import com.placesync.job.entity.JobStatus;
 import com.placesync.job.mapper.JobMapper;
 import com.placesync.job.repository.JobRepository;
@@ -290,5 +291,112 @@ class JobServiceTest {
 
         assertThatThrownBy(() -> jobService.softDeleteJob(userId, jobId))
                 .isInstanceOf(AccessDeniedException.class);
+    }
+
+    // ── ONSITE city validation — createJob ───────────────────────────────────
+
+    @Test
+    void createJob_onsiteWithNullCity_throwsIllegalArgumentException() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        CreateJobRequest req = createJobRequest();
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity(null);
+
+        assertThatThrownBy(() -> jobService.createJob(userId, req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("City is required for on-site jobs");
+    }
+
+    @Test
+    void createJob_onsiteWithBlankCity_throwsIllegalArgumentException() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        CreateJobRequest req = createJobRequest();
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity("   ");
+
+        assertThatThrownBy(() -> jobService.createJob(userId, req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("City is required for on-site jobs");
+    }
+
+    @Test
+    void createJob_onsiteWithValidCity_savesJob() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(jobRepository.save(any())).thenReturn(new Job());
+        when(jobMapper.toResponse(any())).thenReturn(new JobResponse());
+        CreateJobRequest req = createJobRequest();
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity("Mumbai");
+
+        jobService.createJob(userId, req);
+
+        verify(jobRepository).save(any(Job.class));
+    }
+
+    // ── ONSITE city validation — updateJob ───────────────────────────────────
+
+    private Job pendingJob(RecruiterProfile recruiter) {
+        Job j = openJob(recruiter);
+        j.setStatus(JobStatus.PENDING_APPROVAL);
+        return j;
+    }
+
+    @Test
+    void updateJob_onsiteWithNullCity_throwsIllegalArgumentException() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        Job job = pendingJob(recruiter);
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        UpdateJobRequest req = new UpdateJobRequest();
+        req.setTitle("T");
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity(null);
+        req.setRequiredSkills(List.of());
+        req.setEligibleDepartments(List.of());
+
+        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("City is required for on-site jobs");
+    }
+
+    @Test
+    void updateJob_onsiteWithBlankCity_throwsIllegalArgumentException() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        Job job = pendingJob(recruiter);
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        UpdateJobRequest req = new UpdateJobRequest();
+        req.setTitle("T");
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity("   ");
+        req.setRequiredSkills(List.of());
+        req.setEligibleDepartments(List.of());
+
+        assertThatThrownBy(() -> jobService.updateJob(userId, jobId, req))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("City is required for on-site jobs");
+    }
+
+    @Test
+    void updateJob_onsiteWithValidCity_updatesJob() {
+        RecruiterProfile recruiter = verifiedRecruiter();
+        Job job = pendingJob(recruiter);
+        when(jobRepository.findByIdAndDeletedAtIsNull(jobId)).thenReturn(Optional.of(job));
+        when(recruiterProfileRepository.findByUserId(userId)).thenReturn(Optional.of(recruiter));
+        when(jobRepository.save(job)).thenReturn(job);
+        when(jobMapper.toResponse(job)).thenReturn(new JobResponse());
+        UpdateJobRequest req = new UpdateJobRequest();
+        req.setTitle("T");
+        req.setLocationType(JobLocationType.ONSITE);
+        req.setLocationCity("Bangalore");
+        req.setRequiredSkills(List.of());
+        req.setEligibleDepartments(List.of());
+
+        jobService.updateJob(userId, jobId, req);
+
+        assertThat(job.getLocationCity()).isEqualTo("Bangalore");
     }
 }
