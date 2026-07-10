@@ -42,6 +42,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuthStore } from '../../store/authStore';
 import { queryClient } from '../../lib/queryClient';
 import { notificationApi } from '../../api/notificationApi';
+import { authApi } from '../../api/authApi';
 import type { UserRole } from '../../types/auth';
 
 const DRAWER_WIDTH = 240;
@@ -116,6 +117,10 @@ export default function DashboardLayout() {
 
   const handleLogout = () => {
     setAnchorEl(null);
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (refreshToken) {
+      authApi.logout(refreshToken).catch(() => {});
+    }
     queryClient.clear();
     logout();
     navigate('/login', { replace: true });
