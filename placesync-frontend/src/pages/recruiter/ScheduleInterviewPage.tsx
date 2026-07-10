@@ -82,8 +82,15 @@ export default function ScheduleInterviewPage() {
       setScheduleError('');
       setForm({ roundNumber: 1, interviewType: 'ONLINE', scheduledAt: '', durationMinutes: 60, meetingLink: '', venue: '' });
     },
-    onError: (err: { response?: { data?: { message?: string } } }) => {
-      setScheduleError(err?.response?.data?.message ?? 'Failed to schedule interview.');
+    onError: (err: { response?: { data?: { message?: string; fieldErrors?: Array<{ field: string; message: string }> } } }) => {
+      const data = err?.response?.data;
+      if (data?.message && data.message !== 'Validation failed') {
+        setScheduleError(data.message);
+      } else if (data?.fieldErrors?.[0]) {
+        setScheduleError(data.fieldErrors[0].message);
+      } else {
+        setScheduleError(data?.message ?? 'Failed to schedule interview.');
+      }
     },
   });
 
@@ -197,7 +204,7 @@ export default function ScheduleInterviewPage() {
                           />
                         </TableCell>
                         <TableCell align="right">
-                          {iv.status === 'SCHEDULED' && (
+                          {(iv.status === 'SCHEDULED' || iv.status === 'RESCHEDULED') && (
                             <>
                               <Button
                                 size="small"
