@@ -5,26 +5,19 @@ import {
   Chip, Divider, Link,
 } from '@mui/material';
 import {
-  EventNoteRounded, VideocamRounded, PhoneRounded,
-  BusinessRounded, LocationOnRounded,
+  EventNoteRounded, VideocamRounded, LocationOnRounded,
 } from '@mui/icons-material';
 import { interviewApi } from '../../api/interviewApi';
 import type { Interview, InterviewStatus, InterviewType } from '../../types/interview';
 
 const TYPE_LABEL: Record<InterviewType, string> = {
-  PHONE: 'Phone',
-  VIDEO: 'Video',
-  ONSITE: 'On-site',
-  TECHNICAL: 'Technical',
-  HR: 'HR',
+  ONLINE: 'Online',
+  OFFLINE: 'Offline',
 };
 
 const TYPE_ICON: Record<InterviewType, React.ReactNode> = {
-  PHONE: <PhoneRounded fontSize="small" />,
-  VIDEO: <VideocamRounded fontSize="small" />,
-  ONSITE: <BusinessRounded fontSize="small" />,
-  TECHNICAL: <BusinessRounded fontSize="small" />,
-  HR: <BusinessRounded fontSize="small" />,
+  ONLINE: <VideocamRounded fontSize="small" />,
+  OFFLINE: <LocationOnRounded fontSize="small" />,
 };
 
 const STATUS_COLOR: Record<InterviewStatus, string> = {

@@ -74,7 +74,7 @@ export default function RecruiterDashboard() {
   });
 
   const { data: jobsPage, isLoading: jobsLoading } = useQuery({
-    queryKey: ['recruiter-jobs', 0],
+    queryKey: ['recruiter-jobs', { page: 0, size: 5 }],
     queryFn: () => recruiterApi.getMyJobs(0, 5),
   });
 

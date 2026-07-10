@@ -13,14 +13,11 @@ import {
 import { recruiterApi } from '../../api/recruiterApi';
 import type { InterviewType } from '../../types/interview';
 
-const INTERVIEW_TYPES: InterviewType[] = ['PHONE', 'VIDEO', 'ONSITE', 'TECHNICAL', 'HR'];
+const INTERVIEW_TYPES: InterviewType[] = ['ONLINE', 'OFFLINE'];
 
 const TYPE_LABEL: Record<InterviewType, string> = {
-  PHONE: 'Phone',
-  VIDEO: 'Video',
-  ONSITE: 'On-site',
-  TECHNICAL: 'Technical',
-  HR: 'HR',
+  ONLINE: 'Online',
+  OFFLINE: 'Offline',
 };
 
 const STATUS_COLOR: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {
@@ -59,7 +56,7 @@ export default function ScheduleInterviewPage() {
 
   const [form, setForm] = useState({
     roundNumber: 1,
-    interviewType: 'VIDEO' as InterviewType,
+    interviewType: 'ONLINE' as InterviewType,
     scheduledAt: '',
     durationMinutes: 60,
     meetingLink: '',
@@ -83,7 +80,7 @@ export default function ScheduleInterviewPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['application-interviews', applicationId] });
       setScheduleError('');
-      setForm({ roundNumber: 1, interviewType: 'VIDEO', scheduledAt: '', durationMinutes: 60, meetingLink: '', venue: '' });
+      setForm({ roundNumber: 1, interviewType: 'ONLINE', scheduledAt: '', durationMinutes: 60, meetingLink: '', venue: '' });
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
       setScheduleError(err?.response?.data?.message ?? 'Failed to schedule interview.');

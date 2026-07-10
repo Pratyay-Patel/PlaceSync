@@ -4,7 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Chip, IconButton, Tooltip, CircularProgress,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Alert, Pagination,
 } from '@mui/material';
 import {
   AddRounded, PeopleAltRounded, EditRounded, StopRounded,
@@ -28,13 +28,16 @@ export default function RecruiterJobsPage() {
   const queryClient = useQueryClient();
   const [closeTargetId, setCloseTargetId] = useState<string | null>(null);
   const [closeError, setCloseError] = useState('');
+  const [page, setPage] = useState(0);
+  const PAGE_SIZE = 20;
 
   const { data: jobsPage, isLoading } = useQuery({
-    queryKey: ['recruiter-jobs', 0],
-    queryFn: () => recruiterApi.getMyJobs(0, 50),
+    queryKey: ['recruiter-jobs', { page, size: PAGE_SIZE }],
+    queryFn: () => recruiterApi.getMyJobs(page, PAGE_SIZE),
   });
 
   const jobs = jobsPage?.content ?? [];
+  const totalPages = jobsPage?.totalPages ?? 1;
 
   const closeMutation = useMutation({
     mutationFn: (jobId: string) => jobApi.close(jobId),
@@ -42,6 +45,7 @@ export default function RecruiterJobsPage() {
       queryClient.invalidateQueries({ queryKey: ['recruiter-jobs'] });
       setCloseTargetId(null);
       setCloseError('');
+      setPage(0);
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
       setCloseError(err?.response?.data?.message ?? 'Failed to close job.');
@@ -167,6 +171,18 @@ export default function RecruiterJobsPage() {
           )}
         </CardContent>
       </Card>
+
+      {totalPages > 1 && (
+        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+          <Pagination
+            count={totalPages}
+            page={page + 1}
+            onChange={(_, value) => setPage(value - 1)}
+            color="primary"
+            size="small"
+          />
+        </Box>
+      )}
 
       <Dialog open={!!closeTargetId} onClose={() => setCloseTargetId(null)} maxWidth="xs" fullWidth>
         <DialogTitle>Close Job Posting?</DialogTitle>

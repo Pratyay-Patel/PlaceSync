@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, TextField, Button, Alert,
   FormControl, InputLabel, Select, MenuItem, Chip, InputAdornment,
@@ -77,6 +77,9 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (form.locationType === 'ONSITE' && !form.locationCity?.trim()) {
+      return;
+    }
     if (!form.applicationDeadline) {
       setDeadlineError('Application deadline is required.');
       return;
@@ -153,10 +156,13 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
             <TextField
-              label="City (optional)"
+              label={form.locationType === 'ONSITE' ? 'City *' : 'City (optional)'}
               value={form.locationCity}
               onChange={(e) => setForm((f) => ({ ...f, locationCity: e.target.value }))}
               size="small"
+              required={form.locationType === 'ONSITE'}
+              error={form.locationType === 'ONSITE' && !form.locationCity?.trim()}
+              helperText={form.locationType === 'ONSITE' && !form.locationCity?.trim() ? 'Required for on-site jobs' : undefined}
             />
             <TextField
               label="Compensation (optional)"
@@ -295,11 +301,14 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
 
 export default function CreateJobPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [error, setError] = useState('');
 
   const createMutation = useMutation({
     mutationFn: (data: JobFormData) => jobApi.create(data),
     onSuccess: (job) => {
+      queryClient.invalidateQueries({ queryKey: ['recruiter-jobs'] });
+      queryClient.invalidateQueries({ queryKey: ['recruiter-stats'] });
       navigate(`/recruiter/jobs/${job.id}/applications`);
     },
     onError: (err: { response?: { data?: { message?: string; fieldErrors?: Array<{ field: string; message: string }> } } }) => {

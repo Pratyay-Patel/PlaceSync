@@ -14,11 +14,13 @@ export const recruiterApi = {
 
   getMyJobs: (page = 0, size = 20) =>
     axiosClient
-      .get<PagedResponse<JobSummary>>(`/recruiters/jobs?page=${page}&size=${size}`)
+      .get<PagedResponse<JobSummary>>(`/recruiters/jobs?page=${page}&size=${size}&sort=createdAt,desc`)
       .then((r) => r.data),
 
   getStats: () =>
-    axiosClient.get<RecruiterStats>('/analytics/recruiter-stats').then((r) => r.data),
+    axiosClient
+      .get<{ success: boolean; data: RecruiterStats }>('/analytics/recruiter')
+      .then((r) => r.data.data),
 
   getJobApplications: (jobId: string, page = 0, size = 20) =>
     axiosClient

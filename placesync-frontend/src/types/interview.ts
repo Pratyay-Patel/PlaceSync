@@ -1,4 +1,4 @@
-export type InterviewType = 'PHONE' | 'VIDEO' | 'ONSITE' | 'TECHNICAL' | 'HR';
+export type InterviewType = 'ONLINE' | 'OFFLINE';
 export type InterviewStatus = 'SCHEDULED' | 'COMPLETED' | 'CANCELLED' | 'RESCHEDULED';
 
 export interface Interview {
