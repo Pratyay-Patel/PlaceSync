@@ -1,4 +1,4 @@
-export type VerificationStatus = 'PENDING' | 'VERIFIED' | 'REJECTED';
+export type VerificationStatus = 'PENDING_VERIFICATION' | 'VERIFIED' | 'REJECTED';
 
 export interface RecruiterProfile {
   id: string;

@@ -11,7 +11,7 @@ import type { UpdateRecruiterProfileRequest } from '../../types/recruiter';
 
 const VERIFICATION_CONFIG = {
   VERIFIED: { label: 'Verified', icon: <CheckCircleRounded fontSize="small" />, color: 'success' as const },
-  PENDING: { label: 'Pending Verification', icon: <HourglassEmptyRounded fontSize="small" />, color: 'warning' as const },
+  PENDING_VERIFICATION: { label: 'Pending Verification', icon: <HourglassEmptyRounded fontSize="small" />, color: 'warning' as const },
   REJECTED: { label: 'Rejected', icon: <CancelRounded fontSize="small" />, color: 'error' as const },
 };
 
@@ -86,7 +86,7 @@ export default function RecruiterProfilePage() {
     );
   }
 
-  const verStatus = profile?.verificationStatus ?? 'PENDING';
+  const verStatus = profile?.verificationStatus ?? 'PENDING_VERIFICATION';
   const verConfig = VERIFICATION_CONFIG[verStatus];
 
   return (

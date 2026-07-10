@@ -1299,7 +1299,7 @@ This subphase produces no Java source changes. The application is already provid
 
 ## Phase 6 — Frontend: React + TypeScript + Vite
 
-**Status:** 🔄 In progress (6.1, 6.2, 6.3 complete)
+**Status:** 🔄 In progress (6.1, 6.2, 6.3, 6.4, 6.5 complete)
 **Planned branch:** `feat/frontend`
 **Depends on:** Phase 5 (all backend endpoints stable before frontend integration)
 
@@ -1919,19 +1919,39 @@ interface AuthState {
 
 ---
 
-### 6.5 Admin Dashboard & Features
+### 6.5 Admin Dashboard & Features ✅
+
+**Status:** Complete — `npx tsc --noEmit` passes (0 errors)
 
 | Page | Key components | API calls |
 |---|---|---|
 | `AdminDashboard` | Platform-wide analytics: total students, recruiters, companies, jobs, applications, placement rate | `GET /api/v1/analytics/placement-stats` |
-| `AnalyticsPage` | Bar charts (top companies, top departments), placement rate gauge | `GET /api/v1/analytics/company-breakdown`, `GET /api/v1/analytics/department-breakdown` |
-| `UsersPage` | Searchable user table (email, role, status); activate/deactivate toggle | `GET /api/v1/admin/users`, `PATCH /api/v1/admin/users/:id/status` |
-| `RecruitersPage` | Pending recruiters list with profile detail; Approve / Reject buttons | `GET /api/v1/admin/recruiters/pending`, `PATCH /api/v1/admin/recruiters/:id/verify` |
-| `CompaniesPage` | Pending companies list; Approve / Reject buttons | `GET /api/v1/admin/companies/pending`, `PATCH /api/v1/admin/companies/:id/verify` |
-| `JobsPage` (admin) | Pending jobs list; Approve / Reject buttons | `GET /api/v1/admin/jobs/pending`, `PATCH /api/v1/admin/jobs/:id/approve` |
+| `AnalyticsPage` | MUI-only horizontal bar charts (top companies by offers/applications, departments by placement rate) | `GET /api/v1/analytics/companies`, `GET /api/v1/analytics/departments` |
+| `UsersPage` | Searchable user table (email, role, status); activate/deactivate toggle with confirm dialog; 400ms debounced email filter | `GET /api/v1/admin/users`, `PATCH /api/v1/admin/users/:id/status` |
+| `UserDetailPage` | Full user detail card; activate/deactivate button | `GET /api/v1/admin/users/:id`, `PATCH /api/v1/admin/users/:id/status` |
+| `RecruitersPage` | Pending recruiters list; Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/recruiters/pending`, `PATCH /api/v1/admin/recruiters/:id/verify` |
+| `CompaniesPage` | Pending companies list; Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/companies/pending`, `PATCH /api/v1/admin/companies/:id/verify` |
+| `JobsPage` (admin) | Pending jobs list (JobSummary — no recruiter fields); Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/jobs/pending`, `PATCH /api/v1/admin/jobs/:id/approve` |
 | `ApplicationsPage` (admin) | All applications across all jobs; filter by status | `GET /api/v1/admin/applications` |
 | `InterviewsPage` (admin) | All interviews across all recruiters | `GET /api/v1/admin/interviews` |
-| `AuditLogPage` | Searchable table: entity type, actor, action, timestamp, before/after diff viewer | `GET /api/v1/admin/audit-log` |
+| `AuditLogPage` | Filter by entity type, action, date range; expandable rows with before/after JSON diff viewer | `GET /api/v1/admin/audit-log` |
+
+**What was built:**
+- `src/types/admin.ts` — `UserSummary`, `PlacementStats`, `CompanyStats`, `DepartmentStats`, `AuditLog`, `AuditAction` types
+- `src/api/adminApi.ts` — all admin API calls with correct response unwrapping (analytics uses `.data.data`; audit log uses `.data.data`; others use `.data`)
+- Fixed `src/types/recruiter.ts` — `VerificationStatus` `'PENDING'` → `'PENDING_VERIFICATION'`
+- Fixed `src/pages/recruiter/ProfilePage.tsx` — `VERIFICATION_CONFIG` and default value updated to match
+- 10 admin page implementations replacing placeholder stubs
+
+**Acceptance criteria:**
+- [x] Admin dashboard shows stats from `GET /analytics/placement-stats`
+- [x] Analytics page renders MUI-only horizontal bar charts (no external charting lib)
+- [x] Users page has debounced email search, role/status filters, and activate/deactivate toggle
+- [x] Recruiter / Company / Job approval pages: approve directly, reject via dialog requiring a reason
+- [x] Applications and Interviews pages list all records (admin view) with status filter
+- [x] Audit log page supports filtering and shows expandable before/after JSON diff
+- [x] `VerificationStatus` type fixed to match backend enum (`PENDING_VERIFICATION`)
+- [x] `npx tsc --noEmit` passes with 0 errors
 
 ---
 
