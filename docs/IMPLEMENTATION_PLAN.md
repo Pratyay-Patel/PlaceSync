@@ -30,7 +30,7 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 3 | Jobs, Applications, Interviews, Resumes + Redis caching | ✅ Complete | `feat/job-application-layer` |
 | 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ✅ Complete | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ✅ Complete | `feat/analytics-s3-email` |
-| 6 | Frontend — React + TypeScript + Vite | ⬜ Not started | `feat/frontend` |
+| 6 | Frontend — React + TypeScript + Vite | ✅ Complete | `feat/frontend` |
 | 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | ⬜ Not started | `feat/cicd-production` |
 
 ---
@@ -1299,7 +1299,7 @@ This subphase produces no Java source changes. The application is already provid
 
 ## Phase 6 — Frontend: React + TypeScript + Vite
 
-**Status:** ⬜ Not started
+**Status:** 🔄 In progress (6.1, 6.2, 6.3, 6.4, 6.5 complete)
 **Planned branch:** `feat/frontend`
 **Depends on:** Phase 5 (all backend endpoints stable before frontend integration)
 
@@ -1645,6 +1645,15 @@ Create `common/scheduler/MaintenanceScheduler.java` with `@EnableScheduling`:
 | Expired password reset token cleanup | Daily at 02:30 UTC | `DELETE FROM password_reset_tokens WHERE expires_at < NOW()` |
 | Job deadline expiry | Every hour | `UPDATE jobs SET status = 'EXPIRED' WHERE application_deadline < NOW() AND status = 'OPEN'` (SRS JOB-FR-005) |
 
+#### HttpOnly cookie for refresh token (deferred from Phase 6)
+
+The Phase 6 frontend stores the refresh token in `localStorage` (acceptable for V1 — React's JSX auto-escaping makes XSS unlikely). Upgrade to an HttpOnly cookie in this phase:
+
+- `AuthController`: set `Set-Cookie: refreshToken=...; HttpOnly; Secure; SameSite=Strict` on login and refresh responses instead of returning it in the JSON body; clear it with `Max-Age=0` on logout
+- `AuthService.refresh()`: read the cookie from `HttpServletRequest` instead of the request body DTO
+- `SecurityConfig`: enable CSRF protection for the cookie-based flow (stateless JWT APIs can use `CookieCsrfTokenRepository`)
+- Frontend: remove all `localStorage.getItem/setItem('refreshToken')` calls from `axiosClient.ts`, `authStore.ts`, and `useSessionRestore.ts` — the browser attaches the cookie automatically
+
 #### Google OAuth2 (deferred from Phase 2)
 Add `spring-boot-starter-oauth2-client`. Implement `OAuth2LoginSuccessHandler`:
 - If user exists: load and issue PlaceSync JWT pair
@@ -1782,7 +1791,7 @@ src/
 
 ---
 
-### 6.2 Authentication & Token Management
+### 6.2 Authentication & Token Management ✅ COMPLETE
 
 #### Axios interceptor (`src/api/axiosClient.ts`)
 ```
@@ -1855,7 +1864,7 @@ interface AuthState {
 
 ---
 
-### 6.3 Student Dashboard & Features
+### 6.3 Student Dashboard & Features ✅ COMPLETE
 
 | Page | Key components | API calls |
 |---|---|---|
@@ -1871,70 +1880,134 @@ interface AuthState {
 
 ---
 
-### 6.4 Recruiter Dashboard & Features
+### 6.4 Recruiter Dashboard & Features ✅ COMPLETE
 
 | Page | Key components | API calls |
 |---|---|---|
 | `RecruiterDashboard` | Stats: open jobs, total applications, shortlisted, offers; recent applicants | `GET /api/v1/recruiters/jobs`, `GET /api/v1/analytics/recruiter-stats` |
 | `ProfilePage` | Name, title, contact, company selector (dropdown of verified companies); verification status badge | `GET/PUT /api/v1/recruiters/profile`, `GET /api/v1/companies` |
-| `JobsPage` | Jobs table with status, application count, deadline; Create Job button | `GET /api/v1/recruiters/jobs` |
+| `JobsPage` | Jobs table with status, application count, deadline; Create Job button; Close Job confirm dialog | `GET /api/v1/recruiters/jobs`, `PATCH /api/v1/jobs/:id/close` |
 | `CreateJobPage` | Multi-section form: basic info, eligibility (CGPA, departments), skills chip input, deadline picker | `POST /api/v1/jobs` |
-| `ApplicationsPage` (per job) | Applicant table with status selector dropdown; view student profile button; download resume button | `GET /api/v1/recruiters/jobs/:jobId/applications`, `PATCH /api/v1/recruiters/applications/:id/status` |
-| `ScheduleInterviewPage` | Form: round, type, date/time, duration, meeting link; reschedule and cancel actions | `POST/PUT/PATCH /api/v1/recruiters/applications/:id/interviews` |
+| `EditJobPage` | Pre-populated form reusing `JobForm`; saves via PUT | `GET /api/v1/jobs/:id`, `PUT /api/v1/jobs/:id` |
+| `ApplicationsPage` (per job) | Applicant table with inline status selector dropdown; view student profile modal; download resume button | `GET /api/v1/recruiters/jobs/:jobId/applications`, `PATCH /api/v1/recruiters/applications/:id/status`, `GET /api/v1/students/resumes/:id/url` |
+| `ScheduleInterviewPage` | Rounds table + schedule-new form; reschedule dialog; cancel dialog with reason; complete action | `GET/POST /api/v1/recruiters/applications/:id/interviews`, `PUT /api/v1/recruiters/interviews/:id`, `PATCH /api/v1/recruiters/interviews/:id/cancel`, `PATCH /api/v1/recruiters/interviews/:id/complete` |
+
+#### New files created
+| File | Purpose |
+|---|---|
+| `src/types/recruiter.ts` | RecruiterProfile, UpdateRecruiterProfileRequest, RecruiterStats, Company |
+| `src/api/recruiterApi.ts` | All recruiter-scoped API calls (profile, stats, jobs, applications, interviews, resume URL) |
+| `src/api/companyApi.ts` | List verified companies for the profile page company selector |
+| `src/pages/recruiter/EditJobPage.tsx` | Edit job form — pre-populated; reuses `JobForm` from CreateJobPage |
+
+#### Updated files
+| File | Change |
+|---|---|
+| `src/api/jobApi.ts` | Added `JobFormData` interface, `create`, `update`, `close` methods |
+| `src/routes/router.tsx` | Imported `EditJobPage`; updated `/recruiter/jobs/:jobId/edit` route to use it |
+| All 6 recruiter page stubs | Replaced placeholder `<div>` returns with full implementations |
+
+#### Acceptance criteria
+- [x] `RecruiterDashboard` shows 4 stats cards (jobs posted, total applications, shortlisted, offers) and a recent-jobs list
+- [x] `ProfilePage` loads recruiter profile; company dropdown shows verified companies only; verification status badge rendered
+- [x] `JobsPage` lists all recruiter jobs in a table with status chip; Close Job confirm dialog; Edit and View Applicants actions
+- [x] `CreateJobPage` multi-section form posts to `POST /api/v1/jobs`; skills and departments added as chips
+- [x] `EditJobPage` pre-populates from `GET /api/v1/jobs/:id` and saves via `PUT /api/v1/jobs/:id`
+- [x] `ApplicationsPage` shows applicant table per job; inline status selector respects valid transition matrix; resume download opens presigned URL; student profile modal shows applicant name and resume label
+- [x] `ScheduleInterviewPage` lists existing rounds; schedule-new form; reschedule and cancel dialogs; complete button
+- [x] `npx tsc --noEmit` passes — zero TypeScript errors
 
 ---
 
-### 6.5 Admin Dashboard & Features
+### 6.5 Admin Dashboard & Features ✅
+
+**Status:** Complete — `npx tsc --noEmit` passes (0 errors)
 
 | Page | Key components | API calls |
 |---|---|---|
 | `AdminDashboard` | Platform-wide analytics: total students, recruiters, companies, jobs, applications, placement rate | `GET /api/v1/analytics/placement-stats` |
-| `AnalyticsPage` | Bar charts (top companies, top departments), placement rate gauge | `GET /api/v1/analytics/company-breakdown`, `GET /api/v1/analytics/department-breakdown` |
-| `UsersPage` | Searchable user table (email, role, status); activate/deactivate toggle | `GET /api/v1/admin/users`, `PATCH /api/v1/admin/users/:id/status` |
-| `RecruitersPage` | Pending recruiters list with profile detail; Approve / Reject buttons | `GET /api/v1/admin/recruiters/pending`, `PATCH /api/v1/admin/recruiters/:id/verify` |
-| `CompaniesPage` | Pending companies list; Approve / Reject buttons | `GET /api/v1/admin/companies/pending`, `PATCH /api/v1/admin/companies/:id/verify` |
-| `JobsPage` (admin) | Pending jobs list; Approve / Reject buttons | `GET /api/v1/admin/jobs/pending`, `PATCH /api/v1/admin/jobs/:id/approve` |
+| `AnalyticsPage` | MUI-only horizontal bar charts (top companies by offers/applications, departments by placement rate) | `GET /api/v1/analytics/companies`, `GET /api/v1/analytics/departments` |
+| `UsersPage` | Searchable user table (email, role, status); activate/deactivate toggle with confirm dialog; 400ms debounced email filter | `GET /api/v1/admin/users`, `PATCH /api/v1/admin/users/:id/status` |
+| `UserDetailPage` | Full user detail card; activate/deactivate button | `GET /api/v1/admin/users/:id`, `PATCH /api/v1/admin/users/:id/status` |
+| `RecruitersPage` | Pending recruiters list; Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/recruiters/pending`, `PATCH /api/v1/admin/recruiters/:id/verify` |
+| `CompaniesPage` | Pending companies list; Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/companies/pending`, `PATCH /api/v1/admin/companies/:id/verify` |
+| `JobsPage` (admin) | Pending jobs list (JobSummary — no recruiter fields); Approve (direct) / Reject (dialog with reason) | `GET /api/v1/admin/jobs/pending`, `PATCH /api/v1/admin/jobs/:id/approve` |
 | `ApplicationsPage` (admin) | All applications across all jobs; filter by status | `GET /api/v1/admin/applications` |
 | `InterviewsPage` (admin) | All interviews across all recruiters | `GET /api/v1/admin/interviews` |
-| `AuditLogPage` | Searchable table: entity type, actor, action, timestamp, before/after diff viewer | `GET /api/v1/admin/audit-log` |
+| `AuditLogPage` | Filter by entity type, action, date range; expandable rows with before/after JSON diff viewer | `GET /api/v1/admin/audit-log` |
+
+**What was built:**
+- `src/types/admin.ts` — `UserSummary`, `PlacementStats`, `CompanyStats`, `DepartmentStats`, `AuditLog`, `AuditAction` types
+- `src/api/adminApi.ts` — all admin API calls with correct response unwrapping (analytics uses `.data.data`; audit log uses `.data.data`; others use `.data`)
+- Fixed `src/types/recruiter.ts` — `VerificationStatus` `'PENDING'` → `'PENDING_VERIFICATION'`
+- Fixed `src/pages/recruiter/ProfilePage.tsx` — `VERIFICATION_CONFIG` and default value updated to match
+- 10 admin page implementations replacing placeholder stubs
+
+**Acceptance criteria:**
+- [x] Admin dashboard shows stats from `GET /analytics/placement-stats`
+- [x] Analytics page renders MUI-only horizontal bar charts (no external charting lib)
+- [x] Users page has debounced email search, role/status filters, and activate/deactivate toggle
+- [x] Recruiter / Company / Job approval pages: approve directly, reject via dialog requiring a reason
+- [x] Applications and Interviews pages list all records (admin view) with status filter
+- [x] Audit log page supports filtering and shows expandable before/after JSON diff
+- [x] `VerificationStatus` type fixed to match backend enum (`PENDING_VERIFICATION`)
+- [x] `npx tsc --noEmit` passes with 0 errors
 
 ---
 
-### 6.6 Shared UI Components
+### 6.6 Shared UI Components ✅ COMPLETE
 
-| Component | Purpose |
-|---|---|
-| `DataTable<T>` | Generic paginated table with sortable columns, per-page size selector |
-| `StatusChip` | Maps `ApplicationStatus`, `JobStatus`, `VerificationStatus` to coloured MUI `Chip` |
-| `ConfirmDialog` | Reusable confirmation modal for destructive actions (deactivate user, cancel interview) |
-| `FileUploadButton` | Validates file type and size client-side before calling upload API |
-| `NotificationDrawer` | Slide-out panel listing notifications; "Mark all read" button |
-| `ProfileCompletenessBar` | Linear progress bar showing student profile completeness % (SRS STU-FR-007) |
-| `LoadingSpinner` | Full-page and inline loading indicators |
-| `ErrorBoundary` | Wraps all route components; renders friendly error page on unhandled JS error |
+| Component | Status | Notes |
+|---|---|---|
+| `LoadingSpinner` | ✅ | `src/components/common/LoadingSpinner.tsx` |
+| `StatusChip` | ✅ | `src/components/common/StatusChip.tsx` — covers Application, Interview, Verification, Job statuses; replaces inline Chip on 6 pages |
+| `ConfirmDialog` | ✅ | `src/components/common/ConfirmDialog.tsx` — used in ResumesPage (delete) and UsersPage (toggle) |
+| `FileUploadButton` | ✅ | `src/components/common/FileUploadButton.tsx` — client-side extension + size validation |
+| `DataTable<T>` | ✅ | `src/components/common/DataTable.tsx` — generic paginated table |
+| `NotificationDrawer` | ✅ | `src/components/common/NotificationDrawer.tsx` — wired to DashboardLayout bell icon |
+| `ProfileCompletenessBar` | ✅ | `src/components/common/ProfileCompletenessBar.tsx` — shown on StudentProfilePage |
+| `ErrorBoundary` | ✅ | `src/components/common/ErrorBoundary.tsx` — wraps DashboardLayout in router |
+
+**Pages updated:** StudentDashboard, student/ApplicationsPage, admin/ApplicationsPage, recruiter/ApplicationsPage, admin/RecruitersPage, recruiter/ScheduleInterviewPage, student/ResumesPage, admin/UsersPage
+
+**Verification:** `npx tsc --noEmit` — 0 errors
 
 ---
 
-### 6.7 Frontend Testing
+### 6.7 Frontend Testing ✅ COMPLETE
 
 Use Vitest + React Testing Library. All tests run headlessly in CI.
 
 | Test file | What is tested |
 |---|---|
-| `authStore.test.ts` | Login sets tokens, logout clears state, role is readable |
-| `axiosClient.test.ts` | 401 response triggers token refresh; refresh failure clears auth and redirects |
-| `PrivateRoute.test.tsx` | Unauthenticated user is redirected to `/login` |
-| `RoleRoute.test.tsx` | Wrong-role user is redirected to `/403` |
-| `LoginPage.test.tsx` | Form validation shown on empty submit; successful login redirects by role |
-| `JobsPage.test.tsx` | Jobs render from mocked API; keyword filter updates query |
-| `ApplicationsPage.test.tsx` | Applications render; status chip matches status enum |
-| `NotificationDrawer.test.tsx` | Unread count badge shows; marking read decrements count |
+| `authStore.test.ts` | Login sets tokens + localStorage; logout clears state + localStorage |
+| `axiosClient.test.ts` | 401 triggers token refresh; refresh failure clears auth and redirects; no refreshToken redirects immediately |
+| `PrivateRoute.test.tsx` | Unauthenticated user is redirected to `/login`; authenticated user sees outlet |
+| `RoleRoute.test.tsx` | Unauthenticated → `/login`; wrong role → `/403`; correct role → outlet |
+| `LoginPage.test.tsx` | Validation errors on empty submit; successful login navigates by role; 401 shows error message |
+| `JobsPage.test.tsx` | Jobs render from mocked API; keyword filter triggers jobApi.list with keyword |
+| `ApplicationsPage.test.tsx` | Applications render; StatusChip shows human-readable label (Applied, Shortlisted) |
+| `NotificationDrawer.test.tsx` | Notifications render when open; clicking unread calls markAsRead; empty state shown |
 
-Mock Axios calls using `vi.mock` or MSW (Mock Service Worker) for more realistic network mocking.
+Mock Axios calls using `vi.mock`. Shared `testUtils.tsx` provides `createTestQueryClient` and `renderWithProviders`.
+
+**What was built:**
+- `src/test/setup.ts` — added `matchMedia` polyfill for MUI/framer-motion compatibility
+- `src/test/testUtils.tsx` — `createTestQueryClient()` + `renderWithProviders()` (QueryClientProvider + MemoryRouter)
+- `src/test/authStore.test.ts` — 4 tests
+- `src/test/axiosClient.test.ts` — 3 tests (adapter override approach, `vi.stubGlobal` for location)
+- `src/test/PrivateRoute.test.tsx` — 2 tests
+- `src/test/RoleRoute.test.tsx` — 3 tests
+- `src/test/LoginPage.test.tsx` — 3 tests (`vi.hoisted` for navigate mock, framer-motion mock)
+- `src/test/JobsPage.test.tsx` — 2 tests
+- `src/test/ApplicationsPage.test.tsx` — 2 tests
+- `src/test/NotificationDrawer.test.tsx` — 3 tests
+
+**Verification:** `npx vitest run` — 22 tests across 8 files, all passed. `npx tsc --noEmit` — 0 errors.
 
 ---
 
-### 6.8 Docker Build & Nginx Static Serving
+### 6.8 Docker Build & Nginx Static Serving ✅ COMPLETE
 
 #### Dockerfile for frontend (multi-stage)
 ```dockerfile
@@ -1980,22 +2053,22 @@ This lets `npm run dev` hit the local Spring Boot API without CORS issues during
 ---
 
 ### Phase 6 acceptance criteria
-- [ ] `npm run build` completes without TypeScript errors
-- [ ] `npm test` passes all Vitest tests
-- [ ] Unauthenticated user visiting `/student/dashboard` is redirected to `/login`
-- [ ] Student can register, verify email (link from console log in dev), and log in
-- [ ] Student can browse and filter open jobs; apply to a job using a resume
-- [ ] Student sees their application with the current status on the Applications page
-- [ ] Student sees a notification when their application status changes
-- [ ] Recruiter can create and manage job postings
-- [ ] Recruiter can view applicants and move them through the status lifecycle
-- [ ] Recruiter can schedule an interview; student sees it on their Interviews page
-- [ ] Admin can approve a pending recruiter and pending company
-- [ ] Admin dashboard shows accurate placement stats
-- [ ] Admin can search audit log by entity type
-- [ ] Profile completeness bar reflects actual filled fields
-- [ ] App is responsive at 375 px (mobile) and 1920 px (desktop) — SRS NFR-050
-- [ ] `docker-compose up` serves the SPA at `http://localhost/` via Nginx
+- [x] `npm run build` completes without TypeScript errors
+- [x] `npm test` passes all Vitest tests
+- [x] Unauthenticated user visiting `/student/dashboard` is redirected to `/login`
+- [x] Student can register, verify email (link from console log in dev), and log in
+- [x] Student can browse and filter open jobs; apply to a job using a resume
+- [x] Student sees their application with the current status on the Applications page
+- [x] Student sees a notification when their application status changes
+- [x] Recruiter can create and manage job postings
+- [x] Recruiter can view applicants and move them through the status lifecycle
+- [x] Recruiter can schedule an interview; student sees it on their Interviews page
+- [x] Admin can approve a pending recruiter and pending company
+- [x] Admin dashboard shows accurate placement stats
+- [x] Admin can search audit log by entity type
+- [x] Profile completeness bar reflects actual filled fields
+- [x] App is responsive at 375 px (mobile) and 1920 px (desktop) — SRS NFR-050
+- [x] `docker-compose up` serves the SPA at `http://localhost:3001/` via Nginx
 - [ ] Merged to `main` via PR — PlaceSync V1 is functionally complete
 
 ---

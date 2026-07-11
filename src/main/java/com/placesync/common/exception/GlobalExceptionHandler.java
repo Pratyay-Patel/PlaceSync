@@ -72,7 +72,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ApiErrorResponse> handleMessageNotReadable(HttpMessageNotReadableException ex,
                                                                       HttpServletRequest request) {
-        String msg = ex.getCause() != null ? ex.getCause().getMessage() : ex.getMessage();
+        String msg;
+        if (ex.getCause() != null && ex.getCause().getMessage() != null) {
+            msg = ex.getCause().getMessage();
+        } else if (ex.getMessage() != null) {
+            msg = ex.getMessage();
+        } else {
+            msg = "Invalid or malformed request body";
+        }
         return build(HttpStatus.BAD_REQUEST, msg, request.getRequestURI(), null);
     }
 

@@ -29,17 +29,20 @@ public class EmailService {
     @Value("${app.base-url}")
     private String baseUrl;
 
+    @Value("${app.frontend-url}")
+    private String frontendUrl;
+
     @Async
     public void sendEmailVerification(String to, String verificationToken) {
         Context ctx = new Context();
-        ctx.setVariable("verificationLink", baseUrl + "/api/v1/auth/verify-email?token=" + verificationToken);
+        ctx.setVariable("verificationLink", frontendUrl + "/verify-email?token=" + verificationToken);
         send(to, "Verify your PlaceSync email address", "email/email-verification", ctx);
     }
 
     @Async
     public void sendPasswordResetEmail(String to, String resetToken) {
         Context ctx = new Context();
-        ctx.setVariable("resetLink", baseUrl + "/api/v1/auth/reset-password?token=" + resetToken);
+        ctx.setVariable("resetLink", frontendUrl + "/reset-password?token=" + resetToken);
         send(to, "Reset your PlaceSync password", "email/password-reset", ctx);
     }
 

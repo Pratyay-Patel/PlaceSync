@@ -15,7 +15,6 @@ import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.exception.UnauthorizedException;
 import com.placesync.common.security.JwtTokenProvider;
-import com.placesync.common.security.UserPrincipal;
 import com.placesync.recruiter.entity.RecruiterProfile;
 import com.placesync.recruiter.entity.VerificationStatus;
 import com.placesync.recruiter.repository.RecruiterProfileRepository;
@@ -25,8 +24,6 @@ import com.placesync.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,15 +58,16 @@ public class AuthService {
         if (req.getRole() == UserRole.ROLE_ADMIN) {
             throw new IllegalArgumentException("Cannot self-register as ADMIN");
         }
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new ConflictException("Email already registered: " + req.getEmail());
+        String normalizedEmail = req.getEmail().toLowerCase();
+        if (userRepository.existsByEmail(normalizedEmail)) {
+            throw new ConflictException("Email already registered: " + normalizedEmail);
         }
         if (req.getRole() == UserRole.ROLE_STUDENT) {
             validateStudentFields(req);
         }
 
         User user = User.builder()
-                .email(req.getEmail())
+                .email(normalizedEmail)
                 .passwordHash(passwordEncoder.encode(req.getPassword()))
                 .role(req.getRole())
                 .isEmailVerified(false)
@@ -108,13 +106,25 @@ public class AuthService {
 
     @Transactional
     public AuthResponse login(LoginRequest req) {
-        User user = userRepository.findByEmailAndDeletedAtIsNull(req.getEmail())
+        User user = userRepository.findByEmailAndDeletedAtIsNull(req.getEmail().toLowerCase())
                 .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
 
         if (!Boolean.TRUE.equals(user.getIsActive())) {
+            auditLogService.saveAsync(AuditLog.builder()
+                    .entityType("User")
+                    .entityId(user.getId())
+                    .action(AuditAction.LOGIN_FAILURE)
+                    .actorEmail(user.getEmail())
+                    .build());
             throw new UnauthorizedException("Account is deactivated");
         }
         if (user.getLockedUntil() != null && user.getLockedUntil().isAfter(OffsetDateTime.now())) {
+            auditLogService.saveAsync(AuditLog.builder()
+                    .entityType("User")
+                    .entityId(user.getId())
+                    .action(AuditAction.LOGIN_FAILURE)
+                    .actorEmail(user.getEmail())
+                    .build());
             throw new UnauthorizedException("Account is temporarily locked. Try again later");
         }
         if (!passwordEncoder.matches(req.getPassword(), user.getPasswordHash())) {
@@ -123,6 +133,15 @@ public class AuthService {
         }
 
         resetFailedLoginAttempts(user);
+
+        auditLogService.saveAsync(AuditLog.builder()
+                .entityType("User")
+                .entityId(user.getId())
+                .action(AuditAction.LOGIN_SUCCESS)
+                .actorId(user.getId())
+                .actorRole(user.getRole().name())
+                .actorEmail(user.getEmail())
+                .build());
 
         String rawRefreshToken = createRefreshToken(user, UUID.randomUUID());
         return buildAuthResponse(user, rawRefreshToken);
@@ -158,15 +177,18 @@ public class AuthService {
     @Transactional
     public void logout(String rawRefreshToken) {
         String hash = hashToken(rawRefreshToken);
-        refreshTokenRepository.findByTokenHashAndIsRevokedFalse(hash).ifPresent(this::revokeToken);
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof UserPrincipal principal) {
+        refreshTokenRepository.findByTokenHashAndIsRevokedFalse(hash).ifPresent(token -> {
+            revokeToken(token);
+            com.placesync.user.entity.User actor = token.getUser();
             auditLogService.saveAsync(AuditLog.builder()
-                    .entityType("User").entityId(principal.getId())
+                    .entityType("User")
+                    .entityId(actor.getId())
                     .action(AuditAction.LOGOUT)
-                    .actorId(principal.getId()).actorRole(principal.getRole().name()).actorEmail(principal.getEmail())
+                    .actorId(actor.getId())
+                    .actorRole(actor.getRole().name())
+                    .actorEmail(actor.getEmail())
                     .build());
-        }
+        });
     }
 
     @Transactional
@@ -191,7 +213,7 @@ public class AuthService {
 
     @Transactional
     public void forgotPassword(String email) {
-        userRepository.findByEmailAndDeletedAtIsNull(email).ifPresent(user -> {
+        userRepository.findByEmailAndDeletedAtIsNull(email.toLowerCase()).ifPresent(user -> {
             String rawToken = UUID.randomUUID().toString();
             PasswordResetToken resetToken = PasswordResetToken.builder()
                     .user(user)
@@ -306,6 +328,12 @@ public class AuthService {
             log.warn("Account locked for user {} after {} failed attempts", user.getEmail(), attempts);
         }
         userRepository.save(user);
+        auditLogService.saveAsync(AuditLog.builder()
+                .entityType("User")
+                .entityId(user.getId())
+                .action(AuditAction.LOGIN_FAILURE)
+                .actorEmail(user.getEmail())
+                .build());
     }
 
     private void resetFailedLoginAttempts(User user) {

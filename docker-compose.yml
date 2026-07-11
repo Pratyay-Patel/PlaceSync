@@ -1,19 +1,17 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# PlaceSync — Docker Compose (Phase 4: Kafka event streaming added)
+# PlaceSync — Docker Compose (Phase 6: React frontend added)
 #
 # Services included:
 #   - postgres   PostgreSQL 16 (database)
 #   - redis      Redis 7 (cache)
 #   - kafka      Confluent KRaft-mode Kafka 7.6 (event streaming)
-#   - api        Spring Boot application
-#
-# Services NOT yet included (added in later phases):
-#   - nginx      (Phase 6 — reverse proxy / production deployment)
+#   - api        Spring Boot application  →  localhost:8080
+#   - frontend   React + Nginx            →  localhost:3000
 #
 # Usage:
 #   cp .env.example .env          # fill in real values
-#   docker compose up             # start all services
-#   docker compose up -d          # start in background
+#   docker compose up --build     # build images and start all services
+#   docker compose up -d          # start in background (detached)
 #   docker compose down -v        # stop and remove volumes
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -110,6 +108,7 @@ services:
       AWS_REGION: ${AWS_REGION:-ap-south-1}
       AWS_S3_BUCKET_RESUMES: ${AWS_S3_BUCKET_RESUMES:-placesync-resumes-340541182878-ap-south-1-an}
       AWS_S3_BUCKET_PICTURES: ${AWS_S3_BUCKET_PICTURES:-placesync-profile-pictures-340541182878-ap-south-1-an}
+      FRONTEND_URL: http://localhost:5173,http://localhost:3001
     depends_on:
       postgres:
         condition: service_healthy
@@ -125,6 +124,21 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
+
+  # ── React Frontend (Nginx) ────────────────────────────────────────────────
+  frontend:
+    build:
+      context: placesync-frontend
+      dockerfile: Dockerfile
+    container_name: placesync-frontend
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - placesync-net
 
 volumes:
   postgres_data:

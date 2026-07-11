@@ -90,6 +90,10 @@ public class JobService {
         if (recruiter.getCompany() == null) {
             throw new ConflictException("Recruiter must be associated with a company before posting jobs");
         }
+        if (req.getLocationType() == JobLocationType.ONSITE &&
+                (req.getLocationCity() == null || req.getLocationCity().isBlank())) {
+            throw new IllegalArgumentException("City is required for on-site jobs");
+        }
 
         Job job = Job.builder()
                 .recruiter(recruiter)
@@ -135,6 +139,10 @@ public class JobService {
         }
         if (job.getStatus() != JobStatus.DRAFT && job.getStatus() != JobStatus.PENDING_APPROVAL) {
             throw new ConflictException("Job can only be updated in DRAFT or PENDING_APPROVAL status");
+        }
+        if (req.getLocationType() == JobLocationType.ONSITE &&
+                (req.getLocationCity() == null || req.getLocationCity().isBlank())) {
+            throw new IllegalArgumentException("City is required for on-site jobs");
         }
 
         job.setTitle(req.getTitle());

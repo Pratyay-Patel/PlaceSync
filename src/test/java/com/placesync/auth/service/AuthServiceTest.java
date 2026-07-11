@@ -7,6 +7,8 @@ import com.placesync.auth.entity.RefreshToken;
 import com.placesync.auth.repository.EmailVerificationTokenRepository;
 import com.placesync.auth.repository.PasswordResetTokenRepository;
 import com.placesync.auth.repository.RefreshTokenRepository;
+import com.placesync.common.audit.AuditAction;
+import com.placesync.common.audit.AuditLog;
 import com.placesync.common.audit.service.AuditLogService;
 import com.placesync.common.config.JwtProperties;
 import com.placesync.common.exception.ConflictException;
@@ -19,6 +21,7 @@ import com.placesync.user.repository.StudentProfileRepository;
 import com.placesync.user.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -383,5 +386,61 @@ class AuthServiceTest {
         assertThatThrownBy(() -> authService.changePassword(userId, req))
                 .isInstanceOf(UnauthorizedException.class)
                 .hasMessageContaining("Current password is incorrect");
+    }
+
+    @Test
+    void logout_validToken_revokesTokenAndAuditsLogout() {
+        User user = activeUser("student@test.com");
+        String rawToken = UUID.randomUUID().toString();
+        String hash = AuthService.hashToken(rawToken);
+        RefreshToken stored = RefreshToken.builder()
+                .user(user)
+                .tokenHash(hash)
+                .familyId(UUID.randomUUID())
+                .expiresAt(OffsetDateTime.now().plusDays(7))
+                .isRevoked(false)
+                .build();
+        when(refreshTokenRepository.findByTokenHashAndIsRevokedFalse(hash)).thenReturn(Optional.of(stored));
+
+        authService.logout(rawToken);
+
+        verify(refreshTokenRepository).save(argThat(t -> t.getIsRevoked()));
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).saveAsync(captor.capture());
+        assertThat(captor.getValue().getAction()).isEqualTo(AuditAction.LOGOUT);
+        assertThat(captor.getValue().getActorEmail()).isEqualTo(user.getEmail());
+    }
+
+    @Test
+    void logout_invalidToken_doesNothing() {
+        String rawToken = UUID.randomUUID().toString();
+        String hash = AuthService.hashToken(rawToken);
+        when(refreshTokenRepository.findByTokenHashAndIsRevokedFalse(hash)).thenReturn(Optional.empty());
+
+        authService.logout(rawToken);
+
+        verify(refreshTokenRepository, never()).save(any());
+        verify(auditLogService, never()).saveAsync(any());
+    }
+
+    @Test
+    void login_userWithPriorFailures_resetsCountAndAuditsSuccess() {
+        User user = activeUser("student@test.com");
+        user.setFailedLoginAttempts((short) 3);
+        LoginRequest req = new LoginRequest();
+        req.setEmail("student@test.com");
+        req.setPassword("password123");
+        when(userRepository.findByEmailAndDeletedAtIsNull("student@test.com")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtProperties.getRefreshTokenExpiryDays()).thenReturn(7);
+        when(jwtTokenProvider.generateAccessToken(any(), any(), any())).thenReturn("access-token");
+
+        authService.login(req);
+
+        assertThat(user.getFailedLoginAttempts()).isZero();
+        verify(userRepository).save(user);
+        ArgumentCaptor<AuditLog> captor = ArgumentCaptor.forClass(AuditLog.class);
+        verify(auditLogService).saveAsync(captor.capture());
+        assertThat(captor.getValue().getAction()).isEqualTo(AuditAction.LOGIN_SUCCESS);
     }
 }

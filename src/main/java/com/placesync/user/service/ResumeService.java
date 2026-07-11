@@ -174,11 +174,20 @@ public class ResumeService {
             throw new ResourceNotFoundException(RESUME, resumeId);
         }
 
+        boolean wasDefault = Boolean.TRUE.equals(resume.getIsDefault());
         resume.setDeletedAt(OffsetDateTime.now(ZoneOffset.UTC));
-        if (Boolean.TRUE.equals(resume.getIsDefault())) {
-            resume.setIsDefault(false);
-        }
+        resume.setIsDefault(false);
         resumeRepository.save(resume);
+
+        if (wasDefault) {
+            resumeRepository
+                    .findFirstByStudentIdAndIdNotAndDeletedAtIsNullOrderByUploadedAtDesc(student.getId(), resumeId)
+                    .ifPresent(next -> {
+                        next.setIsDefault(true);
+                        resumeRepository.save(next);
+                        log.info("Promoted resumeId={} as new default for studentId={}", sanitize(next.getId()), sanitize(student.getId()));
+                    });
+        }
     }
 
     private String buildResumeKey(UUID studentId, UUID resumeId, String originalFilename) {

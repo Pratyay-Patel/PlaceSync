@@ -41,3 +41,9 @@ desktop.ini
 
 # Documentation (only ignore generated javadoc output, not hand-written markdown)
 docs/site/
+
+# ─── Frontend ─────────────────────────────────────────────────────────────────
+placesync-frontend/node_modules/
+placesync-frontend/dist/
+placesync-frontend/.vite/
+placesync-frontend/coverage/

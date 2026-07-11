@@ -137,19 +137,21 @@ class UserServiceTest {
     }
 
     @Test
-    void addEducation_savesAndReturnsEntity() {
+    void addEducation_savesAndReturnsMappedResponse() {
         StudentProfile profile = studentProfile();
         StudentEducationRequest req = new StudentEducationRequest();
         req.setDegree("B.Tech");
         req.setInstitution("IIT");
         req.setStartYear((short) 2020);
         StudentEducation saved = new StudentEducation();
+        StudentEducationResponse dto = StudentEducationResponse.builder().degree("B.Tech").build();
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentEducationRepository.save(any())).thenReturn(saved);
+        when(studentProfileMapper.toEducationResponse(saved)).thenReturn(dto);
 
-        StudentEducation result = userService.addEducation(userId, req);
+        StudentEducationResponse result = userService.addEducation(userId, req);
 
-        assertThat(result).isEqualTo(saved);
+        assertThat(result).isEqualTo(dto);
     }
 
     @Test
@@ -167,18 +169,20 @@ class UserServiceTest {
     }
 
     @Test
-    void addExperience_savesAndReturnsEntity() {
+    void addExperience_savesAndReturnsMappedResponse() {
         StudentProfile profile = studentProfile();
         StudentExperienceRequest req = new StudentExperienceRequest();
         req.setCompanyName("Acme");
         req.setRole("Intern");
         StudentExperience saved = new StudentExperience();
+        StudentExperienceResponse dto = StudentExperienceResponse.builder().companyName("Acme").build();
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentExperienceRepository.save(any())).thenReturn(saved);
+        when(studentProfileMapper.toExperienceResponse(saved)).thenReturn(dto);
 
-        StudentExperience result = userService.addExperience(userId, req);
+        StudentExperienceResponse result = userService.addExperience(userId, req);
 
-        assertThat(result).isEqualTo(saved);
+        assertThat(result).isEqualTo(dto);
     }
 
     @Test
@@ -205,11 +209,13 @@ class UserServiceTest {
         req.setDegree("M.Tech");
         req.setInstitution("IIT");
         req.setStartYear((short) 2022);
+        StudentEducationResponse dto = StudentEducationResponse.builder().degree("M.Tech").build();
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentEducationRepository.findById(eduId)).thenReturn(Optional.of(edu));
         when(studentEducationRepository.save(edu)).thenReturn(edu);
+        when(studentProfileMapper.toEducationResponse(edu)).thenReturn(dto);
 
-        StudentEducation result = userService.updateEducation(userId, eduId, req);
+        StudentEducationResponse result = userService.updateEducation(userId, eduId, req);
 
         assertThat(result.getDegree()).isEqualTo("M.Tech");
         verify(studentEducationRepository).save(edu);
@@ -238,11 +244,13 @@ class UserServiceTest {
         StudentExperienceRequest req = new StudentExperienceRequest();
         req.setCompanyName("TechCorp");
         req.setRole("SDE");
+        StudentExperienceResponse dto = StudentExperienceResponse.builder().companyName("TechCorp").build();
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentExperienceRepository.findById(expId)).thenReturn(Optional.of(exp));
         when(studentExperienceRepository.save(exp)).thenReturn(exp);
+        when(studentProfileMapper.toExperienceResponse(exp)).thenReturn(dto);
 
-        StudentExperience result = userService.updateExperience(userId, expId, req);
+        StudentExperienceResponse result = userService.updateExperience(userId, expId, req);
 
         assertThat(result.getCompanyName()).isEqualTo("TechCorp");
         verify(studentExperienceRepository).save(exp);
@@ -268,7 +276,7 @@ class UserServiceTest {
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentSkillRepository.findByStudentId(profile.getId())).thenReturn(List.of());
 
-        List<StudentSkill> result = userService.getSkills(userId);
+        List<StudentSkillResponse> result = userService.getSkills(userId);
 
         assertThat(result).isEmpty();
     }
@@ -279,7 +287,7 @@ class UserServiceTest {
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentEducationRepository.findByStudentIdOrderByStartYearDesc(profile.getId())).thenReturn(List.of());
 
-        List<StudentEducation> result = userService.getEducation(userId);
+        List<StudentEducationResponse> result = userService.getEducation(userId);
 
         assertThat(result).isEmpty();
     }
@@ -290,7 +298,7 @@ class UserServiceTest {
         when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
         when(studentExperienceRepository.findByStudentIdOrderByStartDateDesc(profile.getId())).thenReturn(List.of());
 
-        List<StudentExperience> result = userService.getExperience(userId);
+        List<StudentExperienceResponse> result = userService.getExperience(userId);
 
         assertThat(result).isEmpty();
     }
@@ -318,6 +326,37 @@ class UserServiceTest {
 
         verify(fileValidationService).validateProfileImage(file);
         verify(s3StorageService).uploadFile(any(), any(), any(), any(), anyLong());
+        assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
+    }
+
+    @Test
+    void getMyProfile_withProfilePicture_returnsPresignedUrl() {
+        StudentProfile profile = studentProfile();
+        profile.setProfilePictureS3Key("profile-pictures/key.jpg");
+        StudentProfileResponse baseResponse = StudentProfileResponse.builder().build();
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentProfileMapper.toResponse(profile)).thenReturn(baseResponse);
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/pic");
+
+        StudentProfileResponse result = userService.getMyProfile(userId);
+
+        assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
+    }
+
+    @Test
+    void updateProfile_withProfilePicture_returnsPresignedUrl() {
+        StudentProfile profile = studentProfile();
+        profile.setProfilePictureS3Key("profile-pictures/key.jpg");
+        UpdateStudentProfileRequest req = new UpdateStudentProfileRequest();
+        req.setFirstName("Jane");
+        req.setLastName("Doe");
+        when(studentProfileRepository.findByUserId(userId)).thenReturn(Optional.of(profile));
+        when(studentProfileRepository.save(profile)).thenReturn(profile);
+        when(studentProfileMapper.toResponse(profile)).thenReturn(StudentProfileResponse.builder().build());
+        when(s3StorageService.generatePresignedGetUrl(any(), any(), anyInt())).thenReturn("https://s3.example.com/pic");
+
+        StudentProfileResponse result = userService.updateProfile(userId, req);
+
         assertThat(result.getProfilePictureUrl()).isEqualTo("https://s3.example.com/pic");
     }
 

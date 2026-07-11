@@ -1,5 +1,7 @@
 package com.placesync.common.audit;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.placesync.common.audit.service.AuditLogService;
 import com.placesync.common.security.UserPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -12,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Aspect
@@ -22,6 +25,7 @@ public class AuditAspect {
     private static final Logger log = LoggerFactory.getLogger(AuditAspect.class);
 
     private final AuditLogService auditLogService;
+    private final ObjectMapper objectMapper;
 
     @Around("@annotation(auditable)")
     public Object audit(ProceedingJoinPoint pjp, Auditable auditable) throws Throwable {
@@ -36,6 +40,7 @@ public class AuditAspect {
                     .actorId(principal != null ? principal.getId() : null)
                     .actorRole(principal != null ? principal.getRole().name() : null)
                     .actorEmail(principal != null ? principal.getEmail() : null)
+                    .newValues(toMap(result))
                     .build();
             auditLogService.saveAsync(entry);
         } catch (Exception e) {
@@ -44,6 +49,16 @@ public class AuditAspect {
                     pjp.getSignature().getName(), e.getMessage());
         }
         return result;
+    }
+
+    private Map<String, Object> toMap(Object value) {
+        if (value == null) return null;
+        try {
+            return objectMapper.convertValue(value, new TypeReference<>() {});
+        } catch (Exception e) {
+            log.warn("AuditAspect could not serialize newValues: {}", e.getMessage());
+            return null;
+        }
     }
 
     private UserPrincipal resolvePrincipal() {
