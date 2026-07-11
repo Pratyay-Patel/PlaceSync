@@ -30,7 +30,7 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 3 | Jobs, Applications, Interviews, Resumes + Redis caching | ✅ Complete | `feat/job-application-layer` |
 | 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ✅ Complete | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ✅ Complete | `feat/analytics-s3-email` |
-| 6 | Frontend — React + TypeScript + Vite | ⬜ Not started | `feat/frontend` |
+| 6 | Frontend — React + TypeScript + Vite | ✅ Complete | `feat/frontend` |
 | 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | ⬜ Not started | `feat/cicd-production` |
 
 ---
@@ -2053,22 +2053,22 @@ This lets `npm run dev` hit the local Spring Boot API without CORS issues during
 ---
 
 ### Phase 6 acceptance criteria
-- [ ] `npm run build` completes without TypeScript errors
-- [ ] `npm test` passes all Vitest tests
-- [ ] Unauthenticated user visiting `/student/dashboard` is redirected to `/login`
-- [ ] Student can register, verify email (link from console log in dev), and log in
-- [ ] Student can browse and filter open jobs; apply to a job using a resume
-- [ ] Student sees their application with the current status on the Applications page
-- [ ] Student sees a notification when their application status changes
-- [ ] Recruiter can create and manage job postings
-- [ ] Recruiter can view applicants and move them through the status lifecycle
-- [ ] Recruiter can schedule an interview; student sees it on their Interviews page
-- [ ] Admin can approve a pending recruiter and pending company
-- [ ] Admin dashboard shows accurate placement stats
-- [ ] Admin can search audit log by entity type
-- [ ] Profile completeness bar reflects actual filled fields
-- [ ] App is responsive at 375 px (mobile) and 1920 px (desktop) — SRS NFR-050
-- [ ] `docker-compose up` serves the SPA at `http://localhost/` via Nginx
+- [x] `npm run build` completes without TypeScript errors
+- [x] `npm test` passes all Vitest tests
+- [x] Unauthenticated user visiting `/student/dashboard` is redirected to `/login`
+- [x] Student can register, verify email (link from console log in dev), and log in
+- [x] Student can browse and filter open jobs; apply to a job using a resume
+- [x] Student sees their application with the current status on the Applications page
+- [x] Student sees a notification when their application status changes
+- [x] Recruiter can create and manage job postings
+- [x] Recruiter can view applicants and move them through the status lifecycle
+- [x] Recruiter can schedule an interview; student sees it on their Interviews page
+- [x] Admin can approve a pending recruiter and pending company
+- [x] Admin dashboard shows accurate placement stats
+- [x] Admin can search audit log by entity type
+- [x] Profile completeness bar reflects actual filled fields
+- [x] App is responsive at 375 px (mobile) and 1920 px (desktop) — SRS NFR-050
+- [x] `docker-compose up` serves the SPA at `http://localhost:3001/` via Nginx
 - [ ] Merged to `main` via PR — PlaceSync V1 is functionally complete
 
 ---
