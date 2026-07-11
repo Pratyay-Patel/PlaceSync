@@ -53,7 +53,7 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{ sx: { width: 360 } }}
+      sx={{ '& .MuiDrawer-paper': { width: 360 } }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', px: 2, py: 1.5 }}>
         <Typography variant="h6" sx={{ fontWeight: 700, flexGrow: 1 }}>
@@ -110,14 +110,14 @@ export default function NotificationDrawer({ open, onClose }: NotificationDrawer
                     </Typography>
                   }
                   secondary={
-                    <Box>
-                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
+                    <>
+                      <Typography component="span" variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.25 }}>
                         {n.body}
                       </Typography>
-                      <Typography variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>
+                      <Typography component="span" variant="caption" color="text.disabled" sx={{ mt: 0.5, display: 'block' }}>
                         {timeAgo(n.createdAt)}
                       </Typography>
-                    </Box>
+                    </>
                   }
                 />
               </ListItem>

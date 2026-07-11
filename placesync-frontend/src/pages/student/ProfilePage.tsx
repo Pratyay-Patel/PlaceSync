@@ -76,13 +76,14 @@ const EMPTY_EXP: ExperienceRequest = {
 };
 
 function ExperienceDialog({
-  open, initial, onClose, onSave, saving,
+  open, initial, onClose, onSave, saving, error,
 }: {
   open: boolean;
   initial: ExperienceRequest;
   onClose: () => void;
   onSave: (data: ExperienceRequest) => void;
   saving: boolean;
+  error?: string;
 }) {
   const [form, setForm] = useState(initial);
   useEffect(() => { setForm(initial); }, [initial]);
@@ -92,6 +93,7 @@ function ExperienceDialog({
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{initial.companyName ? 'Edit Experience' : 'Add Experience'}</DialogTitle>
       <DialogContent sx={{ pt: '20px !important', display: 'flex', flexDirection: 'column', gap: 2 }}>
+        {error && <Alert severity="error">{error}</Alert>}
         <TextField label="Company" value={form.companyName} onChange={(e) => set('companyName', e.target.value)} size="small" fullWidth required />
         <TextField label="Role" value={form.role} onChange={(e) => set('role', e.target.value)} size="small" fullWidth required />
         <TextField label="Description" value={form.description ?? ''} onChange={(e) => set('description', e.target.value)} size="small" fullWidth multiline rows={3} />
@@ -102,7 +104,15 @@ function ExperienceDialog({
           )}
         </Box>
         <FormControlLabel
-          control={<Switch checked={form.isCurrent} onChange={(e) => set('isCurrent', e.target.checked)} />}
+          control={
+            <Switch
+              checked={form.isCurrent}
+              onChange={(e) => {
+                const checked = e.target.checked;
+                setForm((f) => ({ ...f, isCurrent: checked, endDate: checked ? undefined : f.endDate }));
+              }}
+            />
+          }
           label="Currently working here"
         />
       </DialogContent>
@@ -127,6 +137,7 @@ export default function StudentProfilePage() {
   const [skillInput, setSkillInput] = useState('');
   const [eduDialog, setEduDialog] = useState<{ open: boolean; id?: string; initial: EducationRequest }>({ open: false, initial: EMPTY_EDU });
   const [expDialog, setExpDialog] = useState<{ open: boolean; id?: string; initial: ExperienceRequest }>({ open: false, initial: EMPTY_EXP });
+  const [expError, setExpError] = useState('');
 
   /* ── Queries ── */
   const { data: profile, isLoading: profileLoading } = useQuery({
@@ -231,6 +242,10 @@ export default function StudentProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-experience'] });
       setExpDialog((p) => ({ ...p, open: false }));
+      setExpError('');
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setExpError(err?.response?.data?.message ?? 'Failed to save experience. Please try again.');
     },
   });
 
@@ -240,6 +255,10 @@ export default function StudentProfilePage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['student-experience'] });
       setExpDialog((p) => ({ ...p, open: false }));
+      setExpError('');
+    },
+    onError: (err: { response?: { data?: { message?: string } } }) => {
+      setExpError(err?.response?.data?.message ?? 'Failed to save experience. Please try again.');
     },
   });
 
@@ -541,8 +560,9 @@ export default function StudentProfilePage() {
       <ExperienceDialog
         open={expDialog.open}
         initial={expDialog.initial}
-        onClose={() => setExpDialog((p) => ({ ...p, open: false }))}
+        onClose={() => { setExpDialog((p) => ({ ...p, open: false })); setExpError(''); }}
         saving={addExpMutation.isPending || updateExpMutation.isPending}
+        error={expError || undefined}
         onSave={(data) => {
           if (expDialog.id) {
             updateExpMutation.mutate({ id: expDialog.id, data });

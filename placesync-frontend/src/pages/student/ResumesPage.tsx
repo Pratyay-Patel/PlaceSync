@@ -158,9 +158,11 @@ export default function ResumesPage() {
 
                   {resume.isDefault && (
                     <Tooltip title="Default resume">
-                      <IconButton size="small" disabled>
-                        <StarRounded fontSize="small" sx={{ color: 'warning.main' }} />
-                      </IconButton>
+                      <span>
+                        <IconButton size="small" disabled>
+                          <StarRounded fontSize="small" sx={{ color: 'warning.main' }} />
+                        </IconButton>
+                      </span>
                     </Tooltip>
                   )}
 
