@@ -1439,7 +1439,24 @@ services:
       --health-retries 5
 ```
 
-**Step 2 — JaCoCo coverage report** (after `mvn verify`):
+**Step 2 — Frontend Vitest coverage report** (wire frontend test coverage into SonarCloud):
+
+Switch the frontend CI job from `npm test` to `npm run coverage` so Vitest generates an `lcov.info` file, then add a SonarCloud scan step that picks up both the Java JaCoCo report and the frontend lcov report. Requires a `placesync-frontend/sonar-project.properties` file pointing SonarCloud at `src/` and `coverage/lcov.info`.
+
+```yaml
+# In the frontend-test job, replace:
+- run: npm test
+# With:
+- run: npm run coverage
+- name: SonarCloud scan (frontend)
+  uses: SonarSource/sonarcloud-github-action@master
+  with:
+    projectBaseDir: placesync-frontend
+  env:
+    SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+```
+
+**Step 3 — JaCoCo coverage report** (after `mvn verify`):
 ```yaml
 - name: Publish coverage report
   uses: actions/upload-artifact@v4
@@ -1714,6 +1731,7 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 - [ ] Service layer unit test coverage ≥ 70% (JaCoCo report)
 - [ ] `git push` to `main` triggers the expanded CI pipeline (integration tests + SonarCloud) — all stages pass
 - [ ] SonarCloud quality gate passes (0 critical bugs, 0 security vulnerabilities, ≥ 70% coverage)
+- [ ] Frontend Vitest coverage reported to SonarCloud via lcov — CI generates coverage report and uploads it
 - [ ] Backend live at public Render URL — `GET /actuator/health` returns `db: UP`, `redis: UP`
 - [ ] Register + login smoke test succeeds against Render deployment; data visible in Supabase
 - [ ] Nginx serves `GET /api/v1/auth/me` correctly at `http://localhost/api/v1/auth/me`
