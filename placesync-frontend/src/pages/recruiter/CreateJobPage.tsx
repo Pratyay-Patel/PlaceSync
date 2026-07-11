@@ -208,8 +208,10 @@ export function JobForm({ initialData, onSubmit, isPending, error, submitLabel }
               setForm((f) => ({ ...f, minCgpa: v === '' ? null : Number(v) }));
             }}
             size="small"
-            inputProps={{ min: 0, max: 10, step: 0.1 }}
-            InputProps={{ endAdornment: <InputAdornment position="end">/ 10</InputAdornment> }}
+            slotProps={{
+              htmlInput: { min: 0, max: 10, step: 0.1 },
+              input: { endAdornment: <InputAdornment position="end">/ 10</InputAdornment> },
+            }}
           />
 
           <Box>

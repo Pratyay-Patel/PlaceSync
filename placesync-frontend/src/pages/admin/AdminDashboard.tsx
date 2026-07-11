@@ -68,25 +68,25 @@ export default function AdminDashboard() {
       ) : (
         <>
           <Grid container spacing={2} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<PersonRounded />} label="Students" value={stats?.totalStudents} color="primary" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<PeopleRounded />} label="Recruiters" value={stats?.totalRecruiters} color="info" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<BusinessRounded />} label="Companies" value={stats?.totalCompanies} color="secondary" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<WorkRounded />} label="Open Jobs" value={stats?.openJobs} color="warning" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<AssignmentRounded />} label="Applications" value={stats?.totalApplications} color="info" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard icon={<EmojiEventsRounded />} label="Offers" value={stats?.totalOffers} color="success" />
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <StatCard
                 icon={<TrendingUpRounded />}
                 label="Placement Rate"

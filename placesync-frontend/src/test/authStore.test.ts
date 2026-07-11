@@ -4,6 +4,7 @@ import type { AuthResponse } from '../types/auth';
 const AUTH_RESPONSE: AuthResponse = {
   accessToken: 'access-token-123',
   refreshToken: 'refresh-token-abc',
+  expiresIn: 3600,
   userId: 'user-1',
   email: 'student@test.com',
   role: 'ROLE_STUDENT',

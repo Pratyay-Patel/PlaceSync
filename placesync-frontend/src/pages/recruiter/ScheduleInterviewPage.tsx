@@ -257,7 +257,7 @@ export default function ScheduleInterviewPage() {
                   type="number"
                   value={form.roundNumber}
                   onChange={(e) => setForm((f) => ({ ...f, roundNumber: Number(e.target.value) }))}
-                  inputProps={{ min: 1 }}
+                  slotProps={{ htmlInput: { min: 1 } }}
                   size="small"
                 />
                 <FormControl size="small">
@@ -292,7 +292,7 @@ export default function ScheduleInterviewPage() {
                 type="number"
                 value={form.durationMinutes}
                 onChange={(e) => setForm((f) => ({ ...f, durationMinutes: Number(e.target.value) }))}
-                inputProps={{ min: 15, step: 15 }}
+                slotProps={{ htmlInput: { min: 15, step: 15 } }}
                 size="small"
               />
 

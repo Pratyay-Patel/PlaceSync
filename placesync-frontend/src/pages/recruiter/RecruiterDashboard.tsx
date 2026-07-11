@@ -101,7 +101,7 @@ export default function RecruiterDashboard() {
         </Box>
       ) : (
         <Grid container spacing={2} sx={{ mb: 4 }}>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={<WorkRounded />}
               label="Jobs Posted"
@@ -109,7 +109,7 @@ export default function RecruiterDashboard() {
               color="primary"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={<PeopleAltRounded />}
               label="Total Applications"
@@ -117,7 +117,7 @@ export default function RecruiterDashboard() {
               color="info"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={<StarRounded />}
               label="Shortlisted"
@@ -125,7 +125,7 @@ export default function RecruiterDashboard() {
               color="warning"
             />
           </Grid>
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <StatCard
               icon={<EmojiEventsRounded />}
               label="Offers Extended"

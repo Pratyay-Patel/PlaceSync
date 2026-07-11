@@ -36,6 +36,7 @@ describe('axiosClient 401 interceptor', () => {
     const refreshResponse: AuthResponse = {
       accessToken: 'new-access',
       refreshToken: 'rt-new',
+      expiresIn: 3600,
       userId: 'u1',
       email: 'x@y.com',
       role: 'ROLE_STUDENT',

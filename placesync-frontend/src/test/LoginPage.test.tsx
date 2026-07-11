@@ -21,6 +21,7 @@ vi.mock('../api/authApi');
 const AUTH_RESPONSE: AuthResponse = {
   accessToken: 'access-token',
   refreshToken: 'refresh-token',
+  expiresIn: 3600,
   userId: 'user-1',
   email: 'student@test.com',
   role: 'ROLE_STUDENT',
