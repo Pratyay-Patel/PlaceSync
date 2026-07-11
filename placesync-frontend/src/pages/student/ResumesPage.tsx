@@ -10,6 +10,7 @@ import {
   DownloadRounded, DescriptionRounded,
 } from '@mui/icons-material';
 import { resumeApi } from '../../api/resumeApi';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -225,26 +226,16 @@ export default function ResumesPage() {
         </DialogActions>
       </Dialog>
 
-      {/* Delete confirm dialog */}
-      <Dialog open={!!deleteId} onClose={() => setDeleteId(null)} maxWidth="xs">
-        <DialogTitle>Delete Resume?</DialogTitle>
-        <DialogContent>
-          <Typography variant="body2">
-            This resume will be permanently deleted and removed from any pending applications.
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, py: 1.5 }}>
-          <Button onClick={() => setDeleteId(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            disabled={deleteMutation.isPending}
-            onClick={() => deleteId && deleteMutation.mutate(deleteId)}
-          >
-            {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={!!deleteId}
+        title="Delete Resume?"
+        message="This resume will be permanently deleted and removed from any pending applications."
+        confirmLabel="Delete"
+        confirmColor="error"
+        loading={deleteMutation.isPending}
+        onConfirm={() => deleteId && deleteMutation.mutate(deleteId)}
+        onClose={() => setDeleteId(null)}
+      />
     </Box>
   );
 }

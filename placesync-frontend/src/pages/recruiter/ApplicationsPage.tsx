@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Button, Card, CardContent, Table, TableBody, TableCell,
-  TableContainer, TableHead, TableRow, Chip, CircularProgress, Alert,
+  TableContainer, TableHead, TableRow, CircularProgress, Alert,
   FormControl, Select, MenuItem, Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions, IconButton, Tooltip,
 } from '@mui/material';
@@ -13,15 +13,7 @@ import {
 import { recruiterApi } from '../../api/recruiterApi';
 import { jobApi } from '../../api/jobApi';
 import type { ApplicationStatus } from '../../types/application';
-
-const STATUS_COLOR: Record<ApplicationStatus, 'default' | 'info' | 'warning' | 'primary' | 'success' | 'error'> = {
-  APPLIED: 'info',
-  UNDER_REVIEW: 'warning',
-  SHORTLISTED: 'primary',
-  INTERVIEW_SCHEDULED: 'primary',
-  OFFERED: 'success',
-  REJECTED: 'error',
-};
+import StatusChip from '../../components/common/StatusChip';
 
 const VALID_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   APPLIED: ['UNDER_REVIEW', 'REJECTED'],
@@ -32,14 +24,6 @@ const VALID_TRANSITIONS: Record<ApplicationStatus, ApplicationStatus[]> = {
   REJECTED: [],
 };
 
-const STATUS_LABELS: Record<ApplicationStatus, string> = {
-  APPLIED: 'Applied',
-  UNDER_REVIEW: 'Under Review',
-  SHORTLISTED: 'Shortlisted',
-  INTERVIEW_SCHEDULED: 'Interview Scheduled',
-  OFFERED: 'Offered',
-  REJECTED: 'Rejected',
-};
 
 function fmt(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -168,38 +152,20 @@ export default function RecruiterApplicationsPage() {
                                     status: e.target.value as ApplicationStatus,
                                   })
                                 }
-                                renderValue={(v) => (
-                                  <Chip
-                                    label={STATUS_LABELS[v as ApplicationStatus]}
-                                    size="small"
-                                    color={STATUS_COLOR[v as ApplicationStatus]}
-                                  />
-                                )}
+                                renderValue={(v) => <StatusChip status={v} />}
                               >
                                 <MenuItem value={app.status} disabled>
-                                  <Chip
-                                    label={STATUS_LABELS[app.status]}
-                                    size="small"
-                                    color={STATUS_COLOR[app.status]}
-                                  />
+                                  <StatusChip status={app.status} />
                                 </MenuItem>
                                 {transitions.map((t) => (
                                   <MenuItem key={t} value={t}>
-                                    <Chip
-                                      label={STATUS_LABELS[t]}
-                                      size="small"
-                                      color={STATUS_COLOR[t]}
-                                    />
+                                    <StatusChip status={t} />
                                   </MenuItem>
                                 ))}
                               </Select>
                             </FormControl>
                           ) : (
-                            <Chip
-                              label={STATUS_LABELS[app.status]}
-                              size="small"
-                              color={STATUS_COLOR[app.status]}
-                            />
+                            <StatusChip status={app.status} />
                           )}
                         </TableCell>
                         <TableCell align="right">

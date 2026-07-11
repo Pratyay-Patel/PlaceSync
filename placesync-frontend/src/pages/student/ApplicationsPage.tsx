@@ -1,29 +1,11 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
-  Box, Typography, Card, CardContent, Chip, CircularProgress,
+  Box, Typography, Card, CardContent, CircularProgress,
   Table, TableHead, TableRow, TableCell, TableBody, Pagination,
 } from '@mui/material';
 import { applicationApi } from '../../api/applicationApi';
-import type { ApplicationStatus } from '../../types/application';
-
-const STATUS_COLOR: Record<ApplicationStatus, string> = {
-  APPLIED: '#3B82F6',
-  UNDER_REVIEW: '#F59E0B',
-  SHORTLISTED: '#8B5CF6',
-  INTERVIEW_SCHEDULED: '#06B6D4',
-  OFFERED: '#10B981',
-  REJECTED: '#EF4444',
-};
-
-const STATUS_LABEL: Record<ApplicationStatus, string> = {
-  APPLIED: 'Applied',
-  UNDER_REVIEW: 'Under Review',
-  SHORTLISTED: 'Shortlisted',
-  INTERVIEW_SCHEDULED: 'Interview Scheduled',
-  OFFERED: 'Offered',
-  REJECTED: 'Rejected',
-};
+import StatusChip from '../../components/common/StatusChip';
 
 function fmt(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
@@ -83,17 +65,7 @@ export default function StudentApplicationsPage() {
                       <TableCell sx={{ fontWeight: 500 }}>{app.jobTitle}</TableCell>
                       <TableCell>{app.companyName}</TableCell>
                       <TableCell>
-                        <Chip
-                          label={STATUS_LABEL[app.status]}
-                          size="small"
-                          sx={{
-                            bgcolor: STATUS_COLOR[app.status] + '1A',
-                            color: STATUS_COLOR[app.status],
-                            fontWeight: 600,
-                            fontSize: '0.75rem',
-                            border: `1px solid ${STATUS_COLOR[app.status]}33`,
-                          }}
-                        />
+                        <StatusChip status={app.status} />
                       </TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{fmt(app.appliedAt)}</TableCell>
                       <TableCell sx={{ color: 'text.secondary' }}>{fmt(app.updatedAt)}</TableCell>

@@ -4,12 +4,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Select, MenuItem, FormControl, InputLabel, Chip, IconButton, Tooltip,
-  Pagination, CircularProgress, Switch, Alert, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, Button,
+  Pagination, CircularProgress, Switch,
 } from '@mui/material';
 import { OpenInNewRounded } from '@mui/icons-material';
 import { adminApi } from '../../api/adminApi';
 import type { UserSummary } from '../../types/admin';
+import ConfirmDialog from '../../components/common/ConfirmDialog';
 
 const ROLE_LABEL: Record<string, string> = {
   ROLE_STUDENT: 'Student',
@@ -198,34 +198,21 @@ export default function UsersPage() {
         </Box>
       )}
 
-      <Dialog open={!!toggleTarget} onClose={() => setToggleTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>
-          {toggleTarget?.isActive ? 'Deactivate User?' : 'Activate User?'}
-        </DialogTitle>
-        <DialogContent>
-          {toggleError && <Alert severity="error" sx={{ mb: 2 }}>{toggleError}</Alert>}
-          <DialogContentText>
-            {toggleTarget?.isActive
-              ? `This will prevent ${toggleTarget.email} from logging in.`
-              : `This will restore access for ${toggleTarget?.email}.`}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setToggleTarget(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color={toggleTarget?.isActive ? 'error' : 'success'}
-            disabled={toggleMutation.isPending}
-            onClick={() => toggleMutation.mutate()}
-          >
-            {toggleMutation.isPending
-              ? 'Saving…'
-              : toggleTarget?.isActive
-                ? 'Deactivate'
-                : 'Activate'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <ConfirmDialog
+        open={!!toggleTarget}
+        title={toggleTarget?.isActive ? 'Deactivate User?' : 'Activate User?'}
+        message={
+          toggleTarget?.isActive
+            ? `This will prevent ${toggleTarget.email} from logging in.`
+            : `This will restore access for ${toggleTarget?.email}.`
+        }
+        confirmLabel={toggleTarget?.isActive ? 'Deactivate' : 'Activate'}
+        confirmColor={toggleTarget?.isActive ? 'error' : 'success'}
+        loading={toggleMutation.isPending}
+        error={toggleError || undefined}
+        onConfirm={() => toggleMutation.mutate()}
+        onClose={() => setToggleTarget(null)}
+      />
     </Box>
   );
 }

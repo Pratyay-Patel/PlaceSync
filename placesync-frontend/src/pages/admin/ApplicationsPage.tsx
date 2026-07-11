@@ -2,19 +2,11 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  FormControl, InputLabel, Select, MenuItem, Chip, Pagination, CircularProgress,
+  FormControl, InputLabel, Select, MenuItem, Pagination, CircularProgress,
 } from '@mui/material';
 import { adminApi } from '../../api/adminApi';
 import type { ApplicationStatus } from '../../types/application';
-
-const STATUS_COLOR: Record<ApplicationStatus, 'default' | 'info' | 'warning' | 'success' | 'error' | 'primary'> = {
-  APPLIED: 'default',
-  UNDER_REVIEW: 'info',
-  SHORTLISTED: 'warning',
-  INTERVIEW_SCHEDULED: 'primary',
-  OFFERED: 'success',
-  REJECTED: 'error',
-};
+import StatusChip from '../../components/common/StatusChip';
 
 const ALL_STATUSES: ApplicationStatus[] = [
   'APPLIED', 'UNDER_REVIEW', 'SHORTLISTED', 'INTERVIEW_SCHEDULED', 'OFFERED', 'REJECTED',
@@ -101,11 +93,7 @@ export default function AdminApplicationsPage() {
                     <TableCell>{a.jobTitle}</TableCell>
                     <TableCell>{a.companyName}</TableCell>
                     <TableCell>
-                      <Chip
-                        label={a.status.replace('_', ' ')}
-                        size="small"
-                        color={STATUS_COLOR[a.status] ?? 'default'}
-                      />
+                      <StatusChip status={a.status} />
                     </TableCell>
                     <TableCell>
                       <Typography variant="caption">{fmt(a.appliedAt)}</Typography>

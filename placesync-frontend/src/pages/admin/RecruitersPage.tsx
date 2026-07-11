@@ -2,18 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Chip, Pagination, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
+  Button, Pagination, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
   DialogContentText, DialogActions, TextField,
 } from '@mui/material';
 import { CheckRounded, CloseRounded } from '@mui/icons-material';
 import { adminApi } from '../../api/adminApi';
 import type { RecruiterProfile } from '../../types/recruiter';
-
-const STATUS_COLOR: Record<string, 'default' | 'warning' | 'success' | 'error'> = {
-  PENDING_VERIFICATION: 'warning',
-  VERIFIED: 'success',
-  REJECTED: 'error',
-};
+import StatusChip from '../../components/common/StatusChip';
 
 function fmt(dateStr: string) {
   return new Date(dateStr).toLocaleDateString('en-IN', {
@@ -103,11 +98,7 @@ export default function RecruitersPage() {
                       <Typography variant="caption">{r.contactEmail ?? '—'}</Typography>
                     </TableCell>
                     <TableCell>
-                      <Chip
-                        label={r.verificationStatus.replace('_', ' ')}
-                        size="small"
-                        color={STATUS_COLOR[r.verificationStatus] ?? 'default'}
-                      />
+                      <StatusChip status={r.verificationStatus} />
                     </TableCell>
                     <TableCell>
                       <Typography variant="caption">{fmt(r.createdAt)}</Typography>

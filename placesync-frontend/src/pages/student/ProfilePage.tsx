@@ -12,6 +12,7 @@ import {
   SaveRounded,
 } from '@mui/icons-material';
 import { studentApi } from '../../api/studentApi';
+import ProfileCompletenessBar from '../../components/common/ProfileCompletenessBar';
 import type {
   UpdateProfileRequest, EducationRequest, ExperienceRequest, GenderType,
 } from '../../types/student';
@@ -262,6 +263,15 @@ export default function StudentProfilePage() {
   return (
     <Box>
       <Typography variant="h5" sx={{ fontWeight: 700, mb: 3 }}>My Profile</Typography>
+
+      <Box sx={{ mb: 3 }}>
+        <ProfileCompletenessBar
+          profile={profile!}
+          skills={skills}
+          education={education}
+          experience={experience}
+        />
+      </Box>
 
       {/* ── Avatar + basic info ── */}
       <Card sx={{ mb: 3 }}>

@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, CardContent, Button, TextField, FormControl,
-  InputLabel, Select, MenuItem, CircularProgress, Alert, Chip, Divider,
+  InputLabel, Select, MenuItem, CircularProgress, Alert, Divider,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
   Table, TableBody, TableCell, TableHead, TableRow, TableContainer,
 } from '@mui/material';
@@ -12,19 +12,13 @@ import {
 } from '@mui/icons-material';
 import { recruiterApi } from '../../api/recruiterApi';
 import type { InterviewType } from '../../types/interview';
+import StatusChip from '../../components/common/StatusChip';
 
 const INTERVIEW_TYPES: InterviewType[] = ['ONLINE', 'OFFLINE'];
 
 const TYPE_LABEL: Record<InterviewType, string> = {
   ONLINE: 'Online',
   OFFLINE: 'Offline',
-};
-
-const STATUS_COLOR: Record<string, 'default' | 'info' | 'success' | 'error' | 'warning'> = {
-  SCHEDULED: 'info',
-  COMPLETED: 'success',
-  CANCELLED: 'error',
-  RESCHEDULED: 'warning',
 };
 
 function fmtDate(dateStr: string) {
@@ -197,11 +191,7 @@ export default function ScheduleInterviewPage() {
                           <Typography variant="caption">{fmtDate(iv.scheduledAt)}</Typography>
                         </TableCell>
                         <TableCell>
-                          <Chip
-                            label={iv.status}
-                            size="small"
-                            color={STATUS_COLOR[iv.status] ?? 'default'}
-                          />
+                          <StatusChip status={iv.status} />
                         </TableCell>
                         <TableCell align="right">
                           {(iv.status === 'SCHEDULED' || iv.status === 'RESCHEDULED') && (

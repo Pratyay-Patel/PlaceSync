@@ -1955,18 +1955,22 @@ interface AuthState {
 
 ---
 
-### 6.6 Shared UI Components
+### 6.6 Shared UI Components ✅ COMPLETE
 
-| Component | Purpose |
-|---|---|
-| `DataTable<T>` | Generic paginated table with sortable columns, per-page size selector |
-| `StatusChip` | Maps `ApplicationStatus`, `JobStatus`, `VerificationStatus` to coloured MUI `Chip` |
-| `ConfirmDialog` | Reusable confirmation modal for destructive actions (deactivate user, cancel interview) |
-| `FileUploadButton` | Validates file type and size client-side before calling upload API |
-| `NotificationDrawer` | Slide-out panel listing notifications; "Mark all read" button |
-| `ProfileCompletenessBar` | Linear progress bar showing student profile completeness % (SRS STU-FR-007) |
-| `LoadingSpinner` | Full-page and inline loading indicators |
-| `ErrorBoundary` | Wraps all route components; renders friendly error page on unhandled JS error |
+| Component | Status | Notes |
+|---|---|---|
+| `LoadingSpinner` | ✅ | `src/components/common/LoadingSpinner.tsx` |
+| `StatusChip` | ✅ | `src/components/common/StatusChip.tsx` — covers Application, Interview, Verification, Job statuses; replaces inline Chip on 6 pages |
+| `ConfirmDialog` | ✅ | `src/components/common/ConfirmDialog.tsx` — used in ResumesPage (delete) and UsersPage (toggle) |
+| `FileUploadButton` | ✅ | `src/components/common/FileUploadButton.tsx` — client-side extension + size validation |
+| `DataTable<T>` | ✅ | `src/components/common/DataTable.tsx` — generic paginated table |
+| `NotificationDrawer` | ✅ | `src/components/common/NotificationDrawer.tsx` — wired to DashboardLayout bell icon |
+| `ProfileCompletenessBar` | ✅ | `src/components/common/ProfileCompletenessBar.tsx` — shown on StudentProfilePage |
+| `ErrorBoundary` | ✅ | `src/components/common/ErrorBoundary.tsx` — wraps DashboardLayout in router |
+
+**Pages updated:** StudentDashboard, student/ApplicationsPage, admin/ApplicationsPage, recruiter/ApplicationsPage, admin/RecruitersPage, recruiter/ScheduleInterviewPage, student/ResumesPage, admin/UsersPage
+
+**Verification:** `npx tsc --noEmit` — 0 errors
 
 ---
 

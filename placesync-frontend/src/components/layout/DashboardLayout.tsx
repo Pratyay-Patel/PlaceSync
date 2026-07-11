@@ -43,6 +43,7 @@ import { useAuthStore } from '../../store/authStore';
 import { queryClient } from '../../lib/queryClient';
 import { notificationApi } from '../../api/notificationApi';
 import { authApi } from '../../api/authApi';
+import NotificationDrawer from '../common/NotificationDrawer';
 import type { UserRole } from '../../types/auth';
 
 const DRAWER_WIDTH = 240;
@@ -100,6 +101,7 @@ export default function DashboardLayout() {
   const [collapsed, setCollapsed] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [notifOpen, setNotifOpen] = useState(false);
   const isExpanded = !collapsed || hovered;
   const location = useLocation();
   const navigate = useNavigate();
@@ -319,9 +321,8 @@ export default function DashboardLayout() {
 
             <Box sx={{ flexGrow: 1 }} />
 
-            {/* Notification bell — count wired in 6.3 */}
             <Tooltip title="Notifications">
-              <IconButton size="small" sx={{ color: 'text.secondary' }}>
+              <IconButton size="small" sx={{ color: 'text.secondary' }} onClick={() => setNotifOpen(true)}>
                 <Badge badgeContent={unreadCount} color="error" invisible={unreadCount === 0}>
                   <NotificationsRounded fontSize="small" />
                 </Badge>
@@ -400,6 +401,8 @@ export default function DashboardLayout() {
           </AnimatePresence>
         </Box>
       </Box>
+
+      <NotificationDrawer open={notifOpen} onClose={() => setNotifOpen(false)} />
     </Box>
   );
 }

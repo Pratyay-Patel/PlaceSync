@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router-dom';
 import RootLayout from '../components/layout/RootLayout';
 import DashboardLayout from '../components/layout/DashboardLayout';
 import RoleRoute from './RoleRoute';
+import ErrorBoundary from '../components/common/ErrorBoundary';
 
 import PublicLanding from '../pages/PublicLanding';
 import ForbiddenPage from '../pages/common/ForbiddenPage';
@@ -54,7 +55,7 @@ const router = createBrowserRouter([
 
       // Authenticated routes — wrapped in sidebar + topbar shell
       {
-        element: <DashboardLayout />,
+        element: <ErrorBoundary><DashboardLayout /></ErrorBoundary>,
         children: [
           // Student routes
           {
