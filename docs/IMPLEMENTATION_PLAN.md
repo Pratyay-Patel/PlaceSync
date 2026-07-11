@@ -1974,22 +1974,36 @@ interface AuthState {
 
 ---
 
-### 6.7 Frontend Testing
+### 6.7 Frontend Testing ✅ COMPLETE
 
 Use Vitest + React Testing Library. All tests run headlessly in CI.
 
 | Test file | What is tested |
 |---|---|
-| `authStore.test.ts` | Login sets tokens, logout clears state, role is readable |
-| `axiosClient.test.ts` | 401 response triggers token refresh; refresh failure clears auth and redirects |
-| `PrivateRoute.test.tsx` | Unauthenticated user is redirected to `/login` |
-| `RoleRoute.test.tsx` | Wrong-role user is redirected to `/403` |
-| `LoginPage.test.tsx` | Form validation shown on empty submit; successful login redirects by role |
-| `JobsPage.test.tsx` | Jobs render from mocked API; keyword filter updates query |
-| `ApplicationsPage.test.tsx` | Applications render; status chip matches status enum |
-| `NotificationDrawer.test.tsx` | Unread count badge shows; marking read decrements count |
+| `authStore.test.ts` | Login sets tokens + localStorage; logout clears state + localStorage |
+| `axiosClient.test.ts` | 401 triggers token refresh; refresh failure clears auth and redirects; no refreshToken redirects immediately |
+| `PrivateRoute.test.tsx` | Unauthenticated user is redirected to `/login`; authenticated user sees outlet |
+| `RoleRoute.test.tsx` | Unauthenticated → `/login`; wrong role → `/403`; correct role → outlet |
+| `LoginPage.test.tsx` | Validation errors on empty submit; successful login navigates by role; 401 shows error message |
+| `JobsPage.test.tsx` | Jobs render from mocked API; keyword filter triggers jobApi.list with keyword |
+| `ApplicationsPage.test.tsx` | Applications render; StatusChip shows human-readable label (Applied, Shortlisted) |
+| `NotificationDrawer.test.tsx` | Notifications render when open; clicking unread calls markAsRead; empty state shown |
 
-Mock Axios calls using `vi.mock` or MSW (Mock Service Worker) for more realistic network mocking.
+Mock Axios calls using `vi.mock`. Shared `testUtils.tsx` provides `createTestQueryClient` and `renderWithProviders`.
+
+**What was built:**
+- `src/test/setup.ts` — added `matchMedia` polyfill for MUI/framer-motion compatibility
+- `src/test/testUtils.tsx` — `createTestQueryClient()` + `renderWithProviders()` (QueryClientProvider + MemoryRouter)
+- `src/test/authStore.test.ts` — 4 tests
+- `src/test/axiosClient.test.ts` — 3 tests (adapter override approach, `vi.stubGlobal` for location)
+- `src/test/PrivateRoute.test.tsx` — 2 tests
+- `src/test/RoleRoute.test.tsx` — 3 tests
+- `src/test/LoginPage.test.tsx` — 3 tests (`vi.hoisted` for navigate mock, framer-motion mock)
+- `src/test/JobsPage.test.tsx` — 2 tests
+- `src/test/ApplicationsPage.test.tsx` — 2 tests
+- `src/test/NotificationDrawer.test.tsx` — 3 tests
+
+**Verification:** `npx vitest run` — 22 tests across 8 files, all passed. `npx tsc --noEmit` — 0 errors.
 
 ---
 
