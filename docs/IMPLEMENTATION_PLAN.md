@@ -31,7 +31,7 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 4 | Infrastructure hardening + Notifications + Kafka + Admin module | ✅ Complete | `feat/notification-kafka` |
 | 5 | Analytics + AWS S3 + Email delivery | ✅ Complete | `feat/analytics-s3-email` |
 | 6 | Frontend — React + TypeScript + Vite | ✅ Complete | `feat/frontend` |
-| 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | ⬜ Not started | `feat/cicd-production` |
+| 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | 🔄 In progress | `feat/cicd-production` |
 
 ---
 
@@ -1324,7 +1324,9 @@ A React 18 SPA with TypeScript and Vite, consuming the PlaceSync REST API. Three
 
 ---
 
-### 7.1 Comprehensive Testing Suite
+### 7.1 Comprehensive Testing Suite ✅ Complete
+
+**What was built:** Full backend test suite — 226 tests (0 failures). SharedPostgresContainer singleton provides a single Testcontainers PostgreSQL instance reused across all `@DataJpaTest` slice tests and `@SpringBootTest` integration tests, avoiding per-class container lifecycle issues. All test classes use `@DynamicPropertySource` to override datasource, driver, Flyway, and JPA properties. `AbstractIntegrationTest` base class bootstraps MockMvc with pre-seeded student, recruiter, admin users, and JWT helpers. PlaceSyncMetrics custom Micrometer component added (counters + gauges for applications, interviews, Kafka failures, email failures, cache hit ratio). CacheConfig guard added (`@ConditionalOnProperty`) so explicit RedisCacheManager bean is only created when `spring.cache.type=redis`, preventing Redis connection failures in test contexts.
 
 #### Repository tests (Spring Data slice tests)
 Use `@DataJpaTest` with an embedded H2 or a real PostgreSQL via Testcontainers.
@@ -1724,10 +1726,10 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 ---
 
 ### Phase 7 acceptance criteria
-- [ ] `mvn verify` passes — all unit + integration + security tests pass
-- [ ] Repository tests run against real PostgreSQL via Testcontainers
-- [ ] `GET /api/v1/admin/applications` (admin token) → 200; `GET /api/v1/admin/applications` (student token) → 403
-- [ ] Used refresh token rejected on second use; full family invalidated
+- [x] `mvn verify` passes — all unit + integration + security tests pass (226 tests, 0 failures)
+- [x] Repository tests run against real PostgreSQL via Testcontainers
+- [x] `GET /api/v1/admin/applications` (admin token) → 200; `GET /api/v1/admin/applications` (student token) → 403
+- [x] Used refresh token rejected on second use; full family invalidated
 - [ ] Service layer unit test coverage ≥ 70% (JaCoCo report)
 - [ ] `git push` to `main` triggers the expanded CI pipeline (integration tests + SonarCloud) — all stages pass
 - [ ] SonarCloud quality gate passes (0 critical bugs, 0 security vulnerabilities, ≥ 70% coverage)
@@ -1750,7 +1752,7 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 
 ## Phase 7 — Testing Suite + CI/CD + Deployment + Production Hardening
 
-**Status:** ⬜ Not started
+**Status:** 🔄 In progress (7.1 complete)
 **Planned branch:** `feat/cicd-production`
 **Depends on:** Phase 6 (complete frontend before enforcing integration test quality gates and deploying a full product)
 

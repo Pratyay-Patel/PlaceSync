@@ -1,0 +1,29 @@
+# Integration test profile — loaded on top of the default test application.yml.
+# Testcontainers @ServiceConnection overrides datasource URL/username/password/driver.
+# This file overrides JPA dialect (from H2 to PostgreSQL) and enables Flyway.
+spring:
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  flyway:
+    enabled: true
+  cache:
+    type: none
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
+management:
+  health:
+    redis:
+      enabled: false
+    mail:
+      enabled: false
+  endpoints:
+    web:
+      exposure:
+        include: "*"

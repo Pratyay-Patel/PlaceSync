@@ -10,6 +10,7 @@ import com.placesync.application.repository.ApplicationRepository;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.kafka.KafkaEventPublisher;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import com.placesync.company.entity.Company;
 import com.placesync.job.entity.Job;
 import com.placesync.job.entity.JobStatus;
@@ -54,6 +55,7 @@ class ApplicationServiceTest {
     @Mock ResumeRepository resumeRepository;
     @Mock RecruiterProfileRepository recruiterProfileRepository;
     @Mock KafkaEventPublisher kafkaEventPublisher;
+    @Mock PlaceSyncMetrics placeSyncMetrics;
 
     @InjectMocks ApplicationService applicationService;
 

@@ -15,6 +15,7 @@ import com.placesync.common.event.OfferReleasedEvent;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.kafka.KafkaEventPublisher;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import com.placesync.common.spec.ApplicationSpecification;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.job.entity.Job;
@@ -63,6 +64,7 @@ public class ApplicationService {
     private final ResumeRepository resumeRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final PlaceSyncMetrics placeSyncMetrics;
 
     @Auditable(action = AuditAction.CREATE, entityType = "Application")
     @Transactional
@@ -112,6 +114,7 @@ public class ApplicationService {
                 .build();
 
         Application saved = applicationRepository.save(application);
+        placeSyncMetrics.recordApplication();
         kafkaEventPublisher.publish(ApplicationSubmittedEvent.of(
                 saved.getId(), student.getUser().getId(), job.getId(),
                 job.getTitle(), job.getCompany().getName(), student.getUser().getEmail()));

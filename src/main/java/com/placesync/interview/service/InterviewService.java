@@ -11,6 +11,7 @@ import com.placesync.common.event.InterviewScheduledEvent;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.kafka.KafkaEventPublisher;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import com.placesync.common.util.PagedResponse;
 import com.placesync.interview.dto.*;
 import org.springframework.data.domain.Pageable;
@@ -47,6 +48,7 @@ public class InterviewService {
     private final StudentProfileRepository studentProfileRepository;
     private final RecruiterProfileRepository recruiterProfileRepository;
     private final KafkaEventPublisher kafkaEventPublisher;
+    private final PlaceSyncMetrics placeSyncMetrics;
 
     @Transactional(readOnly = true)
     public List<InterviewResponse> getMyInterviews(UUID userId) {
@@ -108,6 +110,7 @@ public class InterviewService {
         applicationRepository.save(application);
 
         Interview saved = interviewRepository.save(interview);
+        placeSyncMetrics.recordInterview();
         kafkaEventPublisher.publish(InterviewScheduledEvent.of(
                 saved.getId(), applicationId, application.getStudent().getUser().getId(),
                 req.getRoundNumber(), req.getScheduledAt(), req.getMeetingLink()));
