@@ -16,8 +16,8 @@ import {
   IconButton,
 } from '@mui/material';
 import { VisibilityRounded, VisibilityOffRounded, CheckCircleOutlineRounded } from '@mui/icons-material';
-import { motion } from 'framer-motion';
 import { authApi } from '../../api/authApi';
+import AuthPageLayout from '../../components/layout/AuthPageLayout';
 
 const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^a-zA-Z0-9]).{8,}$/;
 
@@ -68,177 +68,138 @@ export default function ResetPasswordPage() {
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-        px: 2,
-      }}
-    >
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
-        style={{ width: '100%', maxWidth: 420 }}
-      >
-        {/* Logo */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3, justifyContent: 'center' }}>
-          <Box
-            sx={{
-              width: 38,
-              height: 38,
-              borderRadius: '10px',
-              background: 'linear-gradient(135deg, #4F46E5 0%, #4338CA 100%)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 2px 10px rgba(79, 70, 229, 0.4)',
-            }}
-          >
-            <Typography sx={{ color: '#FFF', fontWeight: 700, fontSize: '0.875rem', lineHeight: 1 }}>
-              PS
-            </Typography>
-          </Box>
-          <Typography variant="h6" sx={{ fontWeight: 700, color: 'text.primary' }}>
-            PlaceSync
-          </Typography>
-        </Box>
+    <AuthPageLayout>
+      <Card sx={{ p: 1 }}>
+        <CardContent>
+          {!token ? (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Invalid reset link
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                This link is missing a reset token. Please use the link from your email.
+              </Typography>
+              <Link
+                component={RouterLink}
+                to="/forgot-password"
+                sx={{ fontWeight: 600, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                Request a new link
+              </Link>
+            </Box>
+          ) : success ? (
+            <Box sx={{ textAlign: 'center', py: 2 }}>
+              <CheckCircleOutlineRounded sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
+                Password reset
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                Your password has been updated. You can now sign in with your new password.
+              </Typography>
+              <Link
+                component={RouterLink}
+                to="/login"
+                sx={{ fontWeight: 600, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              >
+                Sign in
+              </Link>
+            </Box>
+          ) : (
+            <>
+              <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
+                Set a new password
+              </Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
+                Choose a strong password for your account.
+              </Typography>
 
-        <Card sx={{ p: 1 }}>
-          <CardContent>
-            {!token ? (
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                  Invalid reset link
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-                  This link is missing a reset token. Please use the link from your email.
-                </Typography>
-                <Link
-                  component={RouterLink}
-                  to="/forgot-password"
-                  sx={{ fontWeight: 600, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
+              {serverError && (
+                <Alert severity="error" sx={{ mb: 2.5 }}>
+                  {serverError}{' '}
+                  {(serverError.includes('invalid') || serverError.includes('expired')) && (
+                    <Link component={RouterLink} to="/forgot-password" sx={{ fontWeight: 600 }}>
+                      Request a new link
+                    </Link>
+                  )}
+                </Alert>
+              )}
+
+              <Box
+                component="form"
+                onSubmit={handleSubmit(onSubmit)}
+                sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+              >
+                <TextField
+                  {...register('password')}
+                  label="New password"
+                  type={showPassword ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  autoFocus
+                  fullWidth
+                  error={!!errors.password}
+                  helperText={errors.password?.message}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowPassword((p) => !p)}
+                            edge="end"
+                            tabIndex={-1}
+                          >
+                            {showPassword
+                              ? <VisibilityOffRounded fontSize="small" />
+                              : <VisibilityRounded fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+
+                <TextField
+                  {...register('confirmPassword')}
+                  label="Confirm new password"
+                  type={showConfirm ? 'text' : 'password'}
+                  autoComplete="new-password"
+                  fullWidth
+                  error={!!errors.confirmPassword}
+                  helperText={errors.confirmPassword?.message}
+                  slotProps={{
+                    input: {
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            size="small"
+                            onClick={() => setShowConfirm((p) => !p)}
+                            edge="end"
+                            tabIndex={-1}
+                          >
+                            {showConfirm
+                              ? <VisibilityOffRounded fontSize="small" />
+                              : <VisibilityRounded fontSize="small" />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    },
+                  }}
+                />
+
+                <Button
+                  type="submit"
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  disabled={isSubmitting}
                 >
-                  Request a new link
-                </Link>
+                  {isSubmitting ? 'Updating…' : 'Update password'}
+                </Button>
               </Box>
-            ) : success ? (
-              <Box sx={{ textAlign: 'center', py: 2 }}>
-                <CheckCircleOutlineRounded sx={{ fontSize: 48, color: 'success.main', mb: 2 }} />
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-                  Password reset
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-                  Your password has been updated. You can now sign in with your new password.
-                </Typography>
-                <Link
-                  component={RouterLink}
-                  to="/login"
-                  sx={{ fontWeight: 600, color: 'primary.main', textDecoration: 'none', '&:hover': { textDecoration: 'underline' } }}
-                >
-                  Sign in
-                </Link>
-              </Box>
-            ) : (
-              <>
-                <Typography variant="h5" sx={{ fontWeight: 700, mb: 0.5 }}>
-                  Set a new password
-                </Typography>
-                <Typography variant="body2" sx={{ color: 'text.secondary', mb: 3 }}>
-                  Choose a strong password for your account.
-                </Typography>
-
-                {serverError && (
-                  <Alert severity="error" sx={{ mb: 2.5 }}>
-                    {serverError}{' '}
-                    {(serverError.includes('invalid') || serverError.includes('expired')) && (
-                      <Link component={RouterLink} to="/forgot-password" sx={{ fontWeight: 600 }}>
-                        Request a new link
-                      </Link>
-                    )}
-                  </Alert>
-                )}
-
-                <Box
-                  component="form"
-                  onSubmit={handleSubmit(onSubmit)}
-                  sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
-                >
-                  <TextField
-                    {...register('password')}
-                    label="New password"
-                    type={showPassword ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    autoFocus
-                    fullWidth
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              size="small"
-                              onClick={() => setShowPassword((p) => !p)}
-                              edge="end"
-                              tabIndex={-1}
-                            >
-                              {showPassword
-                                ? <VisibilityOffRounded fontSize="small" />
-                                : <VisibilityRounded fontSize="small" />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-
-                  <TextField
-                    {...register('confirmPassword')}
-                    label="Confirm new password"
-                    type={showConfirm ? 'text' : 'password'}
-                    autoComplete="new-password"
-                    fullWidth
-                    error={!!errors.confirmPassword}
-                    helperText={errors.confirmPassword?.message}
-                    slotProps={{
-                      input: {
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              size="small"
-                              onClick={() => setShowConfirm((p) => !p)}
-                              edge="end"
-                              tabIndex={-1}
-                            >
-                              {showConfirm
-                                ? <VisibilityOffRounded fontSize="small" />
-                                : <VisibilityRounded fontSize="small" />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      },
-                    }}
-                  />
-
-                  <Button
-                    type="submit"
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    disabled={isSubmitting}
-                  >
-                    {isSubmitting ? 'Updating…' : 'Update password'}
-                  </Button>
-                </Box>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </motion.div>
-    </Box>
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </AuthPageLayout>
   );
 }

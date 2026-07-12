@@ -2,18 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Pagination, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField,
+  Button, Pagination, CircularProgress, Alert,
 } from '@mui/material';
 import { CheckRounded, CloseRounded } from '@mui/icons-material';
 import { adminApi } from '../../api/adminApi';
 import type { JobSummary } from '../../types/job';
-
-function fmt(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
+import RejectDialog from '../../components/admin/RejectDialog';
+import { formatDate } from '../../utils/format';
 
 export default function AdminJobsPage() {
   const queryClient = useQueryClient();
@@ -107,7 +102,7 @@ export default function AdminJobsPage() {
                         variant="caption"
                         sx={{ color: new Date(j.applicationDeadline) < new Date() ? 'error.main' : 'inherit' }}
                       >
-                        {fmt(j.applicationDeadline)}
+                        {formatDate(j.applicationDeadline)}
                       </Typography>
                     </TableCell>
                     <TableCell align="right">
@@ -152,34 +147,16 @@ export default function AdminJobsPage() {
         </Box>
       )}
 
-      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Reject Job Posting</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            Provide a reason for rejecting <strong>{rejectTarget?.title}</strong>.
-          </DialogContentText>
-          <TextField
-            label="Rejection Reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            fullWidth
-            multiline
-            rows={3}
-            size="small"
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRejectTarget(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!rejectReason.trim() || rejectMutation.isPending}
-            onClick={() => rejectMutation.mutate()}
-          >
-            {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RejectDialog
+        open={!!rejectTarget}
+        title="Reject Job Posting"
+        description={<>Provide a reason for rejecting <strong>{rejectTarget?.title}</strong>.</>}
+        reason={rejectReason}
+        onReasonChange={setRejectReason}
+        onConfirm={() => rejectMutation.mutate()}
+        onCancel={() => setRejectTarget(null)}
+        isPending={rejectMutation.isPending}
+      />
     </Box>
   );
 }
