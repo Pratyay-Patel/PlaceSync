@@ -1406,7 +1406,9 @@ Expose `/actuator/prometheus` (restricted to internal network via Nginx). Key cu
 
 ---
 
-### 7.2 GitHub Actions CI Pipeline — Advanced
+### 7.2 GitHub Actions CI Pipeline — Advanced ✅ Complete
+
+**What was built:** Expanded `.github/workflows/ci.yml` — frontend job now runs `npm run coverage` (Vitest + lcov) and performs a SonarCloud scan via `sonarcloud-github-action`; backend job uploads the JaCoCo HTML report as a downloadable CI artifact. Added `.github/workflows/pr-checks.yml` (fast compile-only check on every PR, ~30 s feedback). Created `placesync-frontend/sonar-project.properties` wiring the frontend lcov report to SonarCloud. Service containers omitted — Testcontainers starts its own Docker containers; GitHub Actions ubuntu-latest has Docker pre-installed.
 
 The basic workflow (checkout, Java 21 setup, Maven cache, `mvn clean verify`) was established in subphase 4.0. This subphase **expands** `.github/workflows/ci.yml` in place — do not create a new file, edit the existing one.
 
@@ -1730,10 +1732,10 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 - [x] Repository tests run against real PostgreSQL via Testcontainers
 - [x] `GET /api/v1/admin/applications` (admin token) → 200; `GET /api/v1/admin/applications` (student token) → 403
 - [x] Used refresh token rejected on second use; full family invalidated
-- [ ] Service layer unit test coverage ≥ 70% (JaCoCo report)
-- [ ] `git push` to `main` triggers the expanded CI pipeline (integration tests + SonarCloud) — all stages pass
-- [ ] SonarCloud quality gate passes (0 critical bugs, 0 security vulnerabilities, ≥ 70% coverage)
-- [ ] Frontend Vitest coverage reported to SonarCloud via lcov — CI generates coverage report and uploads it
+- [x] Service layer unit test coverage ≥ 70% (JaCoCo report)
+- [x] `git push` to `main` triggers the expanded CI pipeline (integration tests + SonarCloud) — all stages pass
+- [x] SonarCloud quality gate passes (0 critical bugs, 0 security vulnerabilities, ≥ 70% coverage)
+- [x] Frontend Vitest coverage reported to SonarCloud via lcov — CI generates coverage report and uploads it
 - [ ] Backend live at public Render URL — `GET /actuator/health` returns `db: UP`, `redis: UP`
 - [ ] Register + login smoke test succeeds against Render deployment; data visible in Supabase
 - [ ] Nginx serves `GET /api/v1/auth/me` correctly at `http://localhost/api/v1/auth/me`
