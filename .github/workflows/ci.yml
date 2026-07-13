@@ -46,7 +46,7 @@ jobs:
         run: npm run coverage
 
       - name: SonarCloud scan (frontend)
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@master
         with:
           projectBaseDir: placesync-frontend
         env:
