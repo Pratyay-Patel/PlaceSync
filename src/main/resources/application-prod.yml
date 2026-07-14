@@ -6,6 +6,10 @@
 # ─────────────────────────────────────────────────────────────────────────────
 
 spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+
   datasource:
     url: ${DATABASE_URL}
     username: ${DATABASE_USERNAME}
