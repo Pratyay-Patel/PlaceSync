@@ -1,19 +1,21 @@
 package com.placesync.auth.service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import com.placesync.common.metrics.PlaceSyncMetrics;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
+import software.amazon.awssdk.core.exception.SdkException;
+import software.amazon.awssdk.services.ses.SesClient;
+import software.amazon.awssdk.services.ses.model.Body;
+import software.amazon.awssdk.services.ses.model.Content;
+import software.amazon.awssdk.services.ses.model.Destination;
+import software.amazon.awssdk.services.ses.model.Message;
+import software.amazon.awssdk.services.ses.model.SendEmailRequest;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +23,7 @@ public class EmailService {
 
     private static final Logger log = LoggerFactory.getLogger(EmailService.class);
 
-    private final JavaMailSender mailSender;
+    private final SesClient sesClient;
     private final TemplateEngine templateEngine;
     private final PlaceSyncMetrics placeSyncMetrics;
 
@@ -110,15 +112,19 @@ public class EmailService {
     private void send(String to, String subject, String template, Context ctx) {
         try {
             String html = templateEngine.process(template, ctx); // NOSONAR S5145: user data is intentionally rendered into email content, not into logs
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(from);
-            helper.setTo(to);
-            helper.setSubject(subject);
-            helper.setText(html, true);
-            mailSender.send(message);
+            SendEmailRequest request = SendEmailRequest.builder()
+                    .source(from)
+                    .destination(Destination.builder().toAddresses(to).build())
+                    .message(Message.builder()
+                            .subject(Content.builder().data(subject).charset("UTF-8").build())
+                            .body(Body.builder()
+                                    .html(Content.builder().data(html).charset("UTF-8").build())
+                                    .build())
+                            .build())
+                    .build();
+            sesClient.sendEmail(request);
             log.info("Email sent template={}", template);
-        } catch (MailException | MessagingException e) {
+        } catch (SdkException e) {
             placeSyncMetrics.recordEmailFailure();
             log.warn("Failed to send email template={}", template, e);
         }
