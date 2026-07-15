@@ -37,6 +37,17 @@ spring:
 
 # In production, health details are hidden from unauthenticated callers.
 # Nginx restricts /actuator/* to localhost or admin IP — see ARCHITECTURE.md.
+  mail:
+    port: 465
+    properties:
+      mail:
+        smtp:
+          ssl:
+            enable: true
+          starttls:
+            enable: false
+            required: false
+
 management:
   endpoint:
     health:

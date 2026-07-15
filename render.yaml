@@ -41,9 +41,9 @@ services:
       - key: AWS_REGION
         value: ap-south-1
       - key: AWS_S3_BUCKET_RESUMES
-        value: placesync-resumes
+        sync: false
       - key: AWS_S3_BUCKET_PICTURES
-        value: placesync-profile-pictures
+        sync: false
 
       # Redis — wired automatically from the placesync-redis service below
       - key: REDIS_HOST
