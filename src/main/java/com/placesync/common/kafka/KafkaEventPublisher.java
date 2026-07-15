@@ -1,6 +1,7 @@
 package com.placesync.common.kafka;
 
 import com.placesync.common.event.*;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.ObjectProvider;
@@ -18,11 +19,14 @@ public class KafkaEventPublisher {
 
     private final ApplicationEventPublisher applicationEventPublisher;
     private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final PlaceSyncMetrics placeSyncMetrics;
 
     public KafkaEventPublisher(ApplicationEventPublisher applicationEventPublisher,
-                               ObjectProvider<KafkaTemplate<String, Object>> kafkaTemplateProvider) {
+                               ObjectProvider<KafkaTemplate<String, Object>> kafkaTemplateProvider,
+                               PlaceSyncMetrics placeSyncMetrics) {
         this.applicationEventPublisher = applicationEventPublisher;
         this.kafkaTemplate = kafkaTemplateProvider.getIfAvailable();
+        this.placeSyncMetrics = placeSyncMetrics;
     }
 
     public void publish(DomainEvent event) {
@@ -36,6 +40,7 @@ public class KafkaEventPublisher {
             if (log.isDebugEnabled()) {
                 log.debug("KafkaTemplate not available — routing {} via fallback", event.eventType());
             }
+            placeSyncMetrics.recordKafkaFailure();
             applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
             return;
         }
@@ -51,6 +56,7 @@ public class KafkaEventPublisher {
                     if (ex != null) {
                         log.warn("Kafka publish failed for event={} topic={} — activating fallback",
                                 event.eventType(), topic, ex);
+                        placeSyncMetrics.recordKafkaFailure();
                         applicationEventPublisher.publishEvent(new KafkaDeliveryFailedEvent(event));
                     } else {
                         log.info("Published event={} to topic={}", event.eventType(), topic);

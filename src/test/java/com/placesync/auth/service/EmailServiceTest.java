@@ -1,6 +1,7 @@
 package com.placesync.auth.service;
 
 import jakarta.mail.internet.MimeMessage;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,12 +24,13 @@ class EmailServiceTest {
     @Mock JavaMailSender mailSender;
     @Mock TemplateEngine templateEngine;
     @Mock MimeMessage mimeMessage;
+    @Mock PlaceSyncMetrics placeSyncMetrics;
 
     EmailService emailService;
 
     @BeforeEach
     void setUp() {
-        emailService = new EmailService(mailSender, templateEngine);
+        emailService = new EmailService(mailSender, templateEngine, placeSyncMetrics);
         ReflectionTestUtils.setField(emailService, "from", "noreply@placesync.com");
         ReflectionTestUtils.setField(emailService, "baseUrl", "http://localhost:8080");
         when(mailSender.createMimeMessage()).thenReturn(mimeMessage);

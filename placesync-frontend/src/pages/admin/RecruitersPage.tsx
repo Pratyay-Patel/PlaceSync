@@ -2,19 +2,14 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Pagination, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField,
+  Button, Pagination, CircularProgress, Alert,
 } from '@mui/material';
 import { CheckRounded, CloseRounded } from '@mui/icons-material';
 import { adminApi } from '../../api/adminApi';
 import type { RecruiterProfile } from '../../types/recruiter';
 import StatusChip from '../../components/common/StatusChip';
-
-function fmt(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
+import RejectDialog from '../../components/admin/RejectDialog';
+import { formatDate } from '../../utils/format';
 
 export default function RecruitersPage() {
   const queryClient = useQueryClient();
@@ -101,7 +96,7 @@ export default function RecruitersPage() {
                       <StatusChip status={r.verificationStatus} />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption">{fmt(r.createdAt)}</Typography>
+                      <Typography variant="caption">{formatDate(r.createdAt)}</Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Button
@@ -146,35 +141,21 @@ export default function RecruitersPage() {
         </Box>
       )}
 
-      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Reject Recruiter Verification</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
+      <RejectDialog
+        open={!!rejectTarget}
+        title="Reject Recruiter Verification"
+        description={
+          <>
             Provide a reason for rejecting{' '}
             <strong>{rejectTarget?.firstName} {rejectTarget?.lastName}</strong>'s verification.
-          </DialogContentText>
-          <TextField
-            label="Rejection Reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            fullWidth
-            multiline
-            rows={3}
-            size="small"
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRejectTarget(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!rejectReason.trim() || rejectMutation.isPending}
-            onClick={() => rejectMutation.mutate()}
-          >
-            {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </>
+        }
+        reason={rejectReason}
+        onReasonChange={setRejectReason}
+        onConfirm={() => rejectMutation.mutate()}
+        onCancel={() => setRejectTarget(null)}
+        isPending={rejectMutation.isPending}
+      />
     </Box>
   );
 }

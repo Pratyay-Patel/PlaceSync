@@ -1,0 +1,63 @@
+services:
+  - type: web
+    name: placesync-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+
+      # Database — set values in Render dashboard (never commit real credentials)
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_USERNAME
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+
+      # Auth
+      - key: JWT_SECRET
+        sync: false
+
+      # CORS and email links — set to the real Render and Vercel URLs after first deploy
+      - key: FRONTEND_URL
+        sync: false
+      - key: APP_BASE_URL
+        sync: false
+
+      # Email (Gmail SMTP)
+      - key: MAIL_USERNAME
+        sync: false
+      - key: MAIL_APP_PASSWORD
+        sync: false
+
+      # AWS S3
+      - key: AWS_ACCESS_KEY_ID
+        sync: false
+      - key: AWS_SECRET_ACCESS_KEY
+        sync: false
+      - key: AWS_REGION
+        value: ap-south-1
+      - key: AWS_S3_BUCKET_RESUMES
+        value: placesync-resumes
+      - key: AWS_S3_BUCKET_PICTURES
+        value: placesync-profile-pictures
+
+      # Redis — wired automatically from the placesync-redis service below
+      - key: REDIS_HOST
+        fromService:
+          name: placesync-redis
+          type: redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          name: placesync-redis
+          type: redis
+          property: port
+
+  - type: redis
+    name: placesync-redis
+    plan: free
+    ipAllowList: []

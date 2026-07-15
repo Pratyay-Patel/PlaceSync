@@ -6,6 +6,7 @@ import com.placesync.application.repository.ApplicationRepository;
 import com.placesync.common.exception.ConflictException;
 import com.placesync.common.exception.ResourceNotFoundException;
 import com.placesync.common.kafka.KafkaEventPublisher;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import com.placesync.interview.dto.*;
 import com.placesync.interview.entity.Interview;
 import com.placesync.interview.entity.InterviewStatus;
@@ -46,6 +47,7 @@ class InterviewServiceTest {
     @Mock StudentProfileRepository studentProfileRepository;
     @Mock RecruiterProfileRepository recruiterProfileRepository;
     @Mock KafkaEventPublisher kafkaEventPublisher;
+    @Mock PlaceSyncMetrics placeSyncMetrics;
 
     @InjectMocks InterviewService interviewService;
 

@@ -2,6 +2,7 @@ package com.placesync.auth.service;
 
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
+import com.placesync.common.metrics.PlaceSyncMetrics;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,6 +23,7 @@ public class EmailService {
 
     private final JavaMailSender mailSender;
     private final TemplateEngine templateEngine;
+    private final PlaceSyncMetrics placeSyncMetrics;
 
     @Value("${spring.mail.username}")
     private String from;
@@ -117,6 +119,7 @@ public class EmailService {
             mailSender.send(message);
             log.info("Email sent template={}", template);
         } catch (MailException | MessagingException e) {
+            placeSyncMetrics.recordEmailFailure();
             log.warn("Failed to send email template={}", template, e);
         }
     }

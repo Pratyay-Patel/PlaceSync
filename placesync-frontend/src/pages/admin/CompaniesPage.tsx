@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
   Box, Typography, Card, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Button, Chip, Pagination, CircularProgress, Alert, Dialog, DialogTitle, DialogContent,
-  DialogContentText, DialogActions, TextField,
+  Button, Chip, Pagination, CircularProgress, Alert,
 } from '@mui/material';
 import { CheckRounded, CloseRounded } from '@mui/icons-material';
 import { adminApi } from '../../api/adminApi';
 import type { Company } from '../../types/recruiter';
+import RejectDialog from '../../components/admin/RejectDialog';
+import { formatDate } from '../../utils/format';
 
 const STATUS_COLOR: Record<string, 'default' | 'warning' | 'success' | 'error'> = {
   PENDING_APPROVAL: 'warning',
@@ -15,12 +16,6 @@ const STATUS_COLOR: Record<string, 'default' | 'warning' | 'success' | 'error'> 
   REJECTED: 'error',
   SUSPENDED: 'error',
 };
-
-function fmt(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString('en-IN', {
-    day: 'numeric', month: 'short', year: 'numeric',
-  });
-}
 
 export default function CompaniesPage() {
   const queryClient = useQueryClient();
@@ -107,7 +102,7 @@ export default function CompaniesPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Typography variant="caption">{fmt(c.createdAt)}</Typography>
+                      <Typography variant="caption">{formatDate(c.createdAt)}</Typography>
                     </TableCell>
                     <TableCell align="right">
                       <Button
@@ -152,34 +147,16 @@ export default function CompaniesPage() {
         </Box>
       )}
 
-      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle>Reject Company</DialogTitle>
-        <DialogContent>
-          <DialogContentText sx={{ mb: 2 }}>
-            Provide a reason for rejecting <strong>{rejectTarget?.name}</strong>.
-          </DialogContentText>
-          <TextField
-            label="Rejection Reason"
-            value={rejectReason}
-            onChange={(e) => setRejectReason(e.target.value)}
-            fullWidth
-            multiline
-            rows={3}
-            size="small"
-          />
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setRejectTarget(null)}>Cancel</Button>
-          <Button
-            variant="contained"
-            color="error"
-            disabled={!rejectReason.trim() || rejectMutation.isPending}
-            onClick={() => rejectMutation.mutate()}
-          >
-            {rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <RejectDialog
+        open={!!rejectTarget}
+        title="Reject Company"
+        description={<>Provide a reason for rejecting <strong>{rejectTarget?.name}</strong>.</>}
+        reason={rejectReason}
+        onReasonChange={setRejectReason}
+        onConfirm={() => rejectMutation.mutate()}
+        onCancel={() => setRejectTarget(null)}
+        isPending={rejectMutation.isPending}
+      />
     </Box>
   );
 }

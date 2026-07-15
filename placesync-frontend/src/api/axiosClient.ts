@@ -8,7 +8,7 @@ interface RetryableRequest extends InternalAxiosRequestConfig {
 }
 
 const axiosClient = axios.create({
-  baseURL: '/api/v1',
+  baseURL: `${import.meta.env.VITE_API_ORIGIN ?? ''}/api/v1`,
   headers: { 'Content-Type': 'application/json' },
 });
 
