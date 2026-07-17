@@ -32,6 +32,7 @@ This file is the single source of truth for the phased build-out of PlaceSync V1
 | 5 | Analytics + AWS S3 + Email delivery | ✅ Complete | `feat/analytics-s3-email` |
 | 6 | Frontend — React + TypeScript + Vite | ✅ Complete | `feat/frontend` |
 | 7 | Testing suite + CI/CD + Nginx + Deployment + Production hardening | 🔄 In progress | `feat/cicd-production` |
+| 8 | Production infrastructure upgrades — custom domain, SES production, Confluent Kafka | ⬜ Not started | `chore/production-infra` |
 
 ---
 
@@ -1618,13 +1619,22 @@ Push `render.yaml` to GitHub. Connect the repository to Render — it auto-detec
 
 Render free tier services sleep after 15 minutes of inactivity. First request after sleep takes ~30 seconds. This is acceptable for development demos. For always-on behaviour, use a paid Render instance ($7/month) or proceed to the VPS deployment in subphase 6.4.
 
-#### Subphase 6.3 acceptance criteria
-- [ ] `render.yaml` committed to repository
-- [ ] Backend deployed and reachable at public Render URL
-- [ ] `GET /actuator/health` returns `db: UP`, `redis: UP` at the Render URL
-- [ ] Register + login smoke test succeeds against the Render deployment (data visible in Supabase)
-- [ ] No production credentials committed to git — all secrets set via Render dashboard
-- [ ] Auto-deploy triggers on push to `main`
+#### Subphase 7.3 acceptance criteria
+- [x] `render.yaml` committed to repository
+- [x] Backend deployed and reachable at public Render URL
+- [x] `GET /actuator/health` returns `db: UP`, `redis: UP` at the Render URL
+- [x] Register + login smoke test succeeds against the Render deployment (data visible in Supabase)
+- [x] No production credentials committed to git — all secrets set via Render dashboard
+- [x] Auto-deploy triggers on push to `main`
+
+#### What was built (deviation from plan)
+- Email delivery switched from Gmail SMTP (`spring-boot-starter-mail`) to **AWS SES SDK v2** (`software.amazon.awssdk:ses:2.25.0`) — Render free tier blocks all outbound SMTP (ports 587 and 465); SES uses HTTPS so is unaffected
+- `SesConfig.java` added — creates `SesClient` bean using same `DefaultCredentialsProvider` as S3
+- `EmailService.java` rewritten — replaced `JavaMailSender` with `SesClient.sendEmail()`; `@Value("${spring.mail.username}")` retained as the `from` address (reuses `MAIL_USERNAME` env var)
+- `application-prod.yml` — removed SMTP port override; `management.health.mail.enabled: false` retained to suppress health check SMTP probe
+- PgBouncer conflict fixed: `data-source-properties: prepareThreshold: 0` added to HikariCP config
+- S3 bucket env vars changed to `sync: false` in `render.yaml` (actual bucket names have AWS account ID suffix)
+- SES currently in sandbox mode — sends only to verified identities; full production access deferred to Phase 8.1 (requires custom domain)
 
 ---
 
@@ -1761,7 +1771,7 @@ Expand `docs/DEPLOYMENT.md` (started in subphase 5.5) to cover full VPS deployme
 
 ## Phase 7 — Testing Suite + CI/CD + Deployment + Production Hardening
 
-**Status:** 🔄 In progress (7.1, 7.2 complete)
+**Status:** 🔄 In progress (7.1, 7.2, 7.3 complete)
 **Planned branch:** `feat/cicd-production`
 **Depends on:** Phase 6 (complete frontend before enforcing integration test quality gates and deploying a full product)
 
@@ -2099,6 +2109,107 @@ This lets `npm run dev` hit the local Spring Boot API without CORS issues during
 - [x] App is responsive at 375 px (mobile) and 1920 px (desktop) — SRS NFR-050
 - [x] `docker-compose up` serves the SPA at `http://localhost:3001/` via Nginx
 - [ ] Merged to `main` via PR — PlaceSync V1 is functionally complete
+
+---
+
+---
+
+## Phase 8 — Production Infrastructure Upgrades
+
+**Status:** ⬜ Not started
+**Planned branch:** `chore/production-infra`
+**Depends on:** Phase 7 complete
+
+### Scope
+
+These items were deferred from Phase 7 because they require either spending money (domain, dedicated broker) or external account approvals that are outside the development workflow. The code is already production-grade — this phase is purely infrastructure/ops.
+
+---
+
+### 8.1 Custom domain + AWS SES production access
+
+**Why deferred:** SES sandbox mode restricts sending to verified recipient addresses only. Production access requires a verified sending domain (a custom domain you own). Domain purchase has a cost (~₹800–1200/year on Namecheap for `.in` / `.site`).
+
+**Steps:**
+1. Purchase a domain (e.g., `placesync.in`) from Namecheap or Route 53
+2. SES Console → Verified identities → Create identity → Domain → enter the domain
+3. Add the three DKIM CNAME records AWS provides to the domain's DNS (Namecheap DNS management panel)
+4. Wait for verification (usually under 1 hour)
+5. Update Render env var `MAIL_USERNAME` from `pratyay.a.patel@gmail.com` to `noreply@placesync.in`
+6. SES Console → Account dashboard → Request production access
+   - Mail type: Transactional
+   - Use case: email verification, password reset, interview and application notifications — all user-triggered
+7. Wait for AWS approval (typically 24 hours)
+
+**Code changes required:** None — `EmailService` and `SesConfig` are already correct. Only the `MAIL_USERNAME` env var changes.
+
+**Acceptance criteria:**
+- [ ] Domain purchased and DNS verified in SES
+- [ ] `MAIL_USERNAME` updated to `noreply@<domain>`
+- [ ] SES production access granted (sandbox warning removed from SES dashboard)
+- [ ] New user registration sends verification email to an unverified Gmail address successfully
+
+---
+
+### 8.2 Confluent Kafka (cloud) — replace fallback with real broker
+
+**Why deferred:** Confluent Cloud free tier requires account setup and credential management. In production the app currently falls back to direct Spring event dispatch (`KafkaDeliveryFailedEvent`), which is functionally correct but bypasses the broker entirely.
+
+**Why this matters:** The architecture documentation and resume claim event-driven design via Kafka. The fallback path works but means Kafka is not actually in the production message flow.
+
+**Steps:**
+1. Create a Confluent Cloud account (free tier — 10 GB storage, no credit card required)
+2. Create a cluster in `ap-south-1` (AWS Mumbai) to minimise latency to Render
+3. Create an API key (Key + Secret) for the PlaceSync service account
+4. Create the three topics manually: `application-events`, `interview-events`, `offer-events`
+5. Add Render env vars:
+   - `KAFKA_BOOTSTRAP_SERVERS` — from Confluent cluster settings
+   - `KAFKA_API_KEY` — Confluent API key
+   - `KAFKA_API_SECRET` — Confluent API secret
+6. Update `application-prod.yml`:
+   - Remove `KafkaAutoConfiguration` from the `autoconfigure.exclude` list
+   - Add SASL/SSL properties:
+     ```yaml
+     spring:
+       kafka:
+         bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS}
+         properties:
+           security.protocol: SASL_SSL
+           sasl.mechanism: PLAIN
+           sasl.jaas.config: >
+             org.apache.kafka.common.security.plain.PlainLoginModule required
+             username="${KAFKA_API_KEY}"
+             password="${KAFKA_API_SECRET}";
+         consumer:
+           group-id: notification-group
+           auto-offset-reset: earliest
+           key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+           value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+           properties:
+             spring.json.trusted.packages: "com.placesync.common.event"
+         producer:
+           key-serializer: org.apache.kafka.common.serialization.StringSerializer
+           value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+     ```
+7. Run `mvn clean verify` locally with a `.env` pointing at Confluent — confirm `KafkaEventPublisher` logs `Published event=` instead of the fallback debug log
+8. Push and verify Render logs show successful Kafka publishes
+
+**Acceptance criteria:**
+- [ ] Confluent Cloud cluster running in ap-south-1
+- [ ] Three topics created: `application-events`, `interview-events`, `offer-events`
+- [ ] `KafkaAutoConfiguration` no longer excluded in `application-prod.yml`
+- [ ] Render logs show `Published event=ApplicationSubmittedEvent to topic=application-events` (not the fallback path)
+- [ ] `NotificationConsumer` processes the event from the broker — in-app notification appears in the UI
+- [ ] `mvn clean verify` passes with Confluent credentials in CI secrets
+
+---
+
+### Phase 8 acceptance criteria
+- [ ] SES sending domain verified; `MAIL_USERNAME` points to domain address
+- [ ] SES production access granted — emails deliver to any address
+- [ ] Confluent Kafka cluster live — broker is in the production message path, not the fallback
+- [ ] `mvn clean verify` passes
+- [ ] All smoke test steps pass end-to-end with real Kafka and real SES
 
 ---
 
